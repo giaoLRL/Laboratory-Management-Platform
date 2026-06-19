@@ -1,0 +1,102 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+
+{% block title %}{{ object.name }}{% endblock %}
+
+{% block controls %}
+{% if is_superuser and object.approval_status == 'pending' %}
+<a href="{% url 'plugins:lab_manager:hardware_approval' pk=object.pk %}" class="btn btn-success">
+    <i class="mdi mdi-check-decagram"></i> {% trans "审核" %}
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "基本信息" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr><th scope="row">{% trans "名称" %}</th><td>{{ object.name }}</td></tr>
+                    <tr><th scope="row">{% trans "类别" %}</th><td>{% badge object.get_category_display %}</td></tr>
+                    <tr><th scope="row">{% trans "型号" %}</th><td>{{ object.model_number|default:'—' }}</td></tr>
+                    <tr><th scope="row">{% trans "厂家" %}</th><td>{{ object.manufacturer|default:'—' }}</td></tr>
+                    <tr><th scope="row">{% trans "数量" %}</th><td>{{ object.quantity }}</td></tr>
+                    <tr><th scope="row">{% trans "单价" %}</th><td>{{ object.unit_price|default:'—' }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "状态与位置" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr><th scope="row">{% trans "状态" %}</th><td>{% badge object.get_status_display %}</td></tr>
+                    <tr><th scope="row">{% trans "存放位置" %}</th><td>{{ object.storage_location|default:'—' }}</td></tr>
+                    <tr><th scope="row">{% trans "保管人" %}</th><td>{{ object.custodian|linkify|default:'—' }}</td></tr>
+                    <tr><th scope="row">{% trans "购买日期" %}</th><td>{{ object.purchase_date|default:'—' }}</td></tr>
+                    {% if object.purchase_link %}
+                    <tr><th scope="row">{% trans "购买链接" %}</th><td><a href="{{ object.purchase_link }}" target="_blank">查看</a></td></tr>
+                    {% endif %}
+                    <tr><th scope="row">{% trans "备注" %}</th><td>{{ object.remarks|default:'—' }}</td></tr>
+                </table>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <h5 class="card-header">{% trans "审批信息" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">{% trans "审批状态" %}</th>
+                        <td>
+                            {% if object.approval_status == 'approved' %}
+                            <span class="badge text-bg-success">{% trans "已通过" %}</span>
+                            {% elif object.approval_status == 'rejected' %}
+                            <span class="badge text-bg-danger">{% trans "已驳回" %}</span>
+                            {% else %}
+                            <span class="badge text-bg-warning">{% trans "待审核" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if object.approved_by %}
+                    <tr><th scope="row">{% trans "审核人" %}</th><td>{{ object.approved_by.username }}</td></tr>
+                    {% endif %}
+                    {% if object.approval_note %}
+                    <tr><th scope="row">{% trans "审核备注" %}</th><td>{{ object.approval_note }}</td></tr>
+                    {% endif %}
+                    <tr><th scope="row">{% trans "提交人" %}</th><td>{{ object.submitted_by.username|default:'—' }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "实物照片" %}</h5>
+            <div class="card-body text-center">
+                {% if object.image %}
+                <img src="{{ object.image.url }}" alt="{{ object.name }}" class="img-fluid" style="max-height: 400px;">
+                {% else %}
+                <p class="text-muted py-5">{% trans "暂无实物照片" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "发票照片" %}</h5>
+            <div class="card-body text-center">
+                {% if object.invoice_image %}
+                <img src="{{ object.invoice_image.url }}" alt="发票 — {{ object.name }}" class="img-fluid" style="max-height: 400px;">
+                {% else %}
+                <p class="text-muted py-5">{% trans "暂无发票照片" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

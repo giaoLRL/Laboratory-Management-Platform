@@ -1,0 +1,251 @@
+import importlib.abc
+import importlib.util
+import os
+import sys
+from collections import defaultdict
+
+from django.core.exceptions import ValidationError
+from django.core.files.storage import storages
+from django.db import models
+from django.http import HttpResponse
+from django.utils.module_loading import import_string
+from django.utils.translation import gettext_lazy as _
+
+from core.models import ObjectType
+from extras.constants import DEFAULT_MIME_TYPE, JINJA_ENV_PARAMS_ALLOWED
+from extras.utils import filename_from_model, filename_from_object
+from utilities.jinja2 import render_jinja2
+
+__all__ = (
+    'PythonModuleMixin',
+    'RenderTemplateMixin',
+)
+
+
+class CustomStoragesLoader(importlib.abc.Loader):
+    """
+    Custom loader for exec_module to use django-storages instead of the file system.
+    """
+    def __init__(self, filename):
+        self.filename = filename
+
+    def create_module(self, spec):
+        return None  # Use default module creation
+
+    def exec_module(self, module):
+        with storages["scripts"].open(self.filename, 'rb') as f:
+            code = f.read()
+        exec(code, module.__dict__)
+
+
+class PythonModuleMixin:
+
+    def get_jobs(self, name):
+        """
+        Returns a list of Jobs associated with this specific script or report module
+        :param name: The class name of the script or report
+        :return: List of Jobs associated with this
+        """
+        return self.jobs.filter(
+            name=name
+        )
+
+    @property
+    def path(self):
+        return os.path.splitext(self.file_path)[0]
+
+    @property
+    def python_name(self):
+        path, filename = os.path.split(self.full_path)
+        name = os.path.splitext(filename)[0]
+        if name == '__init__':
+            # File is a package
+            return os.path.basename(path)
+        return name
+
+    def get_module(self):
+        """
+        Load the module using importlib, but use a custom loader to use django-storages
+        instead of the file system.
+        """
+        spec = importlib.util.spec_from_file_location(self.python_name, self.name)
+        if spec is None:
+            raise ModuleNotFoundError(f"Could not find module: {self.python_name}")
+        loader = CustomStoragesLoader(self.name)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[self.python_name] = module
+        loader.exec_module(module)
+
+        return module
+
+
+class RenderTemplateMixin(models.Model):
+    """
+    Enables support for rendering templates.
+    """
+    template_code = models.TextField(
+        verbose_name=_('template code'),
+        help_text=_('Jinja template code.')
+    )
+    environment_params = models.JSONField(
+        verbose_name=_('environment parameters'),
+        blank=True,
+        null=True,
+        default=dict,
+        help_text=_(
+            'Any <a href="{url}">additional parameters</a> to pass when constructing the Jinja environment'
+        ).format(url='https://jinja.palletsprojects.com/en/stable/api/#jinja2.Environment')
+    )
+    mime_type = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_('MIME type'),
+        help_text=_('Defaults to <code>{default}</code>').format(default=DEFAULT_MIME_TYPE),
+    )
+    file_name = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=_('Filename to give to the rendered export file')
+    )
+    file_extension = models.CharField(
+        verbose_name=_('file extension'),
+        max_length=15,
+        blank=True,
+        help_text=_('Extension to append to the rendered filename')
+    )
+    as_attachment = models.BooleanField(
+        verbose_name=_('as attachment'),
+        default=True,
+        help_text=_("Download file as attachment")
+    )
+
+    class Meta:
+        abstract = True
+
+    def get_context(self, context=None, queryset=None):
+        _context = defaultdict(dict)
+
+        # Populate all public models for reference within the template
+        for object_type in ObjectType.objects.public():
+            if model := object_type.model_class():
+                _context[object_type.app_label][model.__name__] = model
+
+        if context is not None:
+            _context.update(context)
+
+        return _context
+
+    def clean(self):
+        super().clean()
+
+        params = self.environment_params or {}
+        for key, value in params.items():
+            # finalize is deprecated: block new use but preserve existing stored values
+            if key == 'finalize':
+                raise ValidationError({
+                    'environment_params': _(
+                        'The "{key}" parameter is deprecated and may not be set on new or modified templates.'
+                    ).format(key=key)
+                })
+            if key not in JINJA_ENV_PARAMS_ALLOWED:
+                raise ValidationError({
+                    'environment_params': _(
+                        '"{key}" is not a permitted Jinja2 environment parameter.'
+                    ).format(key=key)
+                })
+            allowed = JINJA_ENV_PARAMS_ALLOWED[key]
+            if type(allowed) is dict:
+                if value not in allowed:
+                    raise ValidationError({
+                        'environment_params': _(
+                            'Invalid value "{value}" for parameter "{key}". '
+                            'Allowed values are: {allowed}'
+                        ).format(
+                            value=value,
+                            key=key,
+                            allowed=', '.join(sorted(allowed.keys()))
+                        )
+                    })
+
+    @staticmethod
+    def _filter_environment_params(params):
+        """
+        Return a copy of params with only permitted keys. Keys not in the allowlist are
+        stripped, except 'finalize' which is a deprecated legacy carve-out.
+        """
+        return {
+            key: value for key, value in params.items()
+            if key in JINJA_ENV_PARAMS_ALLOWED or key == 'finalize'
+        }
+
+    @staticmethod
+    def _resolve_mapped_params(params):
+        """
+        Resolve allowlisted params that have a value mapping (e.g. undefined class names)
+        to their Python objects via direct dict lookup. Returns a new dict with resolved values;
+        unresolved params are passed through unchanged.
+        """
+        resolved = {}
+        for name, value in params.items():
+            allowed = JINJA_ENV_PARAMS_ALLOWED.get(name)
+            if type(allowed) is dict and value in allowed:
+                resolved[name] = allowed[value]
+            else:
+                resolved[name] = value
+        return resolved
+
+    @staticmethod
+    def _resolve_finalize(params):
+        """
+        Legacy carve-out: resolve the deprecated 'finalize' parameter via import_string().
+        Existing templates with finalize continue to work; new use is blocked by clean().
+        """
+        if 'finalize' in params and type(params['finalize']) is str:
+            return {**params, 'finalize': import_string(params['finalize'])}
+        return params
+
+    def get_environment_params(self):
+        """
+        Pre-processing of any defined Jinja environment parameters.
+        """
+        # Shallow-copy so resolved values don't replace the strings on the model field.
+        params = dict(self.environment_params or {})
+        params = self._filter_environment_params(params)
+        params = self._resolve_mapped_params(params)
+        params = self._resolve_finalize(params)
+        return params
+
+    def render(self, context=None, queryset=None):
+        """
+        Render the template with the provided context. The context is passed to the Jinja2 environment as a dictionary.
+        """
+        context = self.get_context(context=context, queryset=queryset)
+        env_params = self.get_environment_params()
+        debug = getattr(self, 'debug', False)
+        output = render_jinja2(self.template_code, context, env_params, getattr(self, 'data_file', None), debug=debug)
+
+        # Replace CRLF-style line terminators
+        output = output.replace('\r\n', '\n')
+
+        return output
+
+    def render_to_response(self, context=None, queryset=None):
+        output = self.render(context=context, queryset=queryset)
+        mime_type = self.mime_type or DEFAULT_MIME_TYPE
+
+        # Build the response
+        response = HttpResponse(output, content_type=mime_type)
+
+        if self.as_attachment:
+            extension = f'.{self.file_extension}' if self.file_extension else ''
+            if self.file_name:
+                filename = self.file_name
+            elif queryset:
+                filename = filename_from_model(queryset.model)
+            elif context:
+                filename = filename_from_object(context)
+            else:
+                filename = "output"
+            response['Content-Disposition'] = f'attachment; filename="{filename}{extension}"'
+
+        return response

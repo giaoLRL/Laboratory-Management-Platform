@@ -1,0 +1,37 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "标记完成" %} — {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "标记任务完成" %}</h5>
+            <div class="card-body">
+                <p class="text-muted"><strong>{{ task.title }}</strong></p>
+                {% if task.attachments.count == 0 %}
+                <div class="alert alert-warning">
+                    <i class="mdi mdi-alert"></i> {% trans "该任务还没有上传附件，建议先上传完成证明。" %}
+                </div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "完成说明" %}</label>
+                        <textarea name="completion_note" class="form-control" rows="5"
+                            placeholder="{% trans '请描述你的完成情况、遇到的问题及解决方案等...' %}">{{ task.completion_note }}</textarea>
+                        <div class="form-text">{% trans "对自己完成的任务做一个总结说明" %}</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="mdi mdi-check"></i> {% trans "确认完成" %}
+                        </button>
+                        <a href="{{ task.get_absolute_url }}" class="btn btn-outline-secondary">{% trans "返回" %}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

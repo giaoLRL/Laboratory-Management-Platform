@@ -1,0 +1,69 @@
+CORE_APPS = (
+    'account',
+    'core',
+    'extras',
+    'users',
+    'utilities',
+)
+
+# RQ queue names
+RQ_QUEUE_DEFAULT = 'default'
+RQ_QUEUE_HIGH = 'high'
+RQ_QUEUE_LOW = 'low'
+
+# Keys for PostgreSQL advisory locks. These are arbitrary bigints used by the advisory_lock
+# context manager. When a lock is acquired, one of these keys will be used to identify said lock.
+# When adding a new key, pick something arbitrary and unique so that it is easily searchable in
+# query logs.
+ADVISORY_LOCK_KEYS = {
+    # Available object locks
+    'available-prefixes': 100100,
+    'available-ips': 100200,
+    'available-vlans': 100300,
+    'available-asns': 100400,
+
+    # MPTT locks
+    'region': 105100,
+    'sitegroup': 105200,
+    'location': 105300,
+    'tenantgroup': 105400,
+    'contactgroup': 105500,
+    'wirelesslangroup': 105600,
+    'inventoryitem': 105700,
+    'inventoryitemtemplate': 105800,
+    'platform': 105900,
+
+    # Jobs
+    'job-schedules': 110100,
+}
+
+# TODO: Remove in NetBox v4.7
+# Legacy default view action permission mapping
+_DEFAULT_ACTION_PERMISSIONS = {
+    'add': {'add'},
+    'export': {'view'},
+    'bulk_import': {'add'},
+    'bulk_edit': {'change'},
+    'bulk_delete': {'delete'},
+}
+
+
+def __getattr__(name):
+    if name == 'DEFAULT_ACTION_PERMISSIONS':
+        import warnings
+        warnings.warn(
+            f"{name} is deprecated and will be removed in NetBox v4.7. "
+            "Define action permissions via ObjectAction subclasses instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return _DEFAULT_ACTION_PERMISSIONS
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# General-purpose tokens
+CENSOR_TOKEN = '********'
+CENSOR_TOKEN_CHANGED = '***CHANGED***'
+
+# Placeholder text for empty tables
+EMPTY_TABLE_TEXT = 'No results found'

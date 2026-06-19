@@ -1,0 +1,87 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "上传附件" %} — {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <h5 class="card-header">{% trans "上传附件" %}</h5>
+            <div class="card-body">
+                <div class="mb-4">
+                    <p class="mb-1"><strong>{% trans "任务" %}：</strong>{{ task.title }}</p>
+                    <p class="text-muted mb-0">{% trans "支持图片、视频、代码及各类文件，可同时选择多个文件批量上传" %}</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="upload-form">
+                    {% csrf_token %}
+
+                    {# 多文件输入 #}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "选择文件" %}</label>
+                        <input type="file" name="files" class="form-control" id="file-input" multiple required
+                               onchange="showFiles()">
+                    </div>
+
+                    {# 已选文件预览列表 #}
+                    <div class="mb-3" id="file-list" style="display:none;">
+                        <label class="form-label fw-bold">{% trans "已选择文件" %}</label>
+                        <ul class="list-group" id="selected-files"></ul>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "附件说明（可选，所有文件共用）" %}</label>
+                        <input type="text" name="remark" class="form-control" maxlength="200"
+                               placeholder="{% trans '如：项目代码、截图、原理图等' %}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "完成说明（可选）" %}</label>
+                        <textarea name="completion_note" class="form-control" rows="4"
+                               placeholder="{% trans '请描述你的完成情况、遇到的问题及解决方案等...' %}">{{ task.completion_note }}</textarea>
+                        <div class="form-text">{% trans "对自己完成的任务做一个总结说明，已填写的内容会被保留" %}</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-upload"></i> {% trans "开始上传" %}
+                        </button>
+                        <a href="{{ task.get_absolute_url }}" class="btn btn-outline-secondary">
+                            <i class="mdi mdi-arrow-left"></i> {% trans "返回任务" %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showFiles() {
+    const input = document.getElementById('file-input');
+    const list = document.getElementById('selected-files');
+    const container = document.getElementById('file-list');
+    list.innerHTML = '';
+
+    if (input.files.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'block';
+
+    for (let i = 0; i < input.files.length; i++) {
+        const f = input.files[i];
+        const sizeKB = (f.size / 1024).toFixed(1);
+        const sizeStr = sizeKB < 1024 ? sizeKB + ' KB' : (sizeKB / 1024).toFixed(1) + ' MB';
+        const icon = f.type.startsWith('image/') ? 'mdi-image' :
+                     f.type.startsWith('video/') ? 'mdi-video' : 'mdi-file-document-outline';
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = '<span><i class="mdi ' + icon + ' me-2"></i>' + f.name + '</span>' +
+                       '<span class="badge text-bg-light">' + sizeStr + '</span>';
+        list.appendChild(li);
+    }
+}
+</script>
+{% endblock %}

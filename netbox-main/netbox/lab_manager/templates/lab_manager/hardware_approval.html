@@ -1,0 +1,43 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "审核硬件" %} — {{ hardware.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "审核硬件" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table mb-3">
+                    <tr><th>{% trans "名称" %}</th><td>{{ hardware.name }}</td></tr>
+                    <tr><th>{% trans "类别" %}</th><td>{{ hardware.get_category_display }}</td></tr>
+                    <tr><th>{% trans "型号" %}</th><td>{{ hardware.model_number|default:'—' }}</td></tr>
+                    <tr><th>{% trans "数量" %}</th><td>{{ hardware.quantity }}</td></tr>
+                    <tr><th>{% trans "提交人" %}</th><td>{{ hardware.submitted_by.username|default:'—' }}</td></tr>
+                </table>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "审核备注" %}</label>
+                        <textarea name="approval_note" class="form-control" rows="3"
+                            placeholder="{% trans '通过或驳回的理由...' %}">{{ hardware.approval_note }}</textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="approve" class="btn btn-success">
+                            <i class="mdi mdi-check"></i> {% trans "通过" %}
+                        </button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger">
+                            <i class="mdi mdi-close"></i> {% trans "驳回" %}
+                        </button>
+                        <a href="{{ hardware.get_absolute_url }}" class="btn btn-outline-secondary">
+                            {% trans "返回" %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+
+{% block title %}{{ object.title }}{% endblock %}
+
+{% block controls %}
+{% if can_operate %}
+{% if object.status == 'pending' or object.status == 'in_progress' %}
+<a href="{% url 'plugins:lab_manager:task_upload' pk=object.pk %}" class="btn btn-primary">
+    <i class="mdi mdi-upload"></i> {% trans "上传附件" %}
+</a>
+{% endif %}
+{% endif %}
+{% if can_edit %}
+<a href="{% url 'plugins:lab_manager:task_edit' pk=object.pk %}" class="btn btn-outline-warning">
+    <i class="mdi mdi-pencil"></i> {% trans "编辑" %}
+</a>
+{% endif %}
+{% if is_superuser %}
+{% if object.status != 'completed' %}
+<a href="{% url 'plugins:lab_manager:task_complete' pk=object.pk %}" class="btn btn-success">
+    <i class="mdi mdi-check"></i> {% trans "标记完成" %}
+</a>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "任务信息" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr><th scope="row">{% trans "标题" %}</th><td>{{ object.title }}</td></tr>
+                    <tr><th scope="row">{% trans "状态" %}</th><td>{% badge object.get_status_display %}</td></tr>
+                    <tr><th scope="row">{% trans "优先级" %}</th><td>{% badge object.get_priority_display %}</td></tr>
+                    <tr><th scope="row">{% trans "执行人" %}</th><td>{{ object.assigned_to|linkify }}</td></tr>
+                    <tr><th scope="row">{% trans "创建人" %}</th><td>{{ object.created_by|linkify }}</td></tr>
+                    <tr><th scope="row">{% trans "截止日期" %}</th><td>{{ object.deadline|default:'—' }}</td></tr>
+                    {% if object.completed_at %}
+                    <tr><th scope="row">{% trans "完成时间" %}</th><td>{{ object.completed_at }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "任务描述" %}</h5>
+            <div class="card-body">
+                {{ object.description|linebreaks }}
+            </div>
+        </div>
+        {% if object.completion_note %}
+        <div class="card mt-3">
+            <h5 class="card-header">{% trans "完成说明" %}</h5>
+            <div class="card-body">
+                {{ object.completion_note|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── 附件展示区（所有人可见） ── #}
+<div class="card mb-3">
+    <h5 class="card-header">
+        {% trans "附件列表" %}
+        <span class="badge text-bg-secondary ms-2">{{ attachments|length }}</span>
+    </h5>
+    <div class="card-body">
+        <div class="row">
+            {% for att in attachments %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    {% with ext=att.file.name|lower|slice:'-4:' %}
+                    {% if '.jpg' in ext or '.png' in ext or '.gif' in ext or '.jpeg' in ext or '.webp' in ext or '.bmp' in ext %}
+                    <a href="{{ att.file.url }}" target="_blank">
+                        <img src="{{ att.file.url }}" class="card-img-top" style="max-height: 180px; object-fit: cover;" alt="{{ att.remark }}">
+                    </a>
+                    {% elif '.mp4' in ext or '.webm' in ext or '.avi' in ext or '.mov' in ext %}
+                    <video controls class="w-100" style="max-height: 180px;" preload="metadata">
+                        <source src="{{ att.file.url }}">
+                    </video>
+                    {% else %}
+                    <div class="text-center p-3">
+                        <i class="mdi mdi-file-document-outline" style="font-size: 3rem;"></i>
+                        <div class="mt-2">
+                            <a href="{{ att.file.url }}" class="btn btn-sm btn-outline-primary" download>
+                                <i class="mdi mdi-download"></i> {% trans "下载" %}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    <div class="card-body p-2">
+                        <small class="text-muted">{{ att.remark|default:att.file.name }}</small>
+                        <br>
+                        <small class="text-muted">{{ att.uploaded_by.username }} · {{ att.created|date:"Y-m-d H:i" }}</small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12"><p class="text-muted">{% trans "暂无附件" %}</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── 评论区（所有人可见、所有人可评论） ── #}
+<div class="card mb-3">
+    <h5 class="card-header">
+        {% trans "评论" %}
+        <span class="badge text-bg-secondary ms-2">{{ comments|length }}</span>
+    </h5>
+    <div class="card-body">
+        {# 评论列表 #}
+        {% for c in comments %}
+        <div class="d-flex mb-3 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <div class="flex-shrink-0 me-2">
+                <span class="badge text-bg-light rounded-pill p-2">
+                    <i class="mdi mdi-account"></i>
+                </span>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ c.user.username }}</strong>
+                    <small class="text-muted">{{ c.created|date:"Y-m-d H:i" }}</small>
+                </div>
+                <div class="mt-1">{{ c.content|linebreaks }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">{% trans "暂无评论，来发表第一条评论吧" %}</p>
+        {% endfor %}
+
+        {# 发表评论表单 — 所有人可见 #}
+        <hr>
+        <form method="post" action="{% url 'plugins:lab_manager:task_comment' pk=object.pk %}">
+            {% csrf_token %}
+            <div class="mb-2">
+                <label class="form-label fw-bold">{% trans "发表评论" %}</label>
+                {{ comment_form.content }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="mdi mdi-send"></i> {% trans "发布评论" %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'generic/object_edit.html' %}
+{% load i18n %}
+
+{% block form %}
+    {{ block.super }}
+    {% if object.pk %}
+    <div class="field-group mb-5">
+        <div class="row">
+            <h2 class="col-9 offset-3">{% trans "附件管理" %}</h2>
+        </div>
+        <div class="row mb-3">
+            <div class="col-9 offset-3">
+                {% with atts=object.attachments.all %}
+                {% if atts %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{% trans "文件名" %}</th>
+                            <th>{% trans "说明" %}</th>
+                            <th>{% trans "上传者" %}</th>
+                            <th style="width: 80px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in atts %}
+                        <tr>
+                            <td>
+                                <a href="{{ att.file.url }}" target="_blank">{{ att.file.name|truncatechars:40 }}</a>
+                            </td>
+                            <td>{{ att.remark|default:'—' }}</td>
+                            <td>{{ att.uploaded_by.username }}</td>
+                            <td>
+                                <a href="{% url 'plugins:lab_manager:task_attachment_delete' pk=att.pk %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="mdi mdi-delete"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">{% trans "暂无附件" %}</p>
+                {% endif %}
+                <a href="{% url 'plugins:lab_manager:task_upload' pk=object.pk %}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="mdi mdi-upload"></i> {% trans "上传附件" %}
+                </a>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock form %}

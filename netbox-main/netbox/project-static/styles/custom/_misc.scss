@@ -1,0 +1,182 @@
+@use 'sass:map';
+
+// Color labels
+span.color-label {
+  display: inline-block;
+  width: 5rem;
+  height: 1rem;
+  padding: $badge-padding-y $badge-padding-x;
+  border: 1px solid #303030;
+  border-radius: $border-radius;
+}
+
+// Object hierarchy depth indicators
+.record-depth {
+  display: inline;
+  user-select: none;
+  opacity: 33%;
+
+  // Add spacing to the last or only dot.
+  span:only-of-type,
+  span:last-of-type {
+    margin-right: map.get($spacers, 1);
+  }
+}
+
+// Hides the last child of an element
+.hide-last-child :last-child {
+  visibility: hidden;
+  opacity: 0;
+}
+
+// NetBox edition text
+.netbox-edition {
+  letter-spacing: 0.15rem;
+}
+
+.logo {
+  height: 80px;
+}
+
+.sso-icon {
+  height: 24px;
+}
+
+.btn-white {
+  @extend .btn-light;
+}
+
+.btn-black {
+  @extend .btn-dark;
+}
+
+.btn-grey,
+.btn-gray {
+  @extend .btn-secondary;
+}
+
+img.plugin-icon {
+  max-width: 1.4285em;
+  height: auto;
+}
+
+// Image attachment thumbnails
+.thumbnail {
+  max-width: 200px;
+  img {
+    border: 1px solid #606060;
+  }
+}
+
+// Image preview popover (rendered for <a.image-preview> by initImagePreview())
+.image-preview-popover {
+  --bs-popover-max-width: clamp(240px, 25vw, 640px);
+
+  .popover-header {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .popover-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: clamp(160px, 33vh, 640px);
+    height: auto;
+  }
+}
+
+html[data-bs-theme='dark'] {
+  // Assuming icon is black/white line art, invert it and tone down brightness
+  img.plugin-icon {
+    filter: grayscale(100%) invert(100%) brightness(80%);
+  }
+}
+
+// ── Sticky action bars ──────────────────────────────────────
+// Base: shared by all sticky-action containers
+.sticky-actions {
+  z-index: 4;
+
+  &[data-sticky-when='always'],
+  &.is-sticky-active {
+    position: sticky;
+    bottom: map.get($spacers, 1);
+  }
+}
+
+// Inline (list / children) variants – selection-driven
+.sticky-actions[data-sticky-position='left'],
+.sticky-actions[data-sticky-position='right'] {
+  display: flex;
+  align-items: center;
+  gap: map.get($spacers, 2);
+  padding: map.get($spacers, 2);
+  max-width: 100%;
+  width: fit-content;
+}
+
+.sticky-actions[data-sticky-position='right'] {
+  margin-left: auto;
+}
+
+.sticky-actions[data-sticky-position='full'] {
+  max-width: 100%;
+}
+
+// Footer variant – edit forms (always visible, sticks to bottom: 0)
+// NOTE: requires `.sticky-actions` on the same element for `position: sticky`.
+.sticky-actions-footer {
+  max-width: 100%;
+  margin-top: map.get($spacers, 4);
+  padding: map.get($spacers, 3);
+  padding-bottom: calc(#{map.get($spacers, 3)} + env(safe-area-inset-bottom, 0));
+  background: var(--#{$prefix}bg-surface-secondary);
+  border-top: 1px solid var(--#{$prefix}border-color);
+
+  &[data-sticky-when='always'],
+  &.is-sticky-active {
+    bottom: 0;
+  }
+
+  > .btn-list {
+    justify-content: flex-end;
+    margin-bottom: 0;
+  }
+}
+
+.object-edit--with-sticky-actions {
+  padding-bottom: calc(#{map.get($spacers, 4)} + env(safe-area-inset-bottom, 0));
+}
+
+// Disabled-button styling inside selection-driven bars
+[data-sticky-when='selection'] .bulk-action-buttons .btn:disabled,
+[data-sticky-when='selection'] .bulk-action-buttons .btn.disabled {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+[data-sticky-when='selection'] .bulk-action-buttons .btn.disabled {
+  pointer-events: none;
+}
+
+// Legacy aliases — remove in v4.7.0
+.btn-float-group-right {
+  position: sticky;
+  bottom: 10px;
+  z-index: 4;
+  margin-left: auto;
+  width: fit-content;
+}
+
+.btn-float-group-left {
+  position: sticky;
+  bottom: 10px;
+  z-index: 4;
+  width: fit-content;
+}
+// ── /Sticky action bars ─────────────────────────────────────

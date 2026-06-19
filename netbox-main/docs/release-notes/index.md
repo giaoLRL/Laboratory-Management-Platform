@@ -1,0 +1,154 @@
+# Release Notes
+
+NetBox releases are numbered as major, minor, and patch releases. For example, version 3.1.0 is a minor release, and v3.1.5 is a patch release. Briefly, these can be described as follows:
+
+* **Major** - Introduces or removes an entire API or other core functionality
+* **Minor** - Implements major new features but may include breaking changes for API consumers or other integrations
+* **Patch** - A maintenance release which fixes bugs and may introduce backward-compatible enhancements
+
+Minor releases are published in April, August, and December of each calendar year. Patch releases are published as needed to address bugs and fulfill minor feature requests, typically around every one to two weeks.
+
+This page contains a history of all major and minor releases since NetBox v2.0. For more detail on a specific patch release, please see the release notes page for that specific minor release.
+
+#### [Version 4.6](./version-4.6.md) (May 2026)
+
+* Virtual Machine Types ([#5795](https://github.com/netbox-community/netbox/issues/5795))
+* Cable Bundles ([#20151](https://github.com/netbox-community/netbox/issues/20151))
+* Rack Groups ([#20961](https://github.com/netbox-community/netbox/issues/20961))
+* ETag Support for REST API ([#21356](https://github.com/netbox-community/netbox/issues/21356))
+* Cursor-based Pagination for REST API ([#21363](https://github.com/netbox-community/netbox/issues/21363))
+
+#### [Version 4.5](./version-4.5.md) (January 2026)
+
+* Lookup Modifiers in Filter Forms ([#7604](https://github.com/netbox-community/netbox/issues/7604))
+* Improved API Authentication Tokens ([#20210](https://github.com/netbox-community/netbox/issues/20210))
+* Object Ownership ([#20304](https://github.com/netbox-community/netbox/issues/20304))
+* Advanced Port Mappings ([#20564](https://github.com/netbox-community/netbox/issues/20564))
+* Cable Profiles ([#20788](https://github.com/netbox-community/netbox/issues/20788))
+
+#### [Version 4.4](./version-4.4.md) (September 2025)
+
+* Background Jobs for Bulk Operations ([#19589](https://github.com/netbox-community/netbox/issues/19589), [#19891](https://github.com/netbox-community/netbox/issues/19891))
+* Logging Mechanism for Background Jobs ([#19816](https://github.com/netbox-community/netbox/issues/19816))
+* Changelog Comments ([#19713](https://github.com/netbox-community/netbox/issues/19713))
+* Config Context Data Validation ([#19377](https://github.com/netbox-community/netbox/issues/19377))
+
+#### [Version 4.3](./version-4.3.md) (May 2025)
+
+* Module Type Profiles & Custom Attributes ([#19002](https://github.com/netbox-community/netbox/issues/19002))
+* Reusable Table Configurations ([#14591](https://github.com/netbox-community/netbox/issues/14591))
+* Option to Treat IP Ranges as Fully Populated ([#9763](https://github.com/netbox-community/netbox/issues/9763))
+* Hierarchical Device Roles ([#18245](https://github.com/netbox-community/netbox/issues/18245))
+* Periodic Synchronization of Data Sources ([#18287](https://github.com/netbox-community/netbox/issues/18287))
+* Proxy Routing ([#18627](https://github.com/netbox-community/netbox/issues/18627))
+
+#### [Version 4.2](./version-4.2.md) (January 2025)
+
+* Assign Multiple MAC Addresses per Interface ([#4867](https://github.com/netbox-community/netbox/issues/4867))
+* Quick Add UI Widget ([#5858](https://github.com/netbox-community/netbox/issues/5858))
+* VLAN Translation ([#7336](https://github.com/netbox-community/netbox/issues/7336))
+* Virtual Circuits ([#13086](https://github.com/netbox-community/netbox/issues/13086))
+* Q-in-Q Encapsulation ([#13428](https://github.com/netbox-community/netbox/issues/13428))
+
+#### [Version 4.1](./version-4.1.md) (September 2024)
+
+* Circuit Groups ([#7025](https://github.com/netbox-community/netbox/issues/7025))
+* VLAN Group ID Ranges ([#9627](https://github.com/netbox-community/netbox/issues/9627))
+* Nested Device Modules ([#10500](https://github.com/netbox-community/netbox/issues/10500))
+* Rack Types ([#12826](https://github.com/netbox-community/netbox/issues/12826))
+* Plugins Catalog Integration ([#14731](https://github.com/netbox-community/netbox/issues/14731))
+* User Notifications ([#15621](https://github.com/netbox-community/netbox/issues/15621))
+
+#### [Version 4.0](./version-4.0.md) (April 2024)
+
+* Complete UI Refresh ([#12128](https://github.com/netbox-community/netbox/issues/12128))
+* Dynamic REST API Fields ([#15087](https://github.com/netbox-community/netbox/issues/15087))
+* Strawberry GraphQL Engine ([#9856](https://github.com/netbox-community/netbox/issues/9856))
+* Advanced Form Rendering Functionality ([#14739](https://github.com/netbox-community/netbox/issues/14739))
+* Legacy Admin UI Disabled ([#12325](https://github.com/netbox-community/netbox/issues/12325))
+
+#### [Version 3.7](./version-3.7.md) (December 2023)
+
+* VPN Tunnels ([#9816](https://github.com/netbox-community/netbox/issues/9816))
+* Event Rules ([#14132](https://github.com/netbox-community/netbox/issues/14132))
+* Virtual Machine Disks ([#8356](https://github.com/netbox-community/netbox/issues/8356))
+* Object Protection Rules ([#10244](https://github.com/netbox-community/netbox/issues/10244))
+* Improved Custom Field Visibility Controls ([#13299](https://github.com/netbox-community/netbox/issues/13299))
+* Improved Global Search Results ([#14134](https://github.com/netbox-community/netbox/issues/14134))
+* Table Column Registration for Plugins ([#14173](https://github.com/netbox-community/netbox/issues/14173))
+* Data Backend Registration for Plugins ([#13381](https://github.com/netbox-community/netbox/issues/13381))
+
+#### [Version 3.6](./version-3.6.md) (August 2023)
+
+* Relocated Admin UI Views ([#12589](https://github.com/netbox-community/netbox/issues/12589), [#12590](https://github.com/netbox-community/netbox/issues/12590), [#12591](https://github.com/netbox-community/netbox/issues/12591), [#13044](https://github.com/netbox-community/netbox/issues/13044))
+* Configurable Default Permissions ([#13038](https://github.com/netbox-community/netbox/issues/13038))
+* User Bookmarks ([#8248](https://github.com/netbox-community/netbox/issues/8248))
+* Custom Field Choice Sets ([#12988](https://github.com/netbox-community/netbox/issues/12988))
+* Pre-Defined Location Choices for Custom Fields ([#12194](https://github.com/netbox-community/netbox/issues/12194))
+* Restrict Tag Usage by Object Type ([#11541](https://github.com/netbox-community/netbox/issues/11541))
+
+#### [Version 3.5](./version-3.5.md) (April 2023)
+
+* Customizable Dashboard ([#9416](https://github.com/netbox-community/netbox/issues/9416))
+* Remote Data Sources ([#11558](https://github.com/netbox-community/netbox/issues/11558))
+* Configuration Template Rendering ([#11559](https://github.com/netbox-community/netbox/issues/11559))
+* NAPALM Integration Plugin ([#10520](https://github.com/netbox-community/netbox/issues/10520))
+* ASN Ranges ([#8550](https://github.com/netbox-community/netbox/issues/8550))
+* Provider Accounts ([#9047](https://github.com/netbox-community/netbox/issues/9047))
+* Job-Triggered Webhooks  ([#8958](https://github.com/netbox-community/netbox/issues/8958))
+
+#### [Version 3.4](./version-3.4.md) (December 2022)
+
+* New Global Search ([#10560](https://github.com/netbox-community/netbox/issues/10560))
+* Virtual Device Contexts ([#7854](https://github.com/netbox-community/netbox/issues/7854))
+* Saved Filters ([#9623](https://github.com/netbox-community/netbox/issues/9623))
+* JSON/YAML Bulk Imports ([#4347](https://github.com/netbox-community/netbox/issues/4347))
+* Update Existing Objects via Bulk Import ([#7961](https://github.com/netbox-community/netbox/issues/7961))
+* Scheduled Reports & Scripts ([#8366](https://github.com/netbox-community/netbox/issues/8366))
+* API for Staged Changes ([#10851](https://github.com/netbox-community/netbox/issues/10851))
+
+#### [Version 3.3](./version-3.3.md) (August 2022)
+
+* Multi-object Cable Terminations ([#9102](https://github.com/netbox-community/netbox/issues/9102))
+* L2VPN Modeling ([#8157](https://github.com/netbox-community/netbox/issues/8157))
+* PoE Interface Attributes ([#1099](https://github.com/netbox-community/netbox/issues/1099))
+* Half-Height Rack Units ([#51](https://github.com/netbox-community/netbox/issues/51))
+* Restrict API Tokens by Client IP ([#8233](https://github.com/netbox-community/netbox/issues/8233))
+* Reference User in Permission Constraints ([#9074](https://github.com/netbox-community/netbox/issues/9074))
+* Custom Field Grouping ([#8495](https://github.com/netbox-community/netbox/issues/8495))
+* Toggle Custom Field Visibility ([#9166](https://github.com/netbox-community/netbox/issues/9166))
+
+#### [Version 3.2](./version-3.2.md) (April 2022)
+
+* Plugins Framework Extensions ([#8333](https://github.com/netbox-community/netbox/issues/8333))
+* Modules & Module Types ([#7844](https://github.com/netbox-community/netbox/issues/7844))
+* Custom Object Fields ([#7006](https://github.com/netbox-community/netbox/issues/7006))
+* Custom Status Choices ([#8054](https://github.com/netbox-community/netbox/issues/8054))
+* Improved User Preferences ([#7759](https://github.com/netbox-community/netbox/issues/7759))
+* Inventory Item Roles ([#3087](https://github.com/netbox-community/netbox/issues/3087))
+* Inventory Item Templates ([#8118](https://github.com/netbox-community/netbox/issues/8118))
+* Service Templates ([#1591](https://github.com/netbox-community/netbox/issues/1591))
+* Automatic Provisioning of Next Available VLANs ([#2658](https://github.com/netbox-community/netbox/issues/2658))
+
+#### [Version 3.1](./version-3.1.md) (December 2021)
+
+* Contact Objects ([#1344](https://github.com/netbox-community/netbox/issues/1344))
+* Wireless Networks ([#3979](https://github.com/netbox-community/netbox/issues/3979))
+* Dynamic Configuration Updates ([#5883](https://github.com/netbox-community/netbox/issues/5883))
+* First Hop Redundancy Protocol (FHRP) Groups ([#6235](https://github.com/netbox-community/netbox/issues/6235))
+* Conditional Webhooks ([#6238](https://github.com/netbox-community/netbox/issues/6238))
+* Interface Bridging ([#6346](https://github.com/netbox-community/netbox/issues/6346))
+* Multiple ASNs per Site ([#6732](https://github.com/netbox-community/netbox/issues/6732))
+* Single Sign-On (SSO) Authentication ([#7649](https://github.com/netbox-community/netbox/issues/7649))
+
+#### [Version 3.0](./version-3.0.md) (August 2021)
+
+* Updated User Interface ([#5893](https://github.com/netbox-community/netbox/issues/5893))
+* GraphQL API ([#2007](https://github.com/netbox-community/netbox/issues/2007))
+* IP Ranges ([#834](https://github.com/netbox-community/netbox/issues/834))
+* Custom Model Validation ([#5963](https://github.com/netbox-community/netbox/issues/5963))
+* SVG Cable Traces ([#6000](https://github.com/netbox-community/netbox/issues/6000))
+* New Views for Models Previously Under the Admin UI ([#6466](https://github.com/netbox-community/netbox/issues/6466))
+* REST API Token Provisioning ([#5264](https://github.com/netbox-community/netbox/issues/5264))
+* New Housekeeping Command ([#6590](https://github.com/netbox-community/netbox/issues/6590))
+* Custom Queue Support for Plugins ([#6651](https://github.com/netbox-community/netbox/issues/6651))

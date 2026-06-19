@@ -1,0 +1,68 @@
+# ── 大型二进制依赖（本地安装，不上传） ──
+/pgsql/
+
+# ── Python 虚拟环境 ──
+.venv/
+venv/
+netbox-main/netbox/.venv/
+
+# ── Python 缓存/编译文件 ──
+__pycache__/
+*.py[cod]
+.coverage
+
+# ── 用户上传的测试数据 ──
+netbox-main/netbox/media/*
+!netbox-main/netbox/media/.gitkeep
+
+# ── Django 收集的静态文件 ──
+netbox-main/netbox/static/
+netbox-main/netbox/project-static/node_modules/
+
+# ── 本地配置文件（含密钥，绝不上传） ──
+netbox-main/netbox/netbox/configuration.py
+netbox-main/netbox/netbox/ldap_config.py
+netbox-main/netbox/local_requirements.txt
+netbox-main/netbox/netbox/local_settings.py
+netbox-main/netbox/netbox/local/
+netbox-main/netbox/local/
+
+# ── SQLite 数据库文件 ──
+*.sqlite3
+
+# ── 本地脚本（非项目代码） ──
+netbox-main/netbox/reports/*
+!netbox-main/netbox/reports/__init__.py
+netbox-main/netbox/scripts/*
+!netbox-main/netbox/scripts/__init__.py
+
+# ── 部署配置（本地） ──
+netbox-main/gunicorn.py
+netbox-main/uwsgi.ini
+
+# ── AI 工具本地配置 ──
+.claude/settings.local.json
+
+# ── 前端构建产物 ──
+yarn-debug.log*
+yarn-error.log*
+
+# ── 内建文档（非项目代码） ──
+netbox-main/netbox/project-static/docs/
+
+# ── 临时文件/编辑器 ──
+*.swp
+.DS_Store
+.idea/
+.vscode/
+.python-version
+*.patch
+*.diff
+
+# ── 本地基础设施（不上传） ──
+/redis/
+/server.log
+*.log
+
+# ── 自动生成的 OpenAPI schema (12MB) ──
+netbox-main/contrib/openapi.json

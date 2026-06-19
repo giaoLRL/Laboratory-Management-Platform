@@ -1,0 +1,273 @@
+import traceback
+
+import jsonschema
+from django.conf import settings
+from django.core.validators import ValidationError
+from django.db import models
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+from jinja2.exceptions import TemplateError
+from jsonschema.exceptions import ValidationError as JSONValidationError
+
+from extras.models.mixins import RenderTemplateMixin
+from extras.querysets import ConfigContextQuerySet
+from netbox.models import ChangeLoggedModel, PrimaryModel
+from netbox.models.features import CloningMixin, CustomLinksMixin, ExportTemplatesMixin, SyncedDataMixin, TagsMixin
+from netbox.models.mixins import OwnerMixin
+from utilities.data import deepmerge
+from utilities.jsonschema import validate_schema
+
+__all__ = (
+    'ConfigContext',
+    'ConfigContextModel',
+    'ConfigContextProfile',
+    'ConfigTemplate',
+)
+
+
+#
+# Config contexts
+#
+
+class ConfigContextProfile(SyncedDataMixin, PrimaryModel):
+    """
+    A profile which can be used to enforce parameters on a ConfigContext.
+    """
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=100,
+        unique=True
+    )
+    description = models.CharField(
+        verbose_name=_('description'),
+        max_length=200,
+        blank=True
+    )
+    schema = models.JSONField(
+        blank=True,
+        null=True,
+        validators=[validate_schema],
+        verbose_name=_('schema'),
+        help_text=_('A JSON schema specifying the structure of the context data for this profile')
+    )
+
+    clone_fields = ('schema',)
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name = _('config context profile')
+        verbose_name_plural = _('config context profiles')
+
+    def __str__(self):
+        return self.name
+
+    def sync_data(self):
+        """
+        Synchronize schema from the designated DataFile (if any).
+        """
+        self.schema = self.data_file.get_data()
+    sync_data.alters_data = True
+
+
+class ConfigContext(SyncedDataMixin, CloningMixin, CustomLinksMixin, OwnerMixin, ChangeLoggedModel):
+    """
+    A ConfigContext represents a set of arbitrary data available to any Device or VirtualMachine matching its assigned
+    qualifiers (region, site, etc.). For example, the data stored in a ConfigContext assigned to site A and tenant B
+    will be available to a Device in site A assigned to tenant B. Data is stored in JSON format.
+    """
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=100,
+        unique=True
+    )
+    profile = models.ForeignKey(
+        to='extras.ConfigContextProfile',
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        related_name='config_contexts',
+    )
+    weight = models.PositiveSmallIntegerField(
+        verbose_name=_('weight'),
+        default=1000
+    )
+    description = models.CharField(
+        verbose_name=_('description'),
+        max_length=200,
+        blank=True
+    )
+    is_active = models.BooleanField(
+        verbose_name=_('is active'),
+        default=True,
+    )
+    tags = models.ManyToManyField(
+        to='extras.Tag',
+        related_name='+',
+        blank=True
+    )
+    data = models.JSONField()
+
+    objects = ConfigContextQuerySet.as_manager()
+
+    clone_fields = (
+        'weight', 'profile', 'is_active', 'tags', 'data',
+    )
+
+    class Meta:
+        ordering = ['weight', 'name']
+        indexes = (
+            models.Index(fields=('weight', 'name')),  # Default ordering
+        )
+        verbose_name = _('config context')
+        verbose_name_plural = _('config contexts')
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('extras:configcontext', kwargs={'pk': self.pk})
+
+    @property
+    def docs_url(self):
+        return f'{settings.STATIC_URL}docs/models/extras/configcontext/'
+
+    def clean(self):
+        super().clean()
+
+        # Verify that JSON data is provided as an object
+        if type(self.data) is not dict:
+            raise ValidationError(
+                {'data': _('JSON data must be in object form. Example:') + ' {"foo": 123}'}
+            )
+
+        # Validate config data against the assigned profile's schema (if any)
+        if self.profile and self.profile.schema:
+            try:
+                jsonschema.validate(self.data, schema=self.profile.schema)
+            except JSONValidationError as e:
+                raise ValidationError(_("Data does not conform to profile schema: {error}").format(error=e))
+
+    def sync_data(self):
+        """
+        Synchronize context data from the designated DataFile (if any).
+        """
+        self.data = self.data_file.get_data()
+    sync_data.alters_data = True
+
+
+class ConfigContextModel(models.Model):
+    """
+    A model which includes local configuration context data. This local data will override any inherited data from
+    ConfigContexts.
+    """
+    local_context_data = models.JSONField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "Local config context data takes precedence over source contexts in the final rendered config context"
+        )
+    )
+
+    class Meta:
+        abstract = True
+
+    def get_config_context(self):
+        """
+        Compile all config data, overwriting lower-weight values with higher-weight values where a collision occurs.
+        Return the rendered configuration context for a device or VM.
+        """
+        data = {}
+
+        if not hasattr(self, 'config_context_data'):
+            # The annotation is not available, so we fall back to manually querying for the config context objects
+            config_context_data = ConfigContext.objects.get_for_object(self, aggregate_data=True) or []
+        else:
+            # The attribute may exist, but the annotated value could be None if there is no config context data
+            config_context_data = self.config_context_data or []
+
+        for context in config_context_data:
+            data = deepmerge(data, context)
+
+        # If the object has local config context data defined, merge it last
+        if self.local_context_data:
+            data = deepmerge(data, self.local_context_data)
+
+        return data
+
+    def clean(self):
+        super().clean()
+
+        # Verify that JSON data is provided as an object
+        if self.local_context_data is not None and type(self.local_context_data) is not dict:
+            raise ValidationError(
+                {'local_context_data': _('JSON data must be in object form. Example:') + ' {"foo": 123}'}
+            )
+
+
+#
+# Config templates
+#
+
+class ConfigTemplate(
+    RenderTemplateMixin,
+    SyncedDataMixin,
+    CustomLinksMixin,
+    ExportTemplatesMixin,
+    OwnerMixin,
+    TagsMixin,
+    ChangeLoggedModel,
+):
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=100
+    )
+    description = models.CharField(
+        verbose_name=_('description'),
+        max_length=200,
+        blank=True
+    )
+    debug = models.BooleanField(
+        verbose_name=_('debug'),
+        default=False,
+        help_text=_(
+            'Enable verbose error output when rendering this template. Not recommended for production use.'
+        )
+    )
+
+    class Meta:
+        ordering = ('name',)
+        indexes = (
+            models.Index(fields=('name',)),  # Default ordering
+        )
+        verbose_name = _('config template')
+        verbose_name_plural = _('config templates')
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('extras:configtemplate', args=[self.pk])
+
+    def sync_data(self):
+        """
+        Synchronize template content from the designated DataFile (if any).
+        """
+        self.template_code = self.data_file.data_as_string
+    sync_data.alters_data = True
+
+    def format_render_error(self, exc):
+        """
+        Return a formatted error string for a rendering exception. When debug is enabled, the full
+        traceback for the provided exception is returned. Otherwise, a concise, user-facing message
+        is returned.
+        """
+        if self.debug:
+            return ''.join(traceback.format_exception(exc))
+        if isinstance(exc, TemplateError):
+            parts = [f"{type(exc).__name__}: {exc}"]
+            if getattr(exc, 'name', None):
+                parts.append(_("Template: {name}").format(name=exc.name))
+            if getattr(exc, 'lineno', None):
+                parts.append(_("Line: {lineno}").format(lineno=exc.lineno))
+            return "\n".join(parts)
+        return f"{type(exc).__name__}: {exc}"
