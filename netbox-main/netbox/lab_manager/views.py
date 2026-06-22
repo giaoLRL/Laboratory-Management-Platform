@@ -1,4 +1,4 @@
-import json
+﻿import json
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,7 +19,7 @@ from .filtersets import HardwareFilterSet, TaskFilterSet
 from .forms.filtersets import HardwareFilterForm, TaskFilterForm
 from .forms.model_forms import HardwareForm, HardwareMemberForm, TaskForm, TaskMemberForm, TaskCommentForm
 from .models import AgentConversation, AgentMessage, Hardware, Task, TaskAttachment, TaskComment
-from .services import BackendAgentService, CozeGateway, CozeGatewayConfigError, CozeGatewayRequestError
+from .services import BackendAgentService, DifyGateway, DifyGatewayConfigError, DifyGatewayRequestError
 from .tables.hardware import HardwareTable
 from .tables.task import TaskTable
 
@@ -538,7 +538,9 @@ class AgentChatProxyView(LoginRequiredMixin, View):
         )
 
         try:
-            if not workflow_alias and not force_external:
+            # 优先走 Dify Chat（如果已配置），本地 BackendAgentService 作为 fallback
+            gateway_check = DifyGateway()
+            if not workflow_alias and not force_external and not gateway_check.has_chat_bot():
                 backend_response = BackendAgentService().process_message(
                     user=request.user,
                     message=message,
@@ -547,7 +549,7 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                     final_answer = backend_response.answer_text
                     
                     # === 尝试调用外部工作流，让其基于本地真实数据做二次润色 ===
-                    gateway = CozeGateway()
+                    gateway = DifyGateway()
                     if gateway.has_site_workflow():
                         try:
                             # 提取本地查询到的结构化数据转为文本，或者直接传完整回答作为参考
@@ -602,9 +604,18 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                         }
                     )
 
-            gateway = CozeGateway()
-            if not workflow_alias and gateway.has_site_workflow() and not gateway.has_chat_bot():
-                workflow_alias = 'site_workflow'
+            gateway = DifyGateway()
+            # 智能路由：根据消息内容选择合适的处理方式
+            if not workflow_alias and not force_external:
+                if any(kw in message for kw in ['硬件','库存','设备','芯片','传感器','开发板','stm32','esp32','arduino','物料']):
+                    workflow_alias = 'hardware_query'
+                elif any(kw in message for kw in ['视频','录像','附件','拍摄','录制']):
+                    workflow_alias = 'task_video_search'
+                elif any(kw in message for kw in ['导入','批量','校验','提交','入库']):
+                    workflow_alias = 'hardware_import_validate'
+                elif any(kw in message for kw in ['缺口','缺','项目','方案','需要哪些']):
+                    workflow_alias = 'hardware_gap_analysis'
+                # 其他情况走 Chat API，让 DeepSeek 自然对话
 
             if workflow_alias:
                 parameters = payload.get('parameters')
@@ -619,10 +630,18 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                     user_id=str(request.user.pk),
                 )
                 workflow_data = workflow_response.payload.get('data')
-                workflow_content = workflow_data if isinstance(workflow_data, str) else json.dumps(
-                    workflow_data,
-                    ensure_ascii=False,
-                    indent=2,
+                # 提取 LLM 输出的自然语言文本
+                workflow_text = ''
+                if isinstance(workflow_data, dict):
+                    outputs = workflow_data.get('outputs', {})
+                    workflow_text = outputs.get('result') or outputs.get('text') or outputs.get('answer') or ''
+                    if not workflow_text:
+                        for v in outputs.values():
+                            if v:
+                                workflow_text = str(v)
+                                break
+                workflow_content = workflow_text if workflow_text else (
+                    workflow_data if isinstance(workflow_data, str) else json.dumps(workflow_data, ensure_ascii=False, indent=2)
                 )
                 AgentMessage.objects.create(
                     conversation=conversation,
@@ -640,6 +659,7 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                         'message': 'ok',
                         'conversation_pk': conversation.pk,
                         'created_new_conversation': created_new_conversation,
+                        'answer_text': workflow_text,
                         'data': workflow_response.payload.get('data'),
                         'debug_url': workflow_response.debug_url,
                         'raw_payload': workflow_response.payload,
@@ -678,7 +698,7 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                     'raw_payload': chat_result.get('messages_payload'),
                 }
             )
-        except (CozeGatewayConfigError, CozeGatewayRequestError) as exc:
+        except (DifyGatewayConfigError, DifyGatewayRequestError) as exc:
             return JsonResponse(
                 {'success': False, 'message': str(exc)},
                 status=400,
@@ -688,3 +708,10 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                 {'success': False, 'message': '智能体代理调用失败'},
                 status=500,
             )
+
+
+
+
+
+
+
