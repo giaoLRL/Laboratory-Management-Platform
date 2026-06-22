@@ -1,11 +1,16 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import connection
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import TemplateView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import TemplateView, View
 from netbox.views import generic
 from utilities.views import register_model_view
 
@@ -13,7 +18,8 @@ from .choices import HardwareApprovalStatusChoices, TaskStatusChoices
 from .filtersets import HardwareFilterSet, TaskFilterSet
 from .forms.filtersets import HardwareFilterForm, TaskFilterForm
 from .forms.model_forms import HardwareForm, HardwareMemberForm, TaskForm, TaskMemberForm, TaskCommentForm
-from .models import Hardware, Task, TaskAttachment, TaskComment
+from .models import AgentConversation, AgentMessage, Hardware, Task, TaskAttachment, TaskComment
+from .services import BackendAgentService, CozeGateway, CozeGatewayConfigError, CozeGatewayRequestError
 from .tables.hardware import HardwareTable
 from .tables.task import TaskTable
 
@@ -433,3 +439,252 @@ class LabHomeView(LoginRequiredMixin, TemplateView):
             ).order_by('-created')[:5]
 
         return ctx
+
+
+# ── 智能体助手 ──
+
+class AgentAssistantView(LoginRequiredMixin, TemplateView):
+    template_name = 'lab_manager/agent_console.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        conversations = AgentConversation.objects.filter(user=self.request.user).order_by('-last_updated', '-created')
+        active_conversation = None
+        conversation_pk = self.request.GET.get('conversation')
+        if conversation_pk:
+            active_conversation = conversations.filter(pk=conversation_pk).first()
+        if active_conversation is None:
+            active_conversation = conversations.first()
+
+        ctx['quick_prompts'] = [
+            '现在实验室有哪些 STM32 开发板？',
+            '我想做一个智能温室监测系统，看看缺哪些硬件？',
+            '帮我找出最近 7 天已完成任务里的视频附件',
+            '请帮我解释一下两段式硬件导入应该怎么用',
+        ]
+        ctx['conversations'] = conversations[:20]
+        ctx['active_conversation'] = active_conversation
+        ctx['conversation_messages'] = active_conversation.messages.all() if active_conversation else []
+        ctx['active_conversation_id'] = active_conversation.pk if active_conversation else ''
+        ctx['active_coze_conversation_id'] = active_conversation.coze_conversation_id if active_conversation else ''
+        # 方案 B 默认走本地后端，不再自动回填历史工作流别名，避免旧会话持续命中外部工作流。
+        ctx['initial_workflow_alias'] = ''
+        return ctx
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AgentChatProxyView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body.decode('utf-8') if request.body else '{}')
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return JsonResponse(
+                {'success': False, 'message': '请求体不是合法 JSON'},
+                status=400,
+            )
+
+        message = str(payload.get('message', '')).strip()
+        if not message:
+            return JsonResponse(
+                {'success': False, 'message': 'message 不能为空'},
+                status=400,
+            )
+
+        workflow_alias = str(payload.get('workflow_alias', '')).strip()
+        conversation_id = str(payload.get('conversation_id', '')).strip() or None
+        conversation_pk = str(payload.get('conversation_pk', '')).strip()
+        force_external = bool(payload.get('force_external'))
+
+        conversation = None
+        if conversation_pk:
+            conversation = AgentConversation.objects.filter(pk=conversation_pk, user=request.user).first()
+            if conversation is None:
+                return JsonResponse(
+                    {'success': False, 'message': '会话不存在或无权限访问'},
+                    status=404,
+                )
+
+        if conversation is None and conversation_id:
+            conversation = AgentConversation.objects.filter(
+                user=request.user,
+                coze_conversation_id=conversation_id,
+            ).first()
+
+        created_new_conversation = False
+        if conversation is None:
+            conversation = AgentConversation.objects.create(
+                user=request.user,
+                title=message[:60],
+                mode='workflow' if workflow_alias else ('chat' if force_external else 'backend'),
+                workflow_alias=workflow_alias,
+                coze_conversation_id=conversation_id or '',
+                last_message_preview=message[:255],
+            )
+            created_new_conversation = True
+        else:
+            conversation.mode = 'workflow' if workflow_alias else ('chat' if force_external else 'backend')
+            if workflow_alias:
+                conversation.workflow_alias = workflow_alias
+            conversation.last_message_preview = message[:255]
+            if conversation_id and not conversation.coze_conversation_id:
+                conversation.coze_conversation_id = conversation_id
+            conversation.save()
+
+        AgentMessage.objects.create(
+            conversation=conversation,
+            role='user',
+            content=message,
+            raw_payload={},
+        )
+
+        try:
+            if not workflow_alias and not force_external:
+                backend_response = BackendAgentService().process_message(
+                    user=request.user,
+                    message=message,
+                )
+                if backend_response.handled:
+                    final_answer = backend_response.answer_text
+                    
+                    # === 尝试调用外部工作流，让其基于本地真实数据做二次润色 ===
+                    gateway = CozeGateway()
+                    if gateway.has_site_workflow():
+                        try:
+                            # 提取本地查询到的结构化数据转为文本，或者直接传完整回答作为参考
+                            # 如果有具体数据，就传 data 里的，如果没有，就传拼接好的 text
+                            if backend_response.data:
+                                hardware_items_str = json.dumps(backend_response.data, ensure_ascii=False)
+                            else:
+                                hardware_items_str = backend_response.answer_text
+
+                            parameters = {
+                                'user_query': message,
+                                'hardware_items_str': hardware_items_str,
+                                'intent': backend_response.intent,
+                            }
+                            
+                            workflow_response = gateway.run_workflow(
+                                workflow_alias='site_workflow',
+                                parameters=parameters,
+                                user_id=str(request.user.pk),
+                            )
+                            workflow_data = workflow_response.payload.get('data')
+                            
+                            # 只有当工作流真正返回了有意义的字符串内容，才替换掉本地的 Markdown
+                            if isinstance(workflow_data, str) and len(workflow_data.strip()) > 5:
+                                final_answer = workflow_data.strip()
+                        except Exception as e:
+                            # 如果请求工作流超时、报错，静默失败，保留使用本地高质量 Markdown
+                            print(f"[Agent] Workflow fallback failed: {e}")
+                    
+                    AgentMessage.objects.create(
+                        conversation=conversation,
+                        role='assistant',
+                        content=final_answer,
+                        raw_payload=backend_response.raw_payload,
+                        coze_chat_id='',
+                    )
+                    conversation.mode = 'backend'
+                    conversation.last_message_preview = final_answer[:255]
+                    conversation.workflow_alias = ''
+                    conversation.save()
+                    return JsonResponse(
+                        {
+                            'success': True,
+                            'mode': 'backend',
+                            'message': 'ok',
+                            'conversation_pk': conversation.pk,
+                            'created_new_conversation': created_new_conversation,
+                            'intent': backend_response.intent,
+                            'answer_text': final_answer,
+                            'data': backend_response.data,
+                            'raw_payload': backend_response.raw_payload,
+                        }
+                    )
+
+            gateway = CozeGateway()
+            if not workflow_alias and gateway.has_site_workflow() and not gateway.has_chat_bot():
+                workflow_alias = 'site_workflow'
+
+            if workflow_alias:
+                parameters = payload.get('parameters')
+                if not isinstance(parameters, dict):
+                    parameters = {'user_query': message}
+                else:
+                    parameters.setdefault('user_query', message)
+
+                workflow_response = gateway.run_workflow(
+                    workflow_alias=workflow_alias,
+                    parameters=parameters,
+                    user_id=str(request.user.pk),
+                )
+                workflow_data = workflow_response.payload.get('data')
+                workflow_content = workflow_data if isinstance(workflow_data, str) else json.dumps(
+                    workflow_data,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                AgentMessage.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content=workflow_content,
+                    raw_payload=workflow_response.payload,
+                    coze_chat_id='',
+                )
+                conversation.last_message_preview = workflow_content[:255]
+                conversation.save()
+                return JsonResponse(
+                    {
+                        'success': True,
+                        'mode': 'workflow',
+                        'message': 'ok',
+                        'conversation_pk': conversation.pk,
+                        'created_new_conversation': created_new_conversation,
+                        'data': workflow_response.payload.get('data'),
+                        'debug_url': workflow_response.debug_url,
+                        'raw_payload': workflow_response.payload,
+                    }
+                )
+
+            chat_result = gateway.run_chat_and_wait_answer(
+                message=message,
+                user_id=str(request.user.pk),
+                conversation_id=conversation.coze_conversation_id or conversation_id,
+            )
+            answer_text = chat_result.get('answer_text', '')
+            conversation.mode = 'chat'
+            conversation.workflow_alias = ''
+            conversation.coze_conversation_id = chat_result.get('conversation_id') or conversation.coze_conversation_id
+            conversation.last_message_preview = answer_text[:255] if answer_text else message[:255]
+            conversation.save()
+            AgentMessage.objects.create(
+                conversation=conversation,
+                role='assistant',
+                content=answer_text,
+                raw_payload=chat_result.get('messages_payload') or {},
+                coze_chat_id=chat_result.get('chat_id') or '',
+            )
+            return JsonResponse(
+                {
+                    'success': True,
+                    'mode': 'chat',
+                    'message': 'ok',
+                    'conversation_pk': conversation.pk,
+                    'created_new_conversation': created_new_conversation,
+                    'answer_text': answer_text,
+                    'conversation_id': chat_result.get('conversation_id'),
+                    'chat_id': chat_result.get('chat_id'),
+                    'status': chat_result.get('status'),
+                    'raw_payload': chat_result.get('messages_payload'),
+                }
+            )
+        except (CozeGatewayConfigError, CozeGatewayRequestError) as exc:
+            return JsonResponse(
+                {'success': False, 'message': str(exc)},
+                status=400,
+            )
+        except Exception:
+            return JsonResponse(
+                {'success': False, 'message': '智能体代理调用失败'},
+                status=500,
+            )

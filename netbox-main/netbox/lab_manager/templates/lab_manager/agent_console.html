@@ -1,0 +1,866 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "智能体助手" %}{% endblock %}
+
+{% block content %}
+<style>
+    .agent-shell {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 20px;
+        height: calc(100vh - 120px);
+    }
+
+    .agent-sidebar,
+    .agent-panel {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--bs-body-bg);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+        height: 100%;
+    }
+
+    .agent-sidebar {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .agent-sidebar-header {
+        padding: 24px 20px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .agent-sidebar-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+    }
+
+    .agent-sidebar-subtitle {
+        color: rgba(248, 250, 252, 0.65);
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .agent-new-chat {
+        width: 100%;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: all 0.2s ease;
+    }
+    
+    .agent-new-chat:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .agent-sidebar-section {
+        padding: 20px;
+    }
+
+    .agent-sidebar-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(248, 250, 252, 0.5);
+        margin-bottom: 14px;
+    }
+
+    .agent-conversation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 380px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    /* 自定义滚动条 */
+    .agent-conversation-list::-webkit-scrollbar {
+        width: 4px;
+    }
+    .agent-conversation-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .agent-conversation-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    .agent-conversation-item {
+        display: block;
+        text-decoration: none;
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: 12px;
+        padding: 14px 16px;
+        color: #f8fafc;
+        transition: all 0.2s ease;
+    }
+
+    .agent-conversation-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+    }
+
+    .agent-conversation-item.active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: none;
+    }
+
+    .agent-conversation-title {
+        font-weight: 500;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+
+    .agent-conversation-preview {
+        font-size: 0.82rem;
+        color: rgba(248, 250, 252, 0.55);
+    }
+
+    .agent-conversation-item.active .agent-conversation-preview {
+        color: rgba(147, 197, 253, 0.8);
+    }
+
+    .agent-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(248, 250, 252, 0.7);
+    }
+    
+    .agent-conversation-item.active .agent-badge {
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+    }
+
+    .agent-quick-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .agent-prompt-chip {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: transparent;
+        color: rgba(248, 250, 252, 0.8);
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        line-height: 1.4;
+    }
+
+    .agent-prompt-chip:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .agent-workflow-box {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .agent-workflow-box .form-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: rgba(248, 250, 252, 0.7);
+        margin-bottom: 8px;
+    }
+    
+    .agent-workflow-box .form-text {
+        font-size: 0.75rem;
+        color: rgba(248, 250, 252, 0.45);
+        margin-top: 6px;
+    }
+
+    .agent-workflow-box .form-control {
+        background: rgba(15, 23, 42, 0.3);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    
+    .agent-workflow-box .form-control:focus {
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+
+    .agent-workflow-box .form-control::placeholder {
+        color: rgba(248, 250, 252, 0.3);
+    }
+
+    .agent-panel {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .agent-panel-header {
+        flex: 0 0 auto;
+        padding: 24px 32px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        background: #ffffff;
+    }
+
+    .agent-panel-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+    }
+
+    .agent-panel-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .agent-status-badge {
+        padding: 6px 12px;
+        border-radius: 6px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.8rem;
+        font-weight: 500;
+        white-space: nowrap;
+        border: 1px solid #e2e8f0;
+    }
+
+    .agent-status-badge.is-error {
+        background: #fef2f2;
+        color: #ef4444;
+        border-color: #fca5a5;
+    }
+
+    .agent-message-list {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 32px 40px;
+        background: #f8fafc;
+        min-height: 0;
+    }
+
+    /* 消息区滚动条 */
+    .agent-message-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    .agent-message-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .agent-message-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 6px;
+    }
+    .agent-message-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .agent-empty-state {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .agent-empty-card {
+        max-width: 480px;
+        padding: 40px;
+        border-radius: 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    }
+
+    .agent-empty-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        color: #3b82f6;
+        background: #eff6ff;
+        margin-bottom: 24px;
+    }
+    
+    .agent-empty-card h5 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+    
+    .agent-empty-card p {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .agent-message-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .agent-message-row.user {
+        flex-direction: row-reverse;
+    }
+
+    .agent-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        flex: 0 0 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .agent-avatar.user {
+        background: #0f172a;
+        box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.2);
+    }
+
+    .agent-avatar.assistant {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    }
+
+    .agent-message-body {
+        max-width: min(85%, 900px);
+    }
+
+    .agent-message-row.user .agent-message-body {
+        text-align: right;
+    }
+
+    .agent-message-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .agent-message-row.user .agent-message-meta {
+        justify-content: flex-end;
+    }
+
+    .agent-message-bubble {
+        padding: 16px 20px;
+        border-radius: 16px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.7;
+        font-size: 0.95rem;
+    }
+
+    .agent-message-bubble.user {
+        background: #0f172a;
+        color: #f8fafc;
+        border-top-right-radius: 4px;
+        box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+        text-align: left;
+    }
+
+    .agent-message-bubble.assistant {
+        background: #ffffff;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        border-top-left-radius: 4px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .agent-panel-footer {
+        flex: 0 0 auto;
+        padding: 24px 32px 32px;
+        border-top: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+
+    .agent-composer {
+        border: 1px solid #cbd5e1;
+        border-radius: 16px;
+        padding: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .agent-composer:focus-within {
+        border-color: #94a3b8;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    .agent-composer textarea {
+        border: none;
+        box-shadow: none;
+        resize: none;
+        min-height: 80px;
+        max-height: 240px;
+        padding: 0;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #0f172a;
+        background: transparent;
+    }
+
+    .agent-composer textarea:focus {
+        box-shadow: none;
+        outline: none;
+    }
+    
+    .agent-composer textarea::placeholder {
+        color: #94a3b8;
+    }
+
+    .agent-composer-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .agent-composer-hint {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .agent-action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .agent-send-btn {
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-weight: 600;
+        background: #2563eb;
+        border-color: #2563eb;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+    
+    .agent-send-btn:hover:not(:disabled) {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+    }
+    
+    #clear-agent-result {
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: 500;
+        color: #475569;
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+    
+    #clear-agent-result:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .agent-debug-panel {
+        margin-top: 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+
+    .agent-debug-panel summary {
+        cursor: pointer;
+        padding: 14px 20px;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.9rem;
+    }
+
+    .agent-debug-content {
+        padding: 0 20px 20px;
+    }
+
+    .agent-debug-content pre {
+        min-height: 120px;
+        white-space: pre-wrap;
+        margin-bottom: 0;
+        padding: 16px;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        border: 1px solid #1e293b;
+    }
+
+    @media (max-width: 991.98px) {
+        .agent-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .agent-panel,
+        .agent-sidebar {
+            min-height: auto;
+        }
+
+        .agent-message-body {
+            max-width: 88%;
+        }
+    }
+</style>
+
+<div class="agent-shell">
+    <aside class="agent-sidebar">
+        <div class="agent-sidebar-header">
+            <div class="agent-sidebar-title">{% trans "智能体助手" %}</div>
+            <div class="agent-sidebar-subtitle">{% trans "像聊天一样调用实验室知识、工作流和硬件能力。" %}</div>
+            <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-light agent-new-chat">
+                <i class="mdi mdi-plus"></i> {% trans "新建会话" %}
+            </a>
+        </div>
+
+        <div class="agent-sidebar-section">
+            <div class="agent-sidebar-label">{% trans "历史会话" %}</div>
+            {% if conversations %}
+            <div class="agent-conversation-list">
+                {% for conversation in conversations %}
+                <a href="{% url 'plugins:lab_manager:agent_console' %}?conversation={{ conversation.pk }}"
+                   class="agent-conversation-item {% if active_conversation and active_conversation.pk == conversation.pk %}active{% endif %}">
+                    <div class="agent-conversation-title text-truncate">{{ conversation.title }}</div>
+                    <div class="agent-conversation-preview text-truncate">{{ conversation.last_message_preview|default:"暂无消息" }}</div>
+                    <div class="agent-badge">
+                        {% if conversation.mode == 'workflow' %}
+                            <i class="mdi mdi-vector-polyline"></i> {{ conversation.workflow_alias|default:"workflow" }}
+                        {% elif conversation.mode == 'backend' %}
+                            <i class="mdi mdi-database-search-outline"></i> backend
+                        {% else %}
+                            <i class="mdi mdi-chat-processing-outline"></i> chat
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="agent-conversation-item">
+                <div class="agent-conversation-title">{% trans "暂无历史会话" %}</div>
+                <div class="agent-conversation-preview">{% trans "发送第一条消息后会显示在这里。" %}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="agent-sidebar-section pt-0">
+            <div class="agent-sidebar-label">{% trans "快捷提问" %}</div>
+            <div class="agent-quick-prompts">
+                {% for prompt in quick_prompts %}
+                <button type="button" class="agent-prompt-chip quick-prompt" data-prompt="{{ prompt }}">{{ prompt }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="agent-workflow-box">
+                <label for="workflow-alias" class="form-label">{% trans "工作流别名（可选）" %}</label>
+                <input id="workflow-alias" class="form-control" placeholder="例如 hardware_query" value="{{ initial_workflow_alias }}">
+                <div class="form-text">{% trans "默认留空会走本地数据库智能体；只有手动填写时才调用指定工作流。" %}</div>
+            </div>
+        </div>
+    </aside>
+
+    <section class="agent-panel">
+        <div class="agent-panel-header">
+            <div>
+                <div class="agent-panel-title">
+                    {% if active_conversation %}
+                        {{ active_conversation.title }}
+                    {% else %}
+                        {% trans "新的对话" %}
+                    {% endif %}
+                </div>
+                <div class="agent-panel-subtitle">
+                    {% if active_conversation and active_conversation.mode == 'workflow' %}
+                        {% blocktrans with alias=active_conversation.workflow_alias|default:"workflow" %}当前模式：工作流 {{ alias }}{% endblocktrans %}
+                    {% elif active_conversation and active_conversation.mode == 'backend' %}
+                        {% trans "当前模式：本地后端智能体" %}
+                    {% else %}
+                        {% trans "当前模式：Bot 对话" %}
+                    {% endif %}
+                </div>
+            </div>
+            <div id="agent-status" class="agent-status-badge">{% trans "等待发送请求..." %}</div>
+        </div>
+
+        <div id="message-list" class="agent-message-list">
+            {% if conversation_messages %}
+                {% for item in conversation_messages %}
+                <div class="agent-message-row {% if item.role == 'user' %}user{% else %}assistant{% endif %}">
+                    <div class="agent-avatar {% if item.role == 'user' %}user{% else %}assistant{% endif %}">
+                        {% if item.role == 'user' %}我{% else %}AI{% endif %}
+                    </div>
+                    <div class="agent-message-body">
+                        <div class="agent-message-meta">
+                            <span>{% if item.role == 'user' %}{% trans "我" %}{% else %}{% trans "智能体" %}{% endif %}</span>
+                            <span>{{ item.created|date:"H:i" }}</span>
+                        </div>
+                        <div class="agent-message-bubble {% if item.role == 'user' %}user{% else %}assistant{% endif %}">{{ item.content }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div id="empty-message-placeholder" class="agent-empty-state">
+                <div class="agent-empty-card">
+                    <div class="agent-empty-icon">
+                        <i class="mdi mdi-robot-excited-outline"></i>
+                    </div>
+                    <h5 class="mb-2">{% trans "开始一段新的对话" %}</h5>
+                    <p class="mb-0">{% trans "你可以直接问硬件库存、任务视频、导入流程，或者描述想做的产品，系统会结合实验室数据给出建议。" %}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="agent-panel-footer">
+            <div class="agent-composer">
+                <textarea id="agent-input" class="form-control" rows="3" placeholder="给智能体发送消息，Shift + Enter 换行，Enter 发送"></textarea>
+                <div class="agent-composer-actions">
+                    <div class="agent-composer-hint">{% trans "支持连续对话，会自动复用当前会话上下文。" %}</div>
+                    <div class="agent-action-buttons">
+                        <button type="button" id="clear-agent-result" class="btn btn-outline-secondary">
+                            {% trans "清空输入" %}
+                        </button>
+                        <button type="button" id="send-agent-message" class="btn btn-primary agent-send-btn">
+                            <i class="mdi mdi-send"></i> <span id="send-button-label">{% trans "发送" %}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <details class="agent-debug-panel">
+                <summary>{% trans "调试信息 / 原始响应" %}</summary>
+                <div class="agent-debug-content">
+                    <pre id="agent-raw-payload"></pre>
+                </div>
+            </details>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+(() => {
+    const input = document.getElementById('agent-input');
+    const workflowAlias = document.getElementById('workflow-alias');
+    const sendButton = document.getElementById('send-agent-message');
+    const clearButton = document.getElementById('clear-agent-result');
+    const statusBox = document.getElementById('agent-status');
+    const rawBox = document.getElementById('agent-raw-payload');
+    const messageList = document.getElementById('message-list');
+    const sendButtonLabel = document.getElementById('send-button-label');
+
+    let conversationId = '{{ active_coze_conversation_id|default:"" }}';
+    let conversationPk = '{{ active_conversation_id|default:"" }}';
+
+    function setStatus(text, isError = false) {
+        statusBox.textContent = text;
+        statusBox.className = isError ? 'agent-status-badge is-error' : 'agent-status-badge';
+    }
+
+    function setRawPayload(payload) {
+        rawBox.textContent = payload ? JSON.stringify(payload, null, 2) : '';
+    }
+
+    function removeEmptyPlaceholder() {
+        const placeholder = document.getElementById('empty-message-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+    }
+
+    function formatTime(date = new Date()) {
+        return date.toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function setSendingState(isSending) {
+        sendButton.disabled = isSending;
+        sendButtonLabel.textContent = isSending ? '发送中...' : '发送';
+    }
+
+    function appendMessage(role, content) {
+        removeEmptyPlaceholder();
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'agent-message-row ' + (role === 'user' ? 'user' : 'assistant');
+
+        const avatar = document.createElement('div');
+        avatar.className = 'agent-avatar ' + (role === 'user' ? 'user' : 'assistant');
+        avatar.textContent = role === 'user' ? '我' : 'AI';
+
+        const body = document.createElement('div');
+        body.className = 'agent-message-body';
+
+        const meta = document.createElement('div');
+        meta.className = 'agent-message-meta';
+
+        const label = document.createElement('span');
+        label.textContent = role === 'user' ? '我' : '智能体';
+
+        const time = document.createElement('span');
+        time.textContent = formatTime();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'agent-message-bubble ' + (role === 'user' ? 'user' : 'assistant');
+        bubble.textContent = content || '';
+
+        meta.appendChild(label);
+        meta.appendChild(time);
+        body.appendChild(meta);
+        body.appendChild(bubble);
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(body);
+        messageList.appendChild(wrapper);
+        messageList.scrollTop = messageList.scrollHeight;
+    }
+
+    document.querySelectorAll('.quick-prompt').forEach((button) => {
+        button.addEventListener('click', () => {
+            input.value = button.dataset.prompt || '';
+            input.focus();
+        });
+    });
+
+    clearButton.addEventListener('click', () => {
+        input.value = '';
+        input.focus();
+    });
+
+    async function sendMessage() {
+        const message = input.value.trim();
+        if (!message) {
+            setStatus('请输入内容后再发送', true);
+            return;
+        }
+
+        setSendingState(true);
+        setStatus('请求智能体中...');
+        setRawPayload(null);
+        appendMessage('user', message);
+        input.value = '';
+
+        try {
+            const response = await fetch("{% url 'plugins:lab_manager:agent_chat_proxy' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message,
+                    workflow_alias: workflowAlias.value.trim(),
+                    conversation_id: conversationId,
+                    conversation_pk: conversationPk
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                setStatus(result.message || '请求失败', true);
+                setRawPayload(result);
+                return;
+            }
+
+            if (result.conversation_pk) {
+                conversationPk = String(result.conversation_pk);
+            }
+            if (result.conversation_id) {
+                conversationId = result.conversation_id;
+            }
+
+            if (result.mode === 'workflow') {
+                appendMessage('assistant', typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2));
+            } else {
+                appendMessage('assistant', result.answer_text || '未获取到回答文本，请查看原始响应。');
+            }
+
+            setRawPayload(result.raw_payload);
+            setStatus('请求完成');
+
+            if (result.created_new_conversation && result.conversation_pk) {
+                const targetUrl = "{% url 'plugins:lab_manager:agent_console' %}?conversation=" + result.conversation_pk;
+                window.location.href = targetUrl;
+            } else if (result.conversation_pk) {
+                const targetUrl = "{% url 'plugins:lab_manager:agent_console' %}?conversation=" + result.conversation_pk;
+                window.history.replaceState({}, '', targetUrl);
+            }
+        } catch (error) {
+            setStatus('请求异常，请检查配置或网络连接', true);
+            setRawPayload({ error: String(error) });
+        } finally {
+            setSendingState(false);
+            input.focus();
+        }
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            if (!sendButton.disabled) {
+                sendMessage();
+            }
+        }
+    });
+
+    if (messageList) {
+        messageList.scrollTop = messageList.scrollHeight;
+    }
+})();
+</script>
+{% endblock %}

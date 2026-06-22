@@ -1,11 +1,24 @@
 from django.urls import include, path
 
+from . import agent_api
 from utilities.urls import get_model_urls
 from . import views
 
 app_name = 'lab_manager'
 
 urlpatterns = [
+    # Agent API
+    path('api/agent/hardware/search/', agent_api.SearchHardwareAPIView.as_view(), name='agent_hardware_search'),
+    path('api/agent/hardware/gap-analysis/', agent_api.AnalyzeHardwareGapAPIView.as_view(), name='agent_hardware_gap_analysis'),
+    path('api/agent/tasks/search/', agent_api.SearchTasksAPIView.as_view(), name='agent_tasks_search'),
+    path('api/agent/tasks/videos/', agent_api.SearchTaskVideosAPIView.as_view(), name='agent_task_videos'),
+    path('api/agent/hardware/import/validate/', agent_api.ValidateHardwareImportAPIView.as_view(), name='agent_hardware_import_validate'),
+    path('api/agent/hardware/import/commit/', agent_api.CommitHardwareImportAPIView.as_view(), name='agent_hardware_import_commit'),
+
+    # Agent Console
+    path('agent/', views.AgentAssistantView.as_view(), name='agent_console'),
+    path('agent/chat/', views.AgentChatProxyView.as_view(), name='agent_chat_proxy'),
+
     # 硬件
     path('hardware/', include(get_model_urls('lab_manager', 'hardware', detail=False))),
     path('hardware/<int:pk>/', include(get_model_urls('lab_manager', 'hardware'))),

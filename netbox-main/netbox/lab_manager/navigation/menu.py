@@ -34,5 +34,11 @@ menu = PluginMenu(
                 link_text='我的任务',
             ),
         )),
+        ('智能体', (
+            PluginMenuItem(
+                link='plugins:lab_manager:agent_console',
+                link_text='智能体助手',
+            ),
+        )),
     ),
 )

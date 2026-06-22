@@ -1,0 +1,85 @@
+curl --location --request POST 'https://yk74hyskzh.coze.site/run' \
+  --header 'Authorization: Bearer <YOUR_TOKEN>' \
+  --header 'Content-Type: application/json' \
+  --data '{"user_query":"","hardware_items_str":"","import_action":"","batch_id":""}'
+
+  curl --location --request POST 'https://yk74hyskzh.coze.site/stream_run' \
+  --header 'Authorization: Bearer <YOUR_TOKEN>' \
+  --header 'Content-Type: application/json' \
+  --data '{"user_query":"","hardware_items_str":"","import_action":"","batch_id":""}'
+
+  curl --location --request POST 'https://yk74hyskzh.coze.site/async_run' \
+  --header 'Authorization: Bearer <YOUR_TOKEN>' \
+  --header 'Content-Type: application/json' \
+  --data '{"user_query":"","hardware_items_str":"","import_action":"","batch_id":""}'
+
+  curl --location --request GET 'https://yk74hyskzh.coze.site/task/{task_id}' \
+  --header 'Authorization: Bearer <YOUR_TOKEN>'
+
+  curl --location --request GET 'https://yk74hyskzh.coze.site/graph_parameter' \
+  --header 'Authorization: Bearer <YOUR_TOKEN>'
+
+  {
+  "input_schema": {
+    "description": "工作流的输入",
+    "properties": {
+      "user_query": {
+        "description": "用户查询内容，如'查看硬件库存'、'我想做一个人脸识别门禁系统'等",
+        "title": "User Query",
+        "type": "string"
+      },
+      "hardware_items_str": {
+        "default": "",
+        "description": "批量上传的硬件数据，JSON字符串格式：[{\"name\":\"...\",\"category\":\"...\",\"quantity\":1}]",
+        "title": "Hardware Items Str",
+        "type": "string"
+      },
+      "import_action": {
+        "default": "validate",
+        "description": "导入动作: validate（预校验）/ commit（确认导入）",
+        "title": "Import Action",
+        "type": "string"
+      },
+      "batch_id": {
+        "default": "",
+        "description": "导入批次唯一标识（commit时需要传入，validate时无需传入）",
+        "title": "Batch Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "user_query"
+    ],
+    "title": "GraphInput",
+    "type": "object"
+  },
+  "output_schema": {
+    "description": "工作流的输出",
+    "properties": {
+      "result": {
+        "description": "工作流执行结果",
+        "title": "Result",
+        "type": "string"
+      },
+      "intent": {
+        "default": "",
+        "description": "识别到的用户意图",
+        "title": "Intent",
+        "type": "string"
+      },
+      "batch_id": {
+        "default": "",
+        "description": "如果是预校验模式，返回批次ID供确认导入时使用",
+        "title": "Batch Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "result"
+    ],
+    "title": "GraphOutput",
+    "type": "object"
+  },
+  "code": 0,
+  "msg": ""
+}

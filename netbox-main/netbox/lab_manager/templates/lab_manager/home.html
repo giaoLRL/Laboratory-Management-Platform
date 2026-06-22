@@ -67,25 +67,37 @@
 </div>
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <a href="{% url 'plugins:lab_manager:hardware_add' %}" class="btn btn-primary w-100 py-3">
             <i class="mdi mdi-plus-thick"></i> {% trans "录入新硬件" %}
         </a>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <a href="{% url 'plugins:lab_manager:task_add' %}" class="btn btn-success w-100 py-3">
             <i class="mdi mdi-plus-thick"></i> {% trans "创建任务" %}
         </a>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <a href="{% url 'plugins:lab_manager:task_list' %}" class="btn btn-info w-100 py-3">
             <i class="mdi mdi-format-list-bulleted"></i> {% trans "全部任务" %}
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-dark w-100 py-3">
+            <i class="mdi mdi-robot-outline"></i> {% trans "智能体助手" %}
         </a>
     </div>
 </div>
 
 {% else %}
 {# 成员首页 #}
+<div class="row mb-3">
+    <div class="col">
+        <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-dark">
+            <i class="mdi mdi-robot-outline"></i> {% trans "打开智能体助手" %}
+        </a>
+    </div>
+</div>
 <div class="row mb-3">
     <div class="col">
         <div class="card">
