@@ -7,7 +7,7 @@ from users.models import User
 
 
 class MemberOpenRecord(NetBoxModel):
-    """成员打开实验室平台页面的记录"""
+    """成员打卡记录 —— 记录成员打开实验室平台页面的访问记录"""
     user = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
@@ -42,14 +42,51 @@ class MemberOpenRecord(NetBoxModel):
         null=True,
         blank=True,
     )
+    # 拍照打卡扩展字段
+    photo = models.ImageField(
+        verbose_name=_('打卡照片'),
+        upload_to='checkins/photos/',
+        null=True,
+        blank=True,
+    )
+    latitude = models.DecimalField(
+        verbose_name=_('纬度'),
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+    )
+    longitude = models.DecimalField(
+        verbose_name=_('经度'),
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+    )
+    accuracy = models.DecimalField(
+        verbose_name=_('定位精度（米）'),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    address = models.CharField(
+        verbose_name=_('地址备注'),
+        max_length=255,
+        blank=True,
+    )
+    note = models.TextField(
+        verbose_name=_('备注'),
+        blank=True,
+    )
 
     class Meta(NetBoxModel.Meta):
-        verbose_name = _('成员打开记录')
-        verbose_name_plural = _('成员打开记录')
+        verbose_name = _('成员打卡记录')
+        verbose_name_plural = _('成员打卡记录')
         ordering = ('-created',)
 
     def __str__(self):
         return f'{self.user} - {self.page_title or self.path}'
 
     def get_absolute_url(self):
-        return reverse('plugins:lab_manager:member_open_records')
+        return reverse('plugins:lab_manager:member_open_record_detail', args=[self.pk])

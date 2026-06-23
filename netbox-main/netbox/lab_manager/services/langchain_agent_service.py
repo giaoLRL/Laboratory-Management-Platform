@@ -142,6 +142,28 @@ class LangChainAgentService:
             """Analyze missing hardware for a lab project based on current inventory."""
             return json.dumps(self.backend._analyze_hardware_gap(user, project_description), ensure_ascii=False, default=str)
 
+        @tool
+        def create_task(title: str, assigned_to: str, description: str = "", deadline: str = "", priority: str = "medium") -> str:
+            """当用户要求管理员创建/布置/安排/派发任务时调用本工具。
+
+参数说明：
+- title: 任务标题（必填），从用户消息中提取任务名称
+- assigned_to: 执行人用户名或姓名（必填），如"admin""张三"
+- description: 任务详细描述，默认与标题相同
+- deadline: 截止日期，如"2026-07-01""本周五""明天"，为空则不设截止
+- priority: 优先级，可选 urgent/high/medium/low，默认 medium"""
+            if not user.is_superuser:
+                return json.dumps({'ok': False, 'error': '只有管理员可以通过智能体创建任务'}, ensure_ascii=False)
+            result = self.backend._create_task_structured(
+                user=user,
+                title=title,
+                assigned_to=assigned_to,
+                description=description or title,
+                deadline=deadline or '',
+                priority=priority or 'medium',
+            )
+            return json.dumps(result, ensure_ascii=False, default=str)
+
         return create_agent(
             model=model,
             tools=[
@@ -152,6 +174,7 @@ class LangChainAgentService:
                 describe_platform_data,
                 find_task_videos,
                 analyze_hardware_gap,
+                create_task,
             ],
             system_prompt=self._system_prompt(),
         )
@@ -188,16 +211,17 @@ class LangChainAgentService:
     @staticmethod
     def _system_prompt() -> str:
         return (
-            '你是实验室平台智能体助手。你的职责是理解用户自然语言需求，主动调用工具读取平台真实数据，'
+            '你是实验室平台智能体助手。你的职责是理解用户自然语言需求，主动调用工具读取或修改平台真实数据，'
             '再把结果总结成清晰中文。\n'
             '重要规则：\n'
             '1. 不要声称自己无法访问后台、数据库或系统；你必须先尝试调用工具。\n'
-            '2. 只能通过工具查询数据，不能编造人员、任务、硬件或附件。\n'
+            '2. 只能通过工具查询或创建数据，不能编造人员、任务、硬件或附件。\n'
             '3. 平台模型包括 hardware、hardware_approval、task、task_attachment、checkin、member_open_record、user。\n'
             '4. 用户问附件、视频、任务文件时优先使用 task_attachment 或 find_task_videos。\n'
             '5. 用户问项目缺什么硬件、采购建议、做某个系统时，使用 analyze_hardware_gap。\n'
-            '6. 用户说“他/这个人/该用户/这个任务”时，结合最近会话上下文解析引用。\n'
-            '7. 如果查询为空，要说明你查询的条件，并给出可放宽的条件。'
+            '6. 用户说”他/这个人/该用户/这个任务”时，结合最近会话上下文解析引用。\n'
+            '7. 如果查询为空，要说明你查询的条件，并给出可放宽的条件。\n'
+            '8. **用户要求创建/布置/安排/派发任务时，必须调用 create_task 工具**，把用户完整消息原文传入 user_message 参数。'
         )
 
     @staticmethod
@@ -217,11 +241,8 @@ class LangChainAgentService:
 
     @staticmethod
     def _safe_json(value: Any) -> Any:
-        try:
-            json.dumps(value, ensure_ascii=False, default=str)
-            return value
-        except TypeError:
-            return json.loads(json.dumps(value, ensure_ascii=False, default=str))
+        # 始终序列化再反序列化，确保不含不可 JSON 序列化的对象（如 LangChain Message）
+        return json.loads(json.dumps(value, ensure_ascii=False, default=str))
 
     @staticmethod
     def _parse_json_object(value: str) -> dict[str, Any]:

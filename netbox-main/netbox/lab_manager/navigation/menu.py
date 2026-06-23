@@ -33,10 +33,6 @@ menu = PluginMenu(
                 link='plugins:lab_manager:my_tasks',
                 link_text='我的任务',
             ),
-            PluginMenuItem(
-                link='plugins:lab_manager:member_open_records',
-                link_text='成员打开记录',
-            ),
         )),
         ('打卡管理', (
             PluginMenuItem(
@@ -49,6 +45,10 @@ menu = PluginMenu(
                         icon_class='mdi mdi-format-list-bulleted',
                     ),
                 )
+            ),
+            PluginMenuItem(
+                link='plugins:lab_manager:member_open_records',
+                link_text='成员打卡记录',
             ),
         )),
         ('智能体', (

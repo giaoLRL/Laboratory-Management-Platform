@@ -66,3 +66,4 @@ netbox-main/netbox/project-static/docs/
 
 # ── 自动生成的 OpenAPI schema (12MB) ──
 netbox-main/contrib/openapi.json
+cookies.txt

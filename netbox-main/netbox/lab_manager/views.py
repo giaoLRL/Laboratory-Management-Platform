@@ -19,7 +19,7 @@ from .filtersets import HardwareFilterSet, TaskFilterSet
 from .forms.filtersets import HardwareFilterForm, TaskFilterForm
 from .forms.model_forms import CheckInForm, HardwareForm, HardwareMemberForm, TaskForm, TaskMemberForm, TaskCommentForm
 from .models import AgentConversation, AgentMessage, CheckInRecord, Hardware, MemberOpenRecord, Task, TaskAttachment, TaskComment
-from .services import AgentToolOrchestrator, BackendAgentService, DifyGateway, DifyGatewayConfigError, DifyGatewayRequestError, LangChainAgentService
+from .services import AgentToolOrchestrator, BackendAgentService, LangChainAgentService
 from .tables.hardware import HardwareTable
 from .tables.task import TaskTable
 
@@ -281,6 +281,22 @@ class MemberOpenRecordListView(LoginRequiredMixin, UserPassesTestMixin, Template
         return ctx
 
 
+class MemberOpenRecordDetailView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'lab_manager/member_open_record_detail.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def dispatch(self, request, *args, **kwargs):
+        self.record = MemberOpenRecord.objects.select_related('user').get(pk=self.kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['record'] = self.record
+        return ctx
+
+
 # ── 拍照定位打卡 ──
 
 class CheckInCreateView(LoginRequiredMixin, TemplateView):
@@ -303,6 +319,22 @@ class CheckInCreateView(LoginRequiredMixin, TemplateView):
             checkin.user = request.user
             checkin.save()
             form.save_m2m()
+            # 同步创建成员打卡记录，带上照片和定位
+            MemberOpenRecord.objects.create(
+                user=request.user,
+                path=request.get_full_path()[:500],
+                page_title='拍照定位打卡',
+                target_type='checkin',
+                target_id=checkin.pk,
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:1000],
+                ip_address=_client_ip(request),
+                photo=checkin.photo,
+                latitude=checkin.latitude,
+                longitude=checkin.longitude,
+                accuracy=checkin.accuracy,
+                address=checkin.address,
+                note=checkin.note,
+            )
             messages.success(request, _('打卡成功'))
             return redirect('plugins:lab_manager:checkin_detail', pk=checkin.pk)
 
@@ -583,8 +615,6 @@ class AgentAssistantView(LoginRequiredMixin, TemplateView):
         ctx['active_conversation'] = active_conversation
         ctx['conversation_messages'] = active_conversation.messages.all() if active_conversation else []
         ctx['active_conversation_id'] = active_conversation.pk if active_conversation else ''
-        ctx['active_coze_conversation_id'] = active_conversation.coze_conversation_id if active_conversation else ''
-        # 方案 B 默认走本地后端，不再自动回填历史工作流别名，避免旧会话持续命中外部工作流。
         ctx['initial_workflow_alias'] = ''
         return ctx
 
@@ -607,10 +637,7 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                 status=400,
             )
 
-        workflow_alias = str(payload.get('workflow_alias', '')).strip()
-        conversation_id = str(payload.get('conversation_id', '')).strip() or None
         conversation_pk = str(payload.get('conversation_pk', '')).strip()
-        force_external = bool(payload.get('force_external'))
 
         conversation = None
         if conversation_pk:
@@ -621,30 +648,19 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                     status=404,
                 )
 
-        if conversation is None and conversation_id:
-            conversation = AgentConversation.objects.filter(
-                user=request.user,
-                coze_conversation_id=conversation_id,
-            ).first()
-
         created_new_conversation = False
         if conversation is None:
             conversation = AgentConversation.objects.create(
                 user=request.user,
                 title=message[:60],
-                mode='workflow' if workflow_alias else ('chat' if force_external else 'backend'),
-                workflow_alias=workflow_alias,
-                coze_conversation_id=conversation_id or '',
+                mode='backend',
+                workflow_alias='',
+                coze_conversation_id='',
                 last_message_preview=message[:255],
             )
             created_new_conversation = True
         else:
-            conversation.mode = 'workflow' if workflow_alias else ('chat' if force_external else 'backend')
-            if workflow_alias:
-                conversation.workflow_alias = workflow_alias
             conversation.last_message_preview = message[:255]
-            if conversation_id and not conversation.coze_conversation_id:
-                conversation.coze_conversation_id = conversation_id
             conversation.save()
 
         AgentMessage.objects.create(
@@ -655,219 +671,89 @@ class AgentChatProxyView(LoginRequiredMixin, View):
         )
 
         try:
-            # 默认走 AI 工具编排：先理解用户问题，再调用平台安全工具，最后总结。
-            if not workflow_alias and not force_external:
-                # 写操作（布置任务等）跳过 LangChain，直接走本地确定性编排器
-                is_write_op = any(w in message for w in ('布置任务', '安排任务', '创建任务', '新建任务', '派发任务', '分配任务'))
-                if is_write_op:
-                    agent_response = AgentToolOrchestrator().process_message(
-                        user=request.user,
-                        message=message,
-                        conversation=conversation,
-                    )
-                else:
-                    langchain_response = LangChainAgentService().process_message(
-                        user=request.user,
-                        message=message,
-                        conversation=conversation,
-                    )
-                    agent_response = langchain_response if langchain_response.handled else AgentToolOrchestrator().process_message(
-                        user=request.user,
-                        message=message,
-                        conversation=conversation,
-                    )
-                if agent_response.handled:
-                    final_answer = agent_response.answer_text
-                    AgentMessage.objects.create(
-                        conversation=conversation,
-                        role='assistant',
-                        content=final_answer,
-                        raw_payload=agent_response.raw_payload,
-                        coze_chat_id='',
-                    )
-                    conversation.mode = 'langchain_agent' if agent_response.intent == 'langchain_agent' else 'agent_tools'
-                    conversation.last_message_preview = final_answer[:255]
-                    conversation.workflow_alias = ''
-                    conversation.save()
-                    return JsonResponse(
-                        {
-                            'success': True,
-                            'mode': conversation.mode,
-                            'message': 'ok',
-                            'conversation_pk': conversation.pk,
-                            'created_new_conversation': created_new_conversation,
-                            'intent': agent_response.intent,
-                            'answer_text': final_answer,
-                            'data': agent_response.data,
-                            'raw_payload': agent_response.raw_payload,
-                        }
-                    )
-
-            # 其他闲聊/方案类问题优先走 Dify Chat（如果已配置），本地 BackendAgentService 作为 fallback
-            gateway_check = DifyGateway()
-            if not workflow_alias and not force_external and not gateway_check.has_chat_bot():
-                backend_response = BackendAgentService().process_message(
-                    user=request.user,
-                    message=message,
-                )
-                if backend_response.handled:
-                    final_answer = backend_response.answer_text
-                    AgentMessage.objects.create(
-                        conversation=conversation,
-                        role='assistant',
-                        content=final_answer,
-                        raw_payload=backend_response.raw_payload,
-                        coze_chat_id='',
-                    )
-                    conversation.mode = 'backend'
-                    conversation.last_message_preview = final_answer[:255]
-                    conversation.workflow_alias = ''
-                    conversation.save()
-                    return JsonResponse(
-                        {
-                            'success': True,
-                            'mode': 'backend',
-                            'message': 'ok',
-                            'conversation_pk': conversation.pk,
-                            'created_new_conversation': created_new_conversation,
-                            'intent': backend_response.intent,
-                            'answer_text': final_answer,
-                            'data': backend_response.data,
-                            'raw_payload': backend_response.raw_payload,
-                        }
-                    )
-
-            gateway = DifyGateway()
-            # 智能路由：让 LLM 处理绝大部分问题，只对特定操作保留 workflow
-            if not workflow_alias and not force_external:
-                # 只有明确的数据检索/导入类操作走 workflow
-                if any(kw in message for kw in ['视频','录像','附件','拍摄','录制']):
-                    workflow_alias = 'task_video_search'
-                elif any(kw in message for kw in ['导入','批量','校验','提交','入库']):
-                    workflow_alias = 'hardware_import_validate'
-                # 硬件查询、方案推荐、缺口分析等全部走 Chat，让 DeepSeek 结合库存和网络信息综合回答
-                # 如果用户明确选择了工作流别名则保留
-
-            # 为 Chat 模式注入本地库存上下文
-            inventory_context = ""
-            if not workflow_alias and not force_external:
-                try:
-                    from lab_manager.models import Hardware
-                    hardware_items = Hardware.objects.all()[:50]
-                    if hardware_items.exists():
-                        items = []
-                        for h in hardware_items:
-                            items.append(f"{h.name}（{h.category or chr(39)+chr(39)}类别，库存{h.quantity}）")
-                        inventory_context = "当前实验室硬件库存：\\n" + "\\n".join(items)
-                except Exception:
-                    pass
-
-
-            if workflow_alias:
-                parameters = payload.get('parameters')
-                if not isinstance(parameters, dict):
-                    parameters = {'user_query': message}
-                else:
-                    parameters.setdefault('user_query', message)
-
-                workflow_response = gateway.run_workflow(
-                    workflow_alias=workflow_alias,
-                    parameters=parameters,
-                    user_id=str(request.user.pk),
-                )
-                workflow_data = workflow_response.payload.get('data')
-                # 提取 LLM 输出的自然语言文本
-                workflow_text = ''
-                if isinstance(workflow_data, dict):
-                    outputs = workflow_data.get('outputs', {})
-                    workflow_text = outputs.get('result') or outputs.get('text') or outputs.get('answer') or ''
-                    if not workflow_text:
-                        for v in outputs.values():
-                            if v:
-                                workflow_text = str(v)
-                                break
-                workflow_content = workflow_text if workflow_text else (
-                    workflow_data if isinstance(workflow_data, str) else json.dumps(workflow_data, ensure_ascii=False, indent=2)
-                )
+            # LangChain 大模型（DeepSeek）→ 失败降级到本地编排器
+            langchain_response = LangChainAgentService().process_message(
+                user=request.user,
+                message=message,
+                conversation=conversation,
+            )
+            agent_response = langchain_response if langchain_response.handled else AgentToolOrchestrator().process_message(
+                user=request.user,
+                message=message,
+                conversation=conversation,
+            )
+            if agent_response.handled:
+                final_answer = agent_response.answer_text
                 AgentMessage.objects.create(
                     conversation=conversation,
                     role='assistant',
-                    content=workflow_content,
-                    raw_payload=workflow_response.payload,
+                    content=final_answer,
+                    raw_payload=agent_response.raw_payload,
                     coze_chat_id='',
                 )
-                conversation.last_message_preview = workflow_content[:255]
+                conversation.mode = 'langchain_agent' if agent_response.intent == 'langchain_agent' else 'agent_tools'
+                conversation.last_message_preview = final_answer[:255]
+                conversation.workflow_alias = ''
                 conversation.save()
                 return JsonResponse(
                     {
                         'success': True,
-                        'mode': 'workflow',
+                        'mode': conversation.mode,
                         'message': 'ok',
                         'conversation_pk': conversation.pk,
                         'created_new_conversation': created_new_conversation,
-                        'answer_text': workflow_text,
-                        'data': workflow_response.payload.get('data'),
-                        'debug_url': workflow_response.debug_url,
-                        'raw_payload': workflow_response.payload,
+                        'intent': agent_response.intent,
+                        'answer_text': final_answer,
+                        'data': agent_response.data,
+                        'raw_payload': agent_response.raw_payload,
                     }
                 )
 
+        except Exception:
+            pass
 
-            # 🔍 网络搜索：为用户项目/方案类问题搜索参考信息
-            web_search_context = ""
-            project_keywords = ['项目','方案','设计','制作','小车','机器人','无人机','智能','推荐','购买','需要哪些','需要什么','怎么做','如何','什么硬件','哪些硬件','BOM','元器件','材料清单']
-            if any(kw in message for kw in project_keywords):
-                try:
-                    from .services.web_search import WebSearchService
-                    searcher = WebSearchService()
-                    search_result = searcher.search_for_project(message)
-                    if search_result:
-                        web_search_context = "\\n\\n=== 网络搜索结果（供参考） ===\\n" + search_result[:2000]
-                except Exception:
-                    pass
-
-            chat_result = gateway.run_chat_and_wait_answer(
-                message=(inventory_context + web_search_context + "\n\n用户问题：" + message) if (inventory_context or web_search_context) else message,
-                user_id=str(request.user.pk),
-                conversation_id=conversation.coze_conversation_id or conversation_id,
-            )
-            answer_text = chat_result.get('answer_text', '')
-            conversation.mode = 'chat'
-            conversation.workflow_alias = ''
-            conversation.coze_conversation_id = chat_result.get('conversation_id') or conversation.coze_conversation_id
-            conversation.last_message_preview = answer_text[:255] if answer_text else message[:255]
-            conversation.save()
+        # 最终兜底：本地后端服务
+        backend_response = BackendAgentService().process_message(
+            user=request.user,
+            message=message,
+        )
+        if backend_response.handled:
+            final_answer = backend_response.answer_text
             AgentMessage.objects.create(
                 conversation=conversation,
                 role='assistant',
-                content=answer_text,
-                raw_payload=chat_result.get('messages_payload') or {},
-                coze_chat_id=chat_result.get('chat_id') or '',
+                content=final_answer,
+                raw_payload=backend_response.raw_payload,
+                coze_chat_id='',
             )
+            conversation.mode = 'backend'
+            conversation.last_message_preview = final_answer[:255]
+            conversation.workflow_alias = ''
+            conversation.save()
             return JsonResponse(
                 {
                     'success': True,
-                    'mode': 'chat',
+                    'mode': 'backend',
                     'message': 'ok',
                     'conversation_pk': conversation.pk,
                     'created_new_conversation': created_new_conversation,
-                    'answer_text': answer_text,
-                    'conversation_id': chat_result.get('conversation_id'),
-                    'chat_id': chat_result.get('chat_id'),
-                    'status': chat_result.get('status'),
-                    'raw_payload': chat_result.get('messages_payload'),
+                    'intent': backend_response.intent,
+                    'answer_text': final_answer,
+                    'data': backend_response.data,
+                    'raw_payload': backend_response.raw_payload,
                 }
             )
-        except (DifyGatewayConfigError, DifyGatewayRequestError) as exc:
-            return JsonResponse(
-                {'success': False, 'message': str(exc)},
-                status=400,
-            )
-        except Exception:
-            return JsonResponse(
-                {'success': False, 'message': '智能体代理调用失败'},
-                status=500,
-            )
+
+        return JsonResponse(
+            {'success': False, 'message': '智能体代理调用失败'},
+            status=500,
+        )
+
+    @staticmethod
+    def _is_write_operation(message: str) -> bool:
+        """检测是否包含任务创建意图。"""
+        import re
+        return bool(re.search(r'(创建|新建|布置|安排|派发|分配).{0,4}任务', message))
 
 
 

@@ -23,15 +23,15 @@
     }
 
     .agent-sidebar {
-        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-        color: #f8fafc;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        color: #334155;
         display: flex;
         flex-direction: column;
     }
 
     .agent-sidebar-header {
         padding: 24px 20px 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .agent-sidebar-title {
@@ -39,10 +39,11 @@
         font-weight: 700;
         margin-bottom: 8px;
         letter-spacing: -0.01em;
+        color: #1e293b;
     }
 
     .agent-sidebar-subtitle {
-        color: rgba(248, 250, 252, 0.65);
+        color: #64748b;
         font-size: 0.88rem;
         margin-bottom: 20px;
         line-height: 1.5;
@@ -53,16 +54,18 @@
         border-radius: 12px;
         padding: 12px 16px;
         font-weight: 600;
-        background: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border: none;
         transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
     }
-    
+
     .agent-new-chat:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
         color: #fff;
-        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        transform: translateY(-1px);
     }
 
     .agent-sidebar-section {
@@ -74,7 +77,7 @@
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: rgba(248, 250, 252, 0.5);
+        color: #94a3b8;
         margin-bottom: 14px;
     }
 
@@ -87,7 +90,7 @@
         padding-right: 4px;
     }
 
-    /* 自定义滚动条 */
+    /* 浅色自定义滚动条 */
     .agent-conversation-list::-webkit-scrollbar {
         width: 4px;
     }
@@ -95,7 +98,7 @@
         background: transparent;
     }
     .agent-conversation-list::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(148, 163, 184, 0.35);
         border-radius: 4px;
     }
 
@@ -106,34 +109,35 @@
         background: transparent;
         border-radius: 12px;
         padding: 14px 16px;
-        color: #f8fafc;
+        color: #475569;
         transition: all 0.2s ease;
     }
 
     .agent-conversation-item:hover {
-        background: rgba(255, 255, 255, 0.06);
-        color: #fff;
+        background: rgba(99, 102, 241, 0.06);
+        color: #1e293b;
     }
 
     .agent-conversation-item.active {
-        background: rgba(59, 130, 246, 0.15);
-        border-color: rgba(59, 130, 246, 0.3);
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.2);
         box-shadow: none;
     }
 
     .agent-conversation-title {
-        font-weight: 500;
+        font-weight: 600;
         margin-bottom: 6px;
         font-size: 0.95rem;
+        color: #334155;
     }
 
     .agent-conversation-preview {
         font-size: 0.82rem;
-        color: rgba(248, 250, 252, 0.55);
+        color: #94a3b8;
     }
 
     .agent-conversation-item.active .agent-conversation-preview {
-        color: rgba(147, 197, 253, 0.8);
+        color: #818cf8;
     }
 
     .agent-badge {
@@ -145,13 +149,13 @@
         font-size: 0.7rem;
         font-weight: 500;
         margin-top: 10px;
-        background: rgba(255, 255, 255, 0.08);
-        color: rgba(248, 250, 252, 0.7);
+        background: rgba(148, 163, 184, 0.12);
+        color: #64748b;
     }
-    
+
     .agent-conversation-item.active .agent-badge {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
+        background: rgba(99, 102, 241, 0.12);
+        color: #6366f1;
     }
 
     .agent-quick-prompts {
@@ -161,40 +165,42 @@
     }
 
     .agent-prompt-chip {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: transparent;
-        color: rgba(248, 250, 252, 0.8);
-        border-radius: 8px;
-        padding: 8px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: #fff;
+        color: #475569;
+        border-radius: 10px;
+        padding: 10px 14px;
         font-size: 0.82rem;
         cursor: pointer;
         transition: all 0.2s ease;
         text-align: left;
         line-height: 1.4;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     .agent-prompt-chip:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #fff;
-        border-color: rgba(255, 255, 255, 0.2);
+        background: #f8fafc;
+        color: #6366f1;
+        border-color: rgba(99, 102, 241, 0.3);
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
     }
 
     .agent-workflow-box {
         margin-top: 24px;
         padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .agent-workflow-box .form-label {
         font-size: 0.8rem;
         font-weight: 500;
-        color: rgba(248, 250, 252, 0.7);
+        color: #64748b;
         margin-bottom: 8px;
     }
-    
+
     .agent-workflow-box .form-text {
         font-size: 0.75rem;
-        color: rgba(248, 250, 252, 0.45);
+        color: #94a3b8;
         margin-top: 6px;
     }
 

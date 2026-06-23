@@ -38,6 +38,7 @@ urlpatterns = [
     # 我的任务
     path('my-tasks/', views.MyTasksView.as_view(), name='my_tasks'),
     path('member-open-records/', views.MemberOpenRecordListView.as_view(), name='member_open_records'),
+    path('member-open-records/<int:pk>/', views.MemberOpenRecordDetailView.as_view(), name='member_open_record_detail'),
 
     # 拍照定位打卡
     path('checkins/', views.CheckInListView.as_view(), name='checkin_list'),

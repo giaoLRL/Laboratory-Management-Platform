@@ -1,12 +1,12 @@
 {% extends 'base/layout.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "成员打开记录" %}{% endblock %}
+{% block title %}{% trans "成员打卡记录" %}{% endblock %}
 
 {% block content %}
 <div class="row mb-3">
     <div class="col">
-        <h1>{% trans "成员打开记录" %}</h1>
+        <h1>{% trans "成员打卡记录" %}</h1>
     </div>
 </div>
 
@@ -36,25 +36,39 @@
                 <tr>
                     <th>{% trans "时间" %}</th>
                     <th>{% trans "成员" %}</th>
+                    <th>{% trans "照片" %}</th>
+                    <th>{% trans "位置" %}</th>
                     <th>{% trans "页面" %}</th>
-                    <th>{% trans "对象" %}</th>
                     <th>{% trans "路径" %}</th>
                     <th>{% trans "IP" %}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for record in records %}
-                <tr>
-                    <td>{{ record.created }}</td>
+                <tr class="cursor-pointer" onclick="window.location='{{ record.get_absolute_url }}'">
+                    <td><a href="{{ record.get_absolute_url }}">{{ record.created|date:"m-d H:i" }}</a></td>
                     <td>{{ record.user }}</td>
+                    <td>
+                        {% if record.photo %}
+                        <img src="{{ record.photo.url }}" class="rounded" style="width:40px;height:40px;object-fit:cover;" alt="">
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.latitude and record.longitude %}
+                        <span class="badge bg-info">{{ record.latitude|floatformat:4 }}, {{ record.longitude|floatformat:4 }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
                     <td>{{ record.page_title|default:'-' }}</td>
-                    <td>{{ record.target_type|default:'-' }}{% if record.target_id %} #{{ record.target_id }}{% endif %}</td>
-                    <td class="text-break">{{ record.path }}</td>
+                    <td class="text-break">{{ record.path|truncatechars:40 }}</td>
                     <td>{{ record.ip_address|default:'-' }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-muted text-center py-4">{% trans "暂无打开记录" %}</td>
+                    <td colspan="7" class="text-muted text-center py-4">{% trans "暂无打卡记录" %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

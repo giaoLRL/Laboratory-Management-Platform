@@ -19,16 +19,16 @@ PLUGINS_CONFIG = {
 
         # ── Dify 配置 ──
         "dify_api_base_url": "http://localhost",        # Dify 服务地址
-        "dify_api_key": "app-4a0955a232d44ddc985e4aaa", # Chat 应用: 实验室智能助手
+        "dify_api_key": "app-3MP70Yo0PXdBfkgFGTak7CIO", # Chat 应用: 实验室智能助手
         "dify_timeout": 60,
 
         # 工作流别名 → API Key 映射
         "dify_workflow_api_keys": {
-            "hardware_query":           "app-f4e774d913fa4ec5ac61c3fe",
-            "hardware_gap_analysis":    "app-70591b3157f74127b181f15f",
-            "task_video_search":        "app-50e71c28d140437e9c14af6f",
-            "hardware_import_validate": "app-7db5adb2c5c74a5097b9f954",
-            "hardware_import_commit":   "app-f1e0db7f4d9241d1baed90b0",
+            "hardware_query":           "app-pAOJCev656faqp44EfJDj5y1",
+            "hardware_gap_analysis":    "app-bclnk6wmYINXHKDixYmyn0Gl",
+            "task_video_search":        "app-nCGgvYelAjyCFjuX2CPUrO36",
+            "hardware_import_validate": "app-kSQKC46fRyl1EiChDZqrLsT5",
+            "hardware_import_commit":   "app-qP8KbsY6wlcp8BP6ZR8KPEyG",
         },
     }
 }
@@ -43,28 +43,28 @@ PLUGINS_CONFIG = {
 # Chat 应用:
 #   名称: 实验室智能助手
 #   ID:   b2836cff-f601-4032-b85b-056d554ec0d1
-#   Key:  app-4a0955a232d44ddc985e4aaa
+#   Key:  app-3MP70Yo0PXdBfkgFGTak7CIO
 #
 # 工作流应用 (均已使用 deepseek-chat 模型):
 #   hardware_query (硬件库存查询):
 #     ID: 86741986-46dd-4b83-98f2-ac020da02d11
-#     Key: app-f4e774d913fa4ec5ac61c3fe
+#     Key: app-pAOJCev656faqp44EfJDj5y1
 #
 #   hardware_gap_analysis (产品硬件缺口分析):
 #     ID: e0840703-f1f3-4a4b-b5a2-44579534f357
-#     Key: app-70591b3157f74127b181f15f
+#     Key: app-bclnk6wmYINXHKDixYmyn0Gl
 #
 #   task_video_search (任务视频检索):
 #     ID: fd027f1b-4759-41f7-b579-9a85620ab896
-#     Key: app-50e71c28d140437e9c14af6f
+#     Key: app-nCGgvYelAjyCFjuX2CPUrO36
 #
 #   hardware_import_validate (硬件导入预校验):
 #     ID: 816555f2-ec7d-49ab-b256-93f395397bff
-#     Key: app-7db5adb2c5c74a5097b9f954
+#     Key: app-kSQKC46fRyl1EiChDZqrLsT5
 #
 #   hardware_import_commit (硬件导入正式提交):
 #     ID: 7b88d3a9-e7d5-46c5-b7e9-792db6e37fb2
-#     Key: app-f1e0db7f4d9241d1baed90b0
+#     Key: app-qP8KbsY6wlcp8BP6ZR8KPEyG
 #
 # ============================================================
 # 模型供应商配置

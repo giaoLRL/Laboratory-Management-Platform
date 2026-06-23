@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .backend_agent_service import BackendAgentResponse, BackendAgentService
-from .dify_gateway import DifyGateway, DifyGatewayError
 from .platform_data_service import PlatformDataError, PlatformDataService
 
 
@@ -15,7 +14,7 @@ MODEL_LABELS = {
     'task': '任务',
     'task_attachment': '任务附件',
     'checkin': '打卡记录',
-    'member_open_record': '成员打开记录',
+    'member_open_record': '成员打卡记录',
     'user': '人员',
 }
 
@@ -103,7 +102,7 @@ class AgentToolOrchestrator:
                 )
             ]
 
-        if any(word in message for word in ('布置任务', '安排任务', '创建任务', '新建任务', '派发任务', '分配任务')):
+        if self._is_task_create(message):
             return [
                 AgentToolCall(
                     tool='task.create',
@@ -162,7 +161,7 @@ class AgentToolOrchestrator:
                 AgentToolCall(
                     tool='platform.query',
                     args={'action': 'describe_registry', 'model': 'hardware'},
-                    reason='用户要读取打卡或成员打开记录，但未形成具体查询条件',
+                    reason='用户要读取打卡或成员打卡记录，但未形成具体查询条件',
                 )
             ]
 
@@ -280,31 +279,8 @@ class AgentToolOrchestrator:
         tool_results: list[dict[str, Any]],
         context: dict[str, Any],
     ) -> str:
-        try:
-            gateway = DifyGateway()
-            if not gateway.has_chat_bot():
-                return ''
-
-            prompt = (
-                '你是实验室平台智能体。你已经通过后端安全工具读取了真实平台数据，'
-                '必须只基于工具结果回答，不要说“我无法访问后台/数据库/系统”。\n'
-                '回答要自然、简洁、像助手总结；字段名可以翻译成人能看懂的中文；'
-                '如果结果为空，说明查了哪些条件，并给出下一步建议。\n\n'
-                f'用户问题：{message}\n\n'
-                f'会话引用上下文：{json.dumps(context, ensure_ascii=False)[:2000]}\n\n'
-                f'工具调用：{json.dumps([{"tool": call.tool, "args": call.args, "reason": call.reason} for call in tool_calls], ensure_ascii=False)}\n\n'
-                f'工具结果：{json.dumps(tool_results, ensure_ascii=False, default=str)[:6000]}\n'
-            )
-            chat_result = gateway.run_chat_and_wait_answer(
-                message=prompt,
-                user_id=str(user.pk),
-                conversation_id=None,
-            )
-            return str(chat_result.get('answer_text') or '').strip()
-        except DifyGatewayError:
-            return ''
-        except Exception:
-            return ''
+        # 不再依赖外部平台，统一走本地格式化
+        return ''
 
     def _summarize_locally(self, message: str, tool_results: list[dict[str, Any]], context: dict[str, Any]) -> str:
         first = tool_results[0] if tool_results else {}
@@ -440,6 +416,12 @@ class AgentToolOrchestrator:
             return None
         user = context.get('last_user')
         return user if isinstance(user, dict) else None
+
+    @staticmethod
+    def _is_task_create(message: str) -> bool:
+        """检测任务创建意图，匹配"创建任务""创建一个任务""布置个任务"等变体。"""
+        import re
+        return bool(re.search(r'(创建|新建|布置|安排|派发|分配).{0,4}任务', message))
 
     @staticmethod
     def _looks_like_project_gap(message: str) -> bool:

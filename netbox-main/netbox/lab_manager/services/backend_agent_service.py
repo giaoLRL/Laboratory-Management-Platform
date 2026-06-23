@@ -210,6 +210,73 @@ class BackendAgentService:
             queryset = queryset.filter(Q(created_by=user) | Q(assigned_to=user))
         return queryset
 
+    def _create_task_structured(
+        self,
+        *,
+        user,
+        title: str,
+        assigned_to: str,
+        description: str = '',
+        deadline: str = '',
+        priority: str = 'medium',
+    ) -> dict[str, Any]:
+        """LLM 直接传入结构化参数创建任务（不走自然语言解析）。"""
+        if not user.is_superuser:
+            return {'ok': False, 'error': '只有管理员可以通过智能体创建任务'}
+
+        title = str(title or '').strip()[:200]
+        if not title:
+            return {'ok': False, 'error': '任务标题不能为空'}
+
+        assignee = User.objects.filter(
+            Q(username__iexact=assigned_to) |
+            Q(email__iexact=assigned_to) |
+            Q(first_name__icontains=assigned_to) |
+            Q(last_name__icontains=assigned_to)
+        ).first()
+        if assignee is None:
+            return {'ok': False, 'error': f'找不到执行人 "{assigned_to}"，请确认用户名或姓名是否正确'}
+
+        priority_map = {'urgent': TaskPriorityChoices.URGENT, 'high': TaskPriorityChoices.HIGH,
+                        'medium': TaskPriorityChoices.MEDIUM, 'low': TaskPriorityChoices.LOW}
+        priority_value = priority_map.get(str(priority).lower(), TaskPriorityChoices.MEDIUM)
+
+        deadline_dt = None
+        date_label = ''
+        if deadline and str(deadline).strip():
+            parsed = self._parse_explicit_date(str(deadline).strip())
+            if parsed:
+                deadline_dt = parsed
+                date_label = deadline_dt.strftime('%Y-%m-%d')
+
+        task = Task.objects.create(
+            title=title,
+            description=str(description or title)[:500],
+            priority=priority_value,
+            status=TaskStatusChoices.PENDING,
+            created_by=user,
+            assigned_to=assignee,
+            deadline=deadline_dt,
+        )
+
+        return {
+            'ok': True,
+            'task': {
+                'id': task.pk,
+                'title': task.title,
+                'description': task.description,
+                'status': task.status,
+                'status_label': task.get_status_display(),
+                'priority': task.priority,
+                'priority_label': task.get_priority_display(),
+                'created_by': task.created_by.username,
+                'assigned_to': task.assigned_to.username,
+                'assigned_to_name': task.assigned_to.get_full_name() or task.assigned_to.username,
+                'deadline': task.deadline.isoformat() if task.deadline else None,
+                'deadline_label': date_label,
+            },
+        }
+
     def _create_task_from_message(self, user, message: str) -> dict[str, Any]:
         if not user.is_superuser:
             return {'ok': False, 'error': '只有管理员可以通过智能体布置任务'}
@@ -225,7 +292,7 @@ class BackendAgentService:
 
         # 从消息中提取任务描述
         description = title
-        desc_match = re.search(r'(?:任务)?描述[是为]?[：:]\s*(.+?)(?:[，,]\s*(?:截止|优先级)|$)', message)
+        desc_match = re.search(r'(?:任务)?(?:描述|内容)[是为]?[：:]?\s*(.+?)(?:[，,]\s*(?:截止|优先级|标题)|$)', message)
         if desc_match:
             description = desc_match.group(1).strip()[:500]
 
@@ -728,7 +795,7 @@ class BackendAgentService:
                 'task': '任务',
                 'task_attachment': '任务附件',
                 'checkin': '打卡记录',
-                'member_open_record': '成员打开记录',
+                'member_open_record': '成员打卡记录',
                 'user': '人员/用户',
             }
             lines = ['[智能体] 我现在可以通过平台数据工具读取这些实验室数据：', '']
@@ -749,7 +816,7 @@ class BackendAgentService:
             'task': '任务',
             'task_attachment': '附件',
             'checkin': '打卡记录',
-            'member_open_record': '成员打开记录',
+            'member_open_record': '成员打卡记录',
             'user': '人员',
         }.get(model, model or '数据')
 
@@ -896,73 +963,29 @@ class BackendAgentService:
 
     @staticmethod
     def _extract_task_title(message: str, assignee) -> str:
-        # 优先匹配结构化格式："标题是：xxx" 或 "标题：xxx"
-        title_match = re.search(r'标题[是为]?[：:]\s*(.+?)(?:[，,]\s*(?:任务描述|描述|截止|优先级|$)|$)', message)
+        # 匹配"标题：xxx""标题是xxx""标题:xxx"等变体
+        title_match = re.search(r'标题[是为]?[：:]?\s*(.+?)(?:[，,]\s*(?:内容|任务描述|描述|截止|优先级|$)|$)', message)
         if title_match:
             return title_match.group(1).strip()[:200]
 
-        # 回退到原有提取逻辑
+        # 回退：去掉执行人名字、命令词，剩下的作为标题
         text = message.strip()
         for candidate in (assignee.username, assignee.email, assignee.first_name, assignee.last_name, assignee.get_full_name()):
             if candidate:
                 text = text.replace(str(candidate), ' ')
-        text = re.sub(r'^(请|帮我|给|让|安排|布置|创建|新建|派发|分配|管理员)*', ' ', text).strip()
-        text = re.sub(r'(布置任务|安排任务|创建任务|新建任务|派发任务|分配任务)', ' ', text).strip()
-        text = re.sub(r'^(：|:|，|,|给|让|请)\s*', '', text).strip()
+        text = re.sub(r'^(请|帮我|给|让|安排|布置|创建|新建|派发|分配|管理员)', ' ', text).strip()
+        text = re.sub(r'(布置任务|安排任务|创建任务|新建任务|派发任务|分配任务|一个任务)', ' ', text).strip()
+        text = re.sub(r'^(：|:|，|,|个|给|让|请)\s*', '', text).strip()
+        # 如果有"内容"字段，提取标题部分
+        content_match = re.search(r'^(.+?)[，,]\s*内容', text)
+        if content_match:
+            text = content_match.group(1).strip()
         # 移除日期和截止相关后缀
         text = re.sub(r'[，,]?\s*(?:截止日期|截止时间|ddl|deadline)[是为：:]\s*\S+.*$', '', text, flags=re.IGNORECASE).strip()
         text = re.sub(r'[，,]\s*(今天|今日|明天|本周|这周|尽快|紧急|高优先级|低优先级|不急)$', '', text).strip()
+        if not text:
+            return message[:200]
         return text[:200]
-
-    @staticmethod
-    def _parse_explicit_date(date_str: str):
-        """解析显式日期字符串，支持 2026-07-01、2026/07/01、2026年7月1日、明天、后天、下周一 等格式"""
-        import re as _re
-        from datetime import timedelta as _timedelta
-        today = timezone.localdate()
-
-        # 相对日期
-        date_lower = date_str.lower().strip()
-        if date_lower in ('明天', 'tomorrow'):
-            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=1), timezone.datetime.max.time()))
-        if date_lower in ('后天', 'day after tomorrow'):
-            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=2), timezone.datetime.max.time()))
-        if date_lower in ('今天', 'today'):
-            return timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
-
-        # 下周X
-        weekday_map = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6}
-        next_week_match = _re.match(r'下周([一二三四五六日天])', date_str)
-        if next_week_match:
-            target = weekday_map[next_week_match.group(1)]
-            days_ahead = target - today.weekday() + 7
-            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=days_ahead), timezone.datetime.max.time()))
-
-        # 本周X
-        this_week_match = _re.match(r'本周([一二三四五六日天])', date_str)
-        if this_week_match:
-            target = weekday_map[this_week_match.group(1)]
-            days_ahead = target - today.weekday()
-            if days_ahead < 0:
-                days_ahead += 7
-            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=days_ahead), timezone.datetime.max.time()))
-
-        # 绝对日期: 2026-07-01, 2026/07/01, 2026年7月1日, 7月1日
-        abs_match = _re.search(r'(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})日?', date_str)
-        if abs_match:
-            year, month, day = (int(part) for part in abs_match.groups())
-            return timezone.make_aware(timezone.datetime(year=year, month=month, day=day, hour=23, minute=59, second=59))
-
-        # 只有月日: 7月1日
-        md_match = _re.search(r'(\d{1,2})[-/.月](\d{1,2})日?', date_str)
-        if md_match:
-            month, day = int(md_match.group(1)), int(md_match.group(2))
-            target_date = today.replace(month=month, day=day)
-            if target_date < today:
-                target_date = target_date.replace(year=today.year + 1)
-            return timezone.make_aware(timezone.datetime.combine(target_date, timezone.datetime.max.time()))
-
-        return None
 
     @staticmethod
     def _parse_explicit_date(date_str: str):
@@ -979,6 +1002,22 @@ class BackendAgentService:
             return timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
 
         wd = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6}
+
+        # 这周五 / 下周一
+        nw2 = re.match(r'下周([一二三四五六日天])', date_str)
+        if nw2:
+            target = wd[nw2.group(1)]
+            days_ahead = target - today.weekday() + 7
+            return timezone.make_aware(timezone.datetime.combine(today + _td(days=days_ahead), timezone.datetime.max.time()))
+
+        tw2 = re.match(r'这周([一二三四五六日天])', date_str)
+        if tw2:
+            target = wd[tw2.group(1)]
+            days_ahead = target - today.weekday()
+            if days_ahead <= 0:
+                days_ahead += 7
+            return timezone.make_aware(timezone.datetime.combine(today + _td(days=days_ahead), timezone.datetime.max.time()))
+
         nw = re.match(r'下周([一二三四五六日天])', date_str)
         if nw:
             target = wd[nw.group(1)]
