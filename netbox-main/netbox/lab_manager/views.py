@@ -605,17 +605,30 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                     )
 
             gateway = DifyGateway()
-            # 智能路由：根据消息内容选择合适的处理方式
+            # 智能路由：让 LLM 处理绝大部分问题，只对特定操作保留 workflow
             if not workflow_alias and not force_external:
-                if any(kw in message for kw in ['硬件','库存','设备','芯片','传感器','开发板','stm32','esp32','arduino','物料']):
-                    workflow_alias = 'hardware_query'
-                elif any(kw in message for kw in ['视频','录像','附件','拍摄','录制']):
+                # 只有明确的数据检索/导入类操作走 workflow
+                if any(kw in message for kw in ['视频','录像','附件','拍摄','录制']):
                     workflow_alias = 'task_video_search'
                 elif any(kw in message for kw in ['导入','批量','校验','提交','入库']):
                     workflow_alias = 'hardware_import_validate'
-                elif any(kw in message for kw in ['缺口','缺','项目','方案','需要哪些']):
-                    workflow_alias = 'hardware_gap_analysis'
-                # 其他情况走 Chat API，让 DeepSeek 自然对话
+                # 硬件查询、方案推荐、缺口分析等全部走 Chat，让 DeepSeek 结合库存和网络信息综合回答
+                # 如果用户明确选择了工作流别名则保留
+
+            # 为 Chat 模式注入本地库存上下文
+            inventory_context = ""
+            if not workflow_alias and not force_external:
+                try:
+                    from lab_manager.models import Hardware
+                    hardware_items = Hardware.objects.all()[:50]
+                    if hardware_items.exists():
+                        items = []
+                        for h in hardware_items:
+                            items.append(f"{h.name}（{h.category or chr(39)+chr(39)}类别，库存{h.quantity}）")
+                        inventory_context = "当前实验室硬件库存：\\n" + "\\n".join(items)
+                except Exception:
+                    pass
+
 
             if workflow_alias:
                 parameters = payload.get('parameters')
@@ -666,8 +679,22 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                     }
                 )
 
+
+            # 🔍 网络搜索：为用户项目/方案类问题搜索参考信息
+            web_search_context = ""
+            project_keywords = ['项目','方案','设计','制作','小车','机器人','无人机','智能','推荐','购买','需要哪些','需要什么','怎么做','如何','什么硬件','哪些硬件','BOM','元器件','材料清单']
+            if any(kw in message for kw in project_keywords):
+                try:
+                    from .services.web_search import WebSearchService
+                    searcher = WebSearchService()
+                    search_result = searcher.search_for_project(message)
+                    if search_result:
+                        web_search_context = "\\n\\n=== 网络搜索结果（供参考） ===\\n" + search_result[:2000]
+                except Exception:
+                    pass
+
             chat_result = gateway.run_chat_and_wait_answer(
-                message=message,
+                message=(inventory_context + web_search_context + "\n\n用户问题：" + message) if (inventory_context or web_search_context) else message,
                 user_id=str(request.user.pk),
                 conversation_id=conversation.coze_conversation_id or conversation_id,
             )

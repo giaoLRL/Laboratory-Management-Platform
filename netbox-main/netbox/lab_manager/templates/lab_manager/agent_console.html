@@ -1,4 +1,4 @@
-{% extends 'base/layout.html' %}
+﻿{% extends 'base/layout.html' %}
 {% load i18n %}
 
 {% block title %}{% trans "智能体助手" %}{% endblock %}
@@ -330,7 +330,7 @@
     .agent-empty-card p {
         color: #64748b;
         font-size: 0.95rem;
-        line-height: 1.6;
+        line-height: 1.45;
     }
 
     .agent-message-row {
@@ -393,7 +393,7 @@
         border-radius: 16px;
         white-space: pre-wrap;
         word-break: break-word;
-        line-height: 1.7;
+        line-height: 1.5;
         font-size: 0.95rem;
     }
 
@@ -442,7 +442,7 @@
         max-height: 240px;
         padding: 0;
         font-size: 0.95rem;
-        line-height: 1.6;
+        line-height: 1.45;
         color: #0f172a;
         background: transparent;
     }
@@ -572,6 +572,25 @@
     .md-video-player{margin:12px 0;border-radius:10px;overflow:hidden;background:#0f172a;border:1px solid rgba(148,163,184,0.15)}
     .md-video{width:100%;max-width:560px;display:block;border-radius:10px 10px 0 0;outline:none}
     .md-video-filename{padding:8px 14px;font-size:0.8em;color:#94a3b8;font-family:'Cascadia Code','Fira Code',Consolas,monospace;display:flex;align-items:center;gap:6px}
+    .md-video-filename::before{content:'\1F3AC';font-size:0.9em}
+
+    .agent-message-bubble.assistant h1,.agent-message-bubble.assistant h2,.agent-message-bubble.assistant h3{margin-top:10px;margin-bottom:4px;font-weight:700;line-height:1.3}
+    .agent-message-bubble.assistant h1{font-size:1.4em}.agent-message-bubble.assistant h2{font-size:1.2em}.agent-message-bubble.assistant h3{font-size:1.05em}
+    .agent-message-bubble.assistant p{margin:2px 0 6px;line-height:1.5}
+    .agent-message-bubble.assistant ul,.agent-message-bubble.assistant ol{padding-left:20px;margin:2px 0 6px}
+    .agent-message-bubble.assistant li{margin-bottom:1px}.agent-message-bubble.assistant strong{font-weight:700}
+    .agent-message-bubble.assistant code{background:rgba(148,163,184,0.15);padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:0.88em}
+    .agent-message-bubble.assistant pre{background:#1e293b;color:#e2e8f0;padding:10px 14px;border-radius:8px;overflow-x:auto;margin:6px 0;font-size:0.85em;line-height:1.4}
+    .agent-message-bubble.assistant pre code{background:none;padding:0;border-radius:0;font-size:inherit}
+    .agent-message-bubble.assistant blockquote{border-left:3px solid #6366f1;padding-left:12px;margin:6px 0;color:#94a3b8}
+    .agent-message-bubble.assistant table{border-collapse:collapse;width:100%;margin:6px 0;font-size:0.9em}
+    .agent-message-bubble.assistant th,.agent-message-bubble.assistant td{border:1px solid rgba(148,163,184,0.25);padding:6px 12px;text-align:left}
+    .agent-message-bubble.assistant th{background:rgba(148,163,184,0.12);font-weight:600}
+    .agent-message-bubble.assistant hr{border:none;border-top:1px solid rgba(148,163,184,0.2);margin:8px 0}
+    .agent-message-bubble.assistant a{color:#818cf8;text-decoration:underline}
+    .md-video-player{margin:12px 0;border-radius:10px;overflow:hidden;background:#0f172a;border:1px solid rgba(148,163,184,0.15)}
+    .md-video{width:100%;max-width:560px;display:block;border-radius:10px 10px 0 0;outline:none}
+    .md-video-filename{padding:8px 14px;font-size:0.8em;color:#94a3b8;font-family:Consolas,monospace;display:flex;align-items:center;gap:6px}
     .md-video-filename::before{content:'\1F3AC';font-size:0.9em}
 
 </style>
@@ -711,36 +730,82 @@
 {% endblock %}
 
 {% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-// Markdown + Video 渲染
+// ═══════════════════════════════════════════
+// 自包含 Markdown 渲染器（无外部依赖）
+// ═══════════════════════════════════════════
 function renderMarkdown(text) {
     if (!text) return '';
-    var html;
-    try { html = marked.parse(text, { breaks: true, gfm: true }); }
-    catch (e) { return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
-    html = html.replace(/(\/media\/[^\s<>"']+\.(mp4|webm|ogg|mov|mkv|avi|m4v))/gi,
-        function(m,u,e){var m2=e.toLowerCase();if(m2==='mov')m2='quicktime';if(m2==='mkv')m2='x-matroska';
-        return '<div class=md-video-player><video controls preload=metadata class=md-video><source src='+u+' type=video/'+m2+'>您的浏览器不支持视频播放</video><div class=md-video-filename>'+decodeURIComponent(u.split('/').pop())+'</div></div>';});
-    return html;
+    var t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Code blocks
+    t = t.replace(/```(\w*)\n([\s\S]*?)```/g, function(m,lang,code){ return '<pre><code>'+code.replace(/\n$/,'')+'</code></pre>'; });
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Headers
+    t = t.replace(/^#### (.+)$/gm, '<h5>$1</h5>');
+    t = t.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    t = t.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    t = t.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    t = t.replace(/^---$/gm, '<hr>');
+    // Bold, italic
+    t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Links, images
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">');
+    // Tables
+    t = t.replace(/^\|(.+)\|$/gm, function(row){
+        var cells=row.split('|').filter(function(c){return c.trim();});
+        if (cells.every(function(c){return /^[-: ]+$/.test(c);})) return '';
+        return '<tr>'+cells.map(function(c){var isSep=/^[-: ]+$/.test(c);return (isSep?'<th>':'<td>')+c.trim()+(isSep?'</th>':'</td>');}).join('')+'</tr>';
+    });
+    t = t.replace(/(<tr>[\s\S]*?<\/tr>)/g, function(m){ return '<table>'+m+'</table>'; });
+    t = t.replace(/<\/table>\n<table>/g, '');
+    // Lists
+    t = t.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+    t = t.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+    t = t.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+    // Paragraphs
+    var blocks = t.split(/\n\n+/);
+    t = blocks.map(function(b){
+        b = b.trim();
+        if (!b) return '';
+        if (/^<(h[2-5]|table|ul|ol|pre|hr|div)/.test(b)) return b;
+        return '<p>'+b.replace(/\n/g,'<br>')+'</p>';
+    }).join('\n');
+    // Video embeds
+    t = t.replace(/(\/media\/[^\s<>"']+\.(mp4|webm|ogg|mov|mkv|avi|m4v))/gi,
+        function(m,u,e){
+            var m2=e.toLowerCase();
+            if(m2==='mov')m2='quicktime';
+            if(m2==='mkv')m2='x-matroska';
+            return '<div class="md-video-player"><video controls preload="metadata" class="md-video"><source src="'+u+'" type="video/'+m2+'">不支持该视频格式</video><div class="md-video-filename">'+decodeURIComponent(u.split('/').pop())+'</div></div>';
+        });
+    return t;
 }
-document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b){var r=b.textContent||'';if(r.trim())b.innerHTML=renderMarkdown(r);});
+// 页面加载时渲染已有消息
+document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b){
+    var r=b.textContent||'';
+    if(r.trim()){b.setAttribute('data-raw',r);b.innerHTML=renderMarkdown(r);}
+});
 
-// 主应用
-(() => {
-    const input = document.getElementById('agent-input');
-    const workflowAlias = document.getElementById('workflow-alias');
-    const sendButton = document.getElementById('send-agent-message');
-    const clearButton = document.getElementById('clear-agent-result');
-    const statusBox = document.getElementById('agent-status');
-    const rawBox = document.getElementById('agent-raw-payload');
-    const messageList = document.getElementById('message-list');
-    const sendButtonLabel = document.getElementById('send-button-label');
+// ═══════════════════════════════════════════
+// 智能体控制台主应用
+// ═══════════════════════════════════════════
+(function() {
+    var input = document.getElementById('agent-input');
+    var workflowAlias = document.getElementById('workflow-alias');
+    var sendButton = document.getElementById('send-agent-message');
+    var clearButton = document.getElementById('clear-agent-result');
+    var statusBox = document.getElementById('agent-status');
+    var rawBox = document.getElementById('agent-raw-payload');
+    var messageList = document.getElementById('message-list');
+    var sendButtonLabel = document.getElementById('send-button-label');
 
-    let conversationId = '{{ active_coze_conversation_id|default:"" }}';
-    let conversationPk = '{{ active_conversation_id|default:"" }}';
+    var conversationId = '{{ active_coze_conversation_id|default:""|escapejs }}';
+    var conversationPk = '{{ active_conversation_id|default:""|escapejs }}';
 
-    function setStatus(text, isError = false) {
+    function setStatus(text, isError) {
         statusBox.textContent = text;
         statusBox.className = isError ? 'agent-status-badge is-error' : 'agent-status-badge';
     }
@@ -750,49 +815,49 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     }
 
     function removeEmptyPlaceholder() {
-        const placeholder = document.getElementById('empty-message-placeholder');
-        if (placeholder) {
-            placeholder.remove();
-        }
+        var ph = document.getElementById('empty-message-placeholder');
+        if (ph) ph.remove();
     }
 
-    function formatTime(date = new Date()) {
-        return date.toLocaleTimeString('zh-CN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    function formatTime(date) {
+        date = date || new Date();
+        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
 
-    function setSendingState(isSending) {
-        sendButton.disabled = isSending;
-        sendButtonLabel.textContent = isSending ? '发送中...' : '发送';
+    function setSendingState(sending) {
+        sendButton.disabled = sending;
+        sendButtonLabel.textContent = sending ? '发送中...' : '发送';
     }
 
     function appendMessage(role, content) {
         removeEmptyPlaceholder();
-
-        const wrapper = document.createElement('div');
+        var wrapper = document.createElement('div');
         wrapper.className = 'agent-message-row ' + (role === 'user' ? 'user' : 'assistant');
 
-        const avatar = document.createElement('div');
+        var avatar = document.createElement('div');
         avatar.className = 'agent-avatar ' + (role === 'user' ? 'user' : 'assistant');
         avatar.textContent = role === 'user' ? '我' : 'AI';
 
-        const body = document.createElement('div');
+        var body = document.createElement('div');
         body.className = 'agent-message-body';
 
-        const meta = document.createElement('div');
+        var meta = document.createElement('div');
         meta.className = 'agent-message-meta';
 
-        const label = document.createElement('span');
+        var label = document.createElement('span');
         label.textContent = role === 'user' ? '我' : '智能体';
 
-        const time = document.createElement('span');
+        var time = document.createElement('span');
         time.textContent = formatTime();
 
-        const bubble = document.createElement('div');
+        var bubble = document.createElement('div');
         bubble.className = 'agent-message-bubble ' + (role === 'user' ? 'user' : 'assistant');
-        bubble.innerHTML = role === 'assistant' ? renderMarkdown(content||'') : (content||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        if (role === 'assistant') {
+            bubble.innerHTML = renderMarkdown(content || '');
+        } else {
+            var t = (content || '');
+            bubble.textContent = t;
+        }
 
         meta.appendChild(label);
         meta.appendChild(time);
@@ -804,25 +869,24 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
         messageList.scrollTop = messageList.scrollHeight;
     }
 
-    document.querySelectorAll('.quick-prompt').forEach((button) => {
-        button.addEventListener('click', () => {
-            input.value = button.dataset.prompt || '';
+    document.querySelectorAll('.quick-prompt').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            input.value = btn.dataset.prompt || '';
             input.focus();
         });
     });
 
-    clearButton.addEventListener('click', () => {
+    clearButton.addEventListener('click', function() {
         input.value = '';
         input.focus();
     });
 
     async function sendMessage() {
-        const message = input.value.trim();
+        var message = input.value.trim();
         if (!message) {
             setStatus('请输入内容后再发送', true);
             return;
         }
-
         setSendingState(true);
         setStatus('请求智能体中...');
         setRawPayload(null);
@@ -830,35 +894,34 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
         input.value = '';
 
         try {
-            const response = await fetch("{% url 'plugins:lab_manager:agent_chat_proxy' %}", {
+            var response = await fetch("{% url 'plugins:lab_manager:agent_chat_proxy' %}", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message,
+                    message: message,
                     workflow_alias: workflowAlias.value.trim(),
                     conversation_id: conversationId,
                     conversation_pk: conversationPk
                 })
             });
-
-            const result = await response.json();
+            var result = await response.json();
             if (!response.ok || !result.success) {
                 setStatus(result.message || '请求失败', true);
                 setRawPayload(result);
                 return;
             }
-
-            if (result.conversation_pk) {
-                conversationPk = String(result.conversation_pk);
-            }
-            if (result.conversation_id) {
-                conversationId = result.conversation_id;
-            }
+            if (result.conversation_pk) conversationPk = String(result.conversation_pk);
+            if (result.conversation_id) conversationId = result.conversation_id;
 
             if (result.mode === 'workflow') {
-                appendMessage('assistant', typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2));
+                var displayText = result.answer_text;
+                if (!displayText) {
+                    displayText = (typeof result.data === 'string') ? result.data : JSON.stringify(result.data, null, 2);
+                }
+                var tokens = (result.data && result.data.total_tokens) || 0;
+                var elapsedSec = (result.data && result.data.elapsed_time) || 0;
+                var elapsed = typeof elapsedSec === 'number' ? elapsedSec.toFixed(2) : String(elapsedSec);
+                appendMessage('assistant', displayText + '\n\n---\n🤖 DeepSeek · ' + tokens + ' tokens · ' + elapsed + 's');
             } else {
                 appendMessage('assistant', result.answer_text || '未获取到回答文本，请查看原始响应。');
             }
@@ -867,11 +930,9 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
             setStatus('请求完成');
 
             if (result.created_new_conversation && result.conversation_pk) {
-                const targetUrl = "{% url 'plugins:lab_manager:agent_console' %}?conversation=" + result.conversation_pk;
-                window.location.href = targetUrl;
+                window.location.href = "{% url 'plugins:lab_manager:agent_console' %}?conversation=" + result.conversation_pk;
             } else if (result.conversation_pk) {
-                const targetUrl = "{% url 'plugins:lab_manager:agent_console' %}?conversation=" + result.conversation_pk;
-                window.history.replaceState({}, '', targetUrl);
+                window.history.replaceState({}, '', "{% url 'plugins:lab_manager:agent_console' %}?conversation=" + result.conversation_pk);
             }
         } catch (error) {
             setStatus('请求异常，请检查配置或网络连接', true);
@@ -883,19 +944,22 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     }
 
     sendButton.addEventListener('click', sendMessage);
-
-    input.addEventListener('keydown', (event) => {
+    input.addEventListener('keydown', function(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            if (!sendButton.disabled) {
-                sendMessage();
-            }
+            if (!sendButton.disabled) sendMessage();
         }
     });
 
-    if (messageList) {
-        messageList.scrollTop = messageList.scrollHeight;
-    }
+    if (messageList) messageList.scrollTop = messageList.scrollHeight;
+
+    // 兜底：window.load 时再次渲染
+    window.addEventListener('load', function() {
+        document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b) {
+            var r = b.getAttribute('data-raw') || b.textContent || '';
+            if (r.trim()) b.innerHTML = renderMarkdown(r);
+        });
+    });
 })();
 </script>
 {% endblock %}
