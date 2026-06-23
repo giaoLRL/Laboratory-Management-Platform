@@ -1,0 +1,12 @@
+{
+  "app": {
+    "name": "实验室智能助手",
+    "description": "实验室管理平台对话助手",
+    "mode": "chat"
+  },
+  "model": {
+    "provider": null,
+    "model_id": null,
+    "configs": null
+  }
+}

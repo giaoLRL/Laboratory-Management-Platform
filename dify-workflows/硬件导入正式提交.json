@@ -1,0 +1,218 @@
+{
+  "app": {
+    "name": "硬件导入正式提交",
+    "description": "两段式导入-确认提交",
+    "mode": "workflow"
+  },
+  "workflow": {
+    "graph": {
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "data": {
+            "title": "开始",
+            "type": "start",
+            "variables": [
+              {
+                "variable": "user_query",
+                "label": "user_query",
+                "type": "text-input",
+                "required": true
+              }
+            ]
+          },
+          "position": {
+            "x": 80,
+            "y": 282
+          },
+          "positionAbsolute": {
+            "x": 80,
+            "y": 282
+          }
+        },
+        {
+          "id": "llm1",
+          "type": "llm",
+          "data": {
+            "title": "提取批次ID",
+            "type": "llm",
+            "model": {
+              "provider": "langgenius/openai_api_compatible/openai_api_compatible",
+              "name": "deepseek-chat",
+              "mode": "chat",
+              "completion_params": {
+                "temperature": 0.7
+              }
+            },
+            "prompt_template": [
+              {
+                "role": "system",
+                "text": "提取batch_id，输出JSON：{\"import_action\": \"commit\", \"batch_id\": \"...\", \"confirm\": true}\n用户输入：{{#start.user_query#}}"
+              }
+            ],
+            "memory": null,
+            "context": {
+              "enabled": false
+            }
+          },
+          "position": {
+            "x": 380,
+            "y": 282
+          },
+          "positionAbsolute": {
+            "x": 380,
+            "y": 282
+          }
+        },
+        {
+          "id": "http1",
+          "type": "http-request",
+          "data": {
+            "title": "确认提交",
+            "type": "http-request",
+            "method": "post",
+            "url": "http://172.22.96.1:8000/plugins/lab-manager/api/agent/hardware/import/commit/",
+            "headers": "Content-Type: application/json\nX-Agent-Source: dify-workflow\nX-Agent-Token: lab-manager-internal-token-change-me\nX-Request-ID: {{#sys.request_id#}}\nX-User-ID: 1",
+            "body": "{{#llm1.text#}}",
+            "authorization": {
+              "type": "no-auth"
+            },
+            "timeout": {
+              "connect": 10,
+              "read": 60,
+              "write": 20
+            },
+            "retry_config": {
+              "retry_enabled": true,
+              "max_retries": 3,
+              "retry_interval": 100
+            }
+          },
+          "position": {
+            "x": 680,
+            "y": 282
+          },
+          "positionAbsolute": {
+            "x": 680,
+            "y": 282
+          }
+        },
+        {
+          "id": "llm2",
+          "type": "llm",
+          "data": {
+            "title": "展示导入结果",
+            "type": "llm",
+            "model": {
+              "provider": "langgenius/openai_api_compatible/openai_api_compatible",
+              "name": "deepseek-chat",
+              "mode": "chat",
+              "completion_params": {
+                "temperature": 0.7
+              }
+            },
+            "prompt_template": [
+              {
+                "role": "system",
+                "text": "展示导入成功/失败数量和新建硬件ID。\n导入结果：{{#http1.body#}}"
+              }
+            ],
+            "memory": null,
+            "context": {
+              "enabled": false
+            }
+          },
+          "position": {
+            "x": 980,
+            "y": 282
+          },
+          "positionAbsolute": {
+            "x": 980,
+            "y": 282
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "data": {
+            "title": "结束",
+            "type": "end",
+            "outputs": [
+              {
+                "variable": "result",
+                "value_selector": [
+                  "llm2",
+                  "text"
+                ]
+              }
+            ]
+          },
+          "position": {
+            "x": 1280,
+            "y": 282
+          },
+          "positionAbsolute": {
+            "x": 1280,
+            "y": 282
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "start-llm1",
+          "source": "start",
+          "target": "llm1",
+          "type": "custom",
+          "sourceHandle": "source",
+          "targetHandle": "target",
+          "data": {
+            "sourceType": "start",
+            "targetType": "llm"
+          }
+        },
+        {
+          "id": "llm1-http1",
+          "source": "llm1",
+          "target": "http1",
+          "type": "custom",
+          "sourceHandle": "source",
+          "targetHandle": "target",
+          "data": {
+            "sourceType": "llm",
+            "targetType": "http-request"
+          }
+        },
+        {
+          "id": "http1-llm2",
+          "source": "http1",
+          "target": "llm2",
+          "type": "custom",
+          "sourceHandle": "source",
+          "targetHandle": "target",
+          "data": {
+            "sourceType": "http-request",
+            "targetType": "llm"
+          }
+        },
+        {
+          "id": "llm2-end",
+          "source": "llm2",
+          "target": "end",
+          "type": "custom",
+          "sourceHandle": "source",
+          "targetHandle": "target",
+          "data": {
+            "sourceType": "llm",
+            "targetType": "end"
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      }
+    }
+  }
+}

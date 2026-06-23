@@ -1,0 +1,11 @@
+﻿# Dify API Key 映射表
+# 用于 Netbox PLUGINS_CONFIG["lab_manager"]["dify_workflow_api_keys"]
+
+{
+    "hardware_query": "app-f4e774d913fa4ec5ac61c3fe",
+    "task_video_search": "app-50e71c28d140437e9c14af6f",
+    "hardware_gap_analysis": "app-70591b3157f74127b181f15f",
+    "hardware_import_validate": "app-7db5adb2c5c74a5097b9f954",
+    "hardware_import_commit": "app-f1e0db7f4d9241d1baed90b0",
+    "chat": "app-4a0955a232d44ddc985e4aaa"
+}
