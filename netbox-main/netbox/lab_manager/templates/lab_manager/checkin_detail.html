@@ -1,0 +1,51 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "打卡详情" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "打卡详情" %}</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'plugins:lab_manager:checkin_list' %}" class="btn btn-outline-primary">
+            <i class="mdi mdi-arrow-left"></i> {% trans "返回记录" %}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card">
+            <h5 class="card-header">{% trans "照片" %}</h5>
+            <div class="card-body">
+                {% if record.photo %}
+                <img src="{{ record.photo.url }}" class="img-fluid rounded" alt="{% trans '打卡照片' %}">
+                {% else %}
+                <p class="text-muted mb-0">{% trans "无照片" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card">
+            <h5 class="card-header">{% trans "定位信息" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <tr><th>{% trans "打卡人" %}</th><td>{{ record.user }}</td></tr>
+                    <tr><th>{% trans "打卡时间" %}</th><td>{{ record.created }}</td></tr>
+                    <tr><th>{% trans "纬度" %}</th><td>{{ record.latitude }}</td></tr>
+                    <tr><th>{% trans "经度" %}</th><td>{{ record.longitude }}</td></tr>
+                    <tr><th>{% trans "定位精度" %}</th><td>{{ record.accuracy|default:'-' }} {% trans "米" %}</td></tr>
+                    <tr><th>{% trans "地址备注" %}</th><td>{{ record.address|default:'-' }}</td></tr>
+                    <tr><th>{% trans "备注" %}</th><td>{{ record.note|linebreaksbr|default:'-' }}</td></tr>
+                </table>
+                <a class="btn btn-outline-primary" target="_blank" href="https://maps.google.com/?q={{ record.latitude }},{{ record.longitude }}">
+                    <i class="mdi mdi-map-marker"></i> {% trans "在地图中打开" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

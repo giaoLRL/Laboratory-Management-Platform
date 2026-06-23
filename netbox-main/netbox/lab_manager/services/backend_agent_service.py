@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
@@ -10,7 +10,7 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from users.models import User
 
-from ..choices import HardwareApprovalStatusChoices, HardwareCategoryChoices, HardwareStatusChoices, TaskStatusChoices
+from ..choices import HardwareApprovalStatusChoices, HardwareCategoryChoices, HardwareStatusChoices, TaskPriorityChoices, TaskStatusChoices
 from ..models import Hardware, HardwareImportBatch, Task, TaskAttachment
 from .platform_data_service import PlatformDataError, PlatformDataService
 
@@ -85,6 +85,16 @@ class BackendAgentService:
 
         intent = self._detect_intent(normalized_message)
 
+        if intent == 'task_create':
+            data = self._create_task_from_message(user, normalized_message)
+            return BackendAgentResponse(
+                handled=True,
+                intent=intent,
+                answer_text=self._format_task_create_answer(data),
+                data=data,
+                raw_payload={'intent': intent, 'data': data},
+            )
+
         if intent == 'task_videos':
             data = self._search_task_videos(user, normalized_message)
             return BackendAgentResponse(
@@ -152,7 +162,7 @@ class BackendAgentService:
                 return BackendAgentResponse(
                     handled=True,
                     intent=intent,
-                    answer_text=f'🤖 我理解这是平台数据查询，但查询条件没有通过安全校验：{exc}',
+                    answer_text=f'[智能体] 我理解这是平台数据查询，但查询条件没有通过安全校验：{exc}',
                     data={'error': str(exc)},
                     raw_payload={'intent': intent, 'error': str(exc)},
                 )
@@ -167,6 +177,8 @@ class BackendAgentService:
         )
 
     def _detect_intent(self, message: str) -> str:
+        if self._contains_any(message, ('布置任务', '安排任务', '创建任务', '新建任务', '派发任务', '分配任务')):
+            return 'task_create'
         if self._contains_any(message, ('导入', '批量上传', '批量导入', '一键上传', '一键导入', '两段式')):
             return 'import_guide'
         if self._contains_any(message, ('视频', '录像', '录屏', '附件')) and self._contains_any(message, ('任务', '完成', '已完成', '导出', '下载')):
@@ -197,6 +209,76 @@ class BackendAgentService:
         if not user.is_superuser:
             queryset = queryset.filter(Q(created_by=user) | Q(assigned_to=user))
         return queryset
+
+    def _create_task_from_message(self, user, message: str) -> dict[str, Any]:
+        if not user.is_superuser:
+            return {'ok': False, 'error': '只有管理员可以通过智能体布置任务'}
+
+        matched_users = self._find_members_in_message(message)
+        if not matched_users:
+            return {'ok': False, 'error': '没有识别到执行人，请在消息里写明成员账号、姓名或邮箱'}
+
+        assignee = matched_users[0]
+        title = self._extract_task_title(message, assignee)
+        if not title:
+            return {'ok': False, 'error': '没有识别到任务内容，请用"给张三布置任务：完成xxx"或"标题：xxx，描述：xxx"的格式'}
+
+        # 从消息中提取任务描述
+        description = title
+        desc_match = re.search(r'(?:任务)?描述[是为]?[：:]\s*(.+?)(?:[，,]\s*(?:截止|优先级)|$)', message)
+        if desc_match:
+            description = desc_match.group(1).strip()[:500]
+
+        # 从消息中提取显式截止日期
+        deadline = None
+        date_label = ''
+        dl_match = re.search(r'(?:截止日期|截止时间|ddl|deadline|截止)[是为]?[：:]\s*([^，,]+?)(?:[，,]|$)', message, re.IGNORECASE)
+        if dl_match:
+            parsed = self._parse_explicit_date(dl_match.group(1).strip())
+            if parsed:
+                deadline = parsed
+                date_label = deadline.strftime('%Y-%m-%d')
+        if not deadline:
+            date_from, date_to, dl = self._parse_date_range_from_message(message)
+            date_label = dl
+            if date_to:
+                deadline = timezone.make_aware(timezone.datetime.combine(date_to, timezone.datetime.max.time()))
+
+        priority = TaskPriorityChoices.MEDIUM
+        if self._contains_any(message, ('紧急', '马上', '尽快', '加急')):
+            priority = TaskPriorityChoices.URGENT
+        elif self._contains_any(message, ('高优先级', '重要')):
+            priority = TaskPriorityChoices.HIGH
+        elif self._contains_any(message, ('低优先级', '不急')):
+            priority = TaskPriorityChoices.LOW
+
+        task = Task.objects.create(
+            title=title[:200],
+            description=description,
+            priority=priority,
+            status=TaskStatusChoices.PENDING,
+            created_by=user,
+            assigned_to=assignee,
+            deadline=deadline,
+        )
+
+        return {
+            'ok': True,
+            'task': {
+                'id': task.pk,
+                'title': task.title,
+                'description': task.description,
+                'status': task.status,
+                'status_label': task.get_status_display(),
+                'priority': task.priority,
+                'priority_label': task.get_priority_display(),
+                'created_by': task.created_by.username,
+                'assigned_to': task.assigned_to.username,
+                'assigned_to_name': task.assigned_to.get_full_name() or task.assigned_to.username,
+                'deadline': task.deadline.isoformat() if task.deadline else None,
+                'deadline_label': date_label,
+            },
+        }
 
     def _search_hardware(self, user, message: str) -> dict[str, Any]:
         queryset = self._visible_hardware_queryset(user)
@@ -507,11 +589,11 @@ class BackendAgentService:
     def _format_hardware_answer(self, data: dict[str, Any]) -> str:
         if data['total_count'] == 0:
             if data['keywords']:
-                return f"🤖 抱歉，我翻遍了库存，没有找到与“**{', '.join(data['keywords'])}**”相关的硬件资源。要不换个型号或品牌再试试？"
-            return '🤖 当前你可见范围内还没有硬件资源记录哦。'
+                return f"[智能体] 抱歉，我翻遍了库存，没有找到与“**{', '.join(data['keywords'])}**”相关的硬件资源。要不换个型号或品牌再试试？"
+            return '[智能体] 当前你可见范围内还没有硬件资源记录哦。'
 
         lines = [
-            f"🤖 没问题！我已经为你找到了 **{data['total_count']}** 条相关的硬件记录，合计 **{data['total_quantity']}** 件。",
+            f"[智能体] 没问题！我已经为你找到了 **{data['total_count']}** 条相关的硬件记录，合计 **{data['total_quantity']}** 件。",
             ""
         ]
         if data['category_summary']:
@@ -541,7 +623,7 @@ class BackendAgentService:
     def _format_hardware_gap_answer(self, data: dict[str, Any]) -> str:
         lines = []
         project_name = data.get('project_name') or '当前项目'
-        lines.append(f"🤖 你好！我已经根据你的需求“**{project_name}**”分析了实验室当前的库存情况。")
+        lines.append(f"[智能体] 你好！我已经根据你的需求“**{project_name}**”分析了实验室当前的库存情况。")
         lines.append("")
         
         if data['matched']:
@@ -571,9 +653,9 @@ class BackendAgentService:
 
     def _format_task_summary_answer(self, data: dict[str, Any]) -> str:
         if data['total'] == 0:
-            return '🤖 没有查询到匹配的任务哦。你可以尝试补充具体的任务状态、负责人或时间范围。'
+            return '[智能体] 没有查询到匹配的任务哦。你可以尝试补充具体的任务状态、负责人或时间范围。'
 
-        lines = [f"🤖 好的，我为你找到了 **{data['total']}** 个任务。", ""]
+        lines = [f"[智能体] 好的，我为你找到了 **{data['total']}** 个任务。", ""]
         if data['status_summary']:
             summary_parts = [f"**{self._get_task_status_label(item['status'])}**({item['count']}个)" for item in data['status_summary']]
             lines.append(f"📊 **状态分布**：{'，'.join(summary_parts)}")
@@ -595,7 +677,7 @@ class BackendAgentService:
 
     def _format_task_video_answer(self, data: dict[str, Any]) -> str:
         if data['video_count'] == 0:
-            return '🤖 找了一圈，没有找到匹配的任务视频附件。你可以试着放宽时间范围或换一个关键词。'
+            return '[智能体] 找了一圈，没有找到匹配的任务视频附件。你可以试着放宽时间范围或换一个关键词。'
 
         scope_parts = []
         if data.get('members'):
@@ -603,13 +685,39 @@ class BackendAgentService:
         if data.get('date_label'):
             scope_parts.append('时间：' + data['date_label'])
         scope_text = f"（{'；'.join(scope_parts)}）" if scope_parts else ''
-        lines = [f"🤖 已为你整理好{scope_text}的任务视频附件：共 **{data['task_count']}** 个任务、**{data['video_count']}** 个视频。", ""]
+        lines = [f"[智能体] 已为你整理好{scope_text}的任务视频附件：共 **{data['task_count']}** 个任务、**{data['video_count']}** 个视频。", ""]
         for task in data['tasks'][:5]:
             lines.append(f"📁 **任务：{task['task_title']}** (负责人: {task['assigned_to']})")
             for video in task['videos']:
                 lines.append(f"  - 🎬 `{video['file_name']}` [点击查看]({video['file_url'] or '#'})")
             lines.append("")
         lines.append('结构化结果已同步返回 `export_items`，外部工作流可以直接拿它生成导出表或下载清单。')
+        return '\n'.join(lines)
+
+    @staticmethod
+    def _format_task_create_answer(data: dict[str, Any]) -> str:
+        if not data.get('ok'):
+            return f"[智能体] 任务没有创建成功：{data.get('error', '未知错误')}"
+        task = data['task']
+        lines = [
+            '[智能体] 已创建任务并分配给成员。',
+            '',
+            f"- **任务**：{task['title']}",
+        ]
+        desc = task.get('description', '')
+        if desc and desc != task['title']:
+            # 描述较长时截断展示
+            display_desc = desc[:100] + ('...' if len(desc) > 100 else '')
+            lines.append(f"- **描述**：{display_desc}")
+        lines += [
+            f"- **负责人**：{task['assigned_to_name']}",
+            f"- **优先级**：{task['priority_label']}",
+            f"- **状态**：{task['status_label']}",
+        ]
+        if task.get('deadline'):
+            lines.append(f"- **截止时间**：{task['deadline'][:10]}")
+        if task.get('deadline_label') and task.get('deadline_label') != (task.get('deadline') or '')[:10]:
+            lines.append(f"- **截止说明**：{task['deadline_label']}")
         return '\n'.join(lines)
 
     def _format_platform_query_answer(self, data: dict[str, Any]) -> str:
@@ -619,9 +727,11 @@ class BackendAgentService:
                 'hardware_approval': '硬件审批',
                 'task': '任务',
                 'task_attachment': '任务附件',
+                'checkin': '打卡记录',
+                'member_open_record': '成员打开记录',
                 'user': '人员/用户',
             }
-            lines = ['🤖 我现在可以通过平台数据工具读取这些实验室数据：', '']
+            lines = ['[智能体] 我现在可以通过平台数据工具读取这些实验室数据：', '']
             for model_key, meta in data['models'].items():
                 fields = meta.get('fields') or []
                 field_labels = [field.get('label') or field.get('name') for field in fields[:12]]
@@ -638,17 +748,19 @@ class BackendAgentService:
             'hardware_approval': '硬件审批',
             'task': '任务',
             'task_attachment': '附件',
+            'checkin': '打卡记录',
+            'member_open_record': '成员打开记录',
             'user': '人员',
         }.get(model, model or '数据')
 
         if action == 'count_records':
-            return f"🤖 查询完成：**{model_label}** 共 **{total}** 条。"
+            return f"[智能体] 查询完成：**{model_label}** 共 **{total}** 条。"
 
         if action == 'aggregate_records':
             items = data.get('items') or []
             if not items:
-                return f"🤖 没有找到可统计的 **{model_label}** 数据。"
-            lines = [f"🤖 已按条件统计 **{model_label}**：", ""]
+                return f"[智能体] 没有找到可统计的 **{model_label}** 数据。"
+            lines = [f"[智能体] 已按条件统计 **{model_label}**：", ""]
             for item in items[:12]:
                 parts = [f"{key}: {value}" for key, value in item.items()]
                 lines.append(f"- {' | '.join(parts)}")
@@ -656,16 +768,16 @@ class BackendAgentService:
 
         item = data.get('item')
         if item:
-            lines = [f"🤖 找到这条 **{model_label}** 记录：", ""]
+            lines = [f"[智能体] 找到这条 **{model_label}** 记录：", ""]
             for key, value in item.items():
                 lines.append(f"- **{key}**：{value if value not in (None, '') else '-'}")
             return '\n'.join(lines)
 
         items = data.get('items') or []
         if not items:
-            return f"🤖 没有查询到匹配的 **{model_label}** 数据。"
+            return f"[智能体] 没有查询到匹配的 **{model_label}** 数据。"
 
-        lines = [f"🤖 查询完成：找到 **{total}** 条 **{model_label}** 数据，先展示前 **{len(items[:8])}** 条：", ""]
+        lines = [f"[智能体] 查询完成：找到 **{total}** 条 **{model_label}** 数据，先展示前 **{len(items[:8])}** 条：", ""]
         for index, item in enumerate(items[:8], start=1):
             parts = []
             for key, value in item.items():
@@ -678,7 +790,7 @@ class BackendAgentService:
         return '\n'.join(lines)
 
     def _format_import_guide_answer(self, data: dict[str, Any]) -> str:
-        lines = ["🤖 **关于两段式硬件导入的说明**", ""]
+        lines = ["[智能体] **关于两段式硬件导入的说明**", ""]
         if data['is_admin']:
             lines.append('✅ 你当前拥有**管理员权限**，可以直接执行导入操作。')
         else:
@@ -707,7 +819,7 @@ class BackendAgentService:
         category_text = '，'.join(category_parts) if category_parts else '暂无分类统计'
         
         return (
-            f"🤖 你好！我是实验室智能体助手。\n\n"
+            f"[智能体] 你好！我是实验室智能体助手。\n\n"
             f"📊 **当前概况**：\n"
             f"- 硬件资源：共 **{data['hardware_total']}** 条记录，合计 **{data['hardware_quantity']}** 件。\n"
             f"- 任务进度：共有 **{data['task_total']}** 个任务，最近 7 天已完成 **{data['task_completed_recent']}** 个。\n\n"
@@ -783,6 +895,120 @@ class BackendAgentService:
         return cleaned_message[:40] or '当前项目'
 
     @staticmethod
+    def _extract_task_title(message: str, assignee) -> str:
+        # 优先匹配结构化格式："标题是：xxx" 或 "标题：xxx"
+        title_match = re.search(r'标题[是为]?[：:]\s*(.+?)(?:[，,]\s*(?:任务描述|描述|截止|优先级|$)|$)', message)
+        if title_match:
+            return title_match.group(1).strip()[:200]
+
+        # 回退到原有提取逻辑
+        text = message.strip()
+        for candidate in (assignee.username, assignee.email, assignee.first_name, assignee.last_name, assignee.get_full_name()):
+            if candidate:
+                text = text.replace(str(candidate), ' ')
+        text = re.sub(r'^(请|帮我|给|让|安排|布置|创建|新建|派发|分配|管理员)*', ' ', text).strip()
+        text = re.sub(r'(布置任务|安排任务|创建任务|新建任务|派发任务|分配任务)', ' ', text).strip()
+        text = re.sub(r'^(：|:|，|,|给|让|请)\s*', '', text).strip()
+        # 移除日期和截止相关后缀
+        text = re.sub(r'[，,]?\s*(?:截止日期|截止时间|ddl|deadline)[是为：:]\s*\S+.*$', '', text, flags=re.IGNORECASE).strip()
+        text = re.sub(r'[，,]\s*(今天|今日|明天|本周|这周|尽快|紧急|高优先级|低优先级|不急)$', '', text).strip()
+        return text[:200]
+
+    @staticmethod
+    def _parse_explicit_date(date_str: str):
+        """解析显式日期字符串，支持 2026-07-01、2026/07/01、2026年7月1日、明天、后天、下周一 等格式"""
+        import re as _re
+        from datetime import timedelta as _timedelta
+        today = timezone.localdate()
+
+        # 相对日期
+        date_lower = date_str.lower().strip()
+        if date_lower in ('明天', 'tomorrow'):
+            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=1), timezone.datetime.max.time()))
+        if date_lower in ('后天', 'day after tomorrow'):
+            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=2), timezone.datetime.max.time()))
+        if date_lower in ('今天', 'today'):
+            return timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
+
+        # 下周X
+        weekday_map = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6}
+        next_week_match = _re.match(r'下周([一二三四五六日天])', date_str)
+        if next_week_match:
+            target = weekday_map[next_week_match.group(1)]
+            days_ahead = target - today.weekday() + 7
+            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=days_ahead), timezone.datetime.max.time()))
+
+        # 本周X
+        this_week_match = _re.match(r'本周([一二三四五六日天])', date_str)
+        if this_week_match:
+            target = weekday_map[this_week_match.group(1)]
+            days_ahead = target - today.weekday()
+            if days_ahead < 0:
+                days_ahead += 7
+            return timezone.make_aware(timezone.datetime.combine(today + _timedelta(days=days_ahead), timezone.datetime.max.time()))
+
+        # 绝对日期: 2026-07-01, 2026/07/01, 2026年7月1日, 7月1日
+        abs_match = _re.search(r'(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})日?', date_str)
+        if abs_match:
+            year, month, day = (int(part) for part in abs_match.groups())
+            return timezone.make_aware(timezone.datetime(year=year, month=month, day=day, hour=23, minute=59, second=59))
+
+        # 只有月日: 7月1日
+        md_match = _re.search(r'(\d{1,2})[-/.月](\d{1,2})日?', date_str)
+        if md_match:
+            month, day = int(md_match.group(1)), int(md_match.group(2))
+            target_date = today.replace(month=month, day=day)
+            if target_date < today:
+                target_date = target_date.replace(year=today.year + 1)
+            return timezone.make_aware(timezone.datetime.combine(target_date, timezone.datetime.max.time()))
+
+        return None
+
+    @staticmethod
+    def _parse_explicit_date(date_str: str):
+        """解析显式日期字符串：2026-07-01、明天、后天、下周一 等格式"""
+        today = timezone.localdate()
+        from datetime import timedelta as _td
+
+        date_lower = date_str.lower().strip()
+        if date_lower in ('明天', 'tomorrow'):
+            return timezone.make_aware(timezone.datetime.combine(today + _td(days=1), timezone.datetime.max.time()))
+        if date_lower in ('后天', 'day after tomorrow'):
+            return timezone.make_aware(timezone.datetime.combine(today + _td(days=2), timezone.datetime.max.time()))
+        if date_lower in ('今天', 'today'):
+            return timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
+
+        wd = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6}
+        nw = re.match(r'下周([一二三四五六日天])', date_str)
+        if nw:
+            target = wd[nw.group(1)]
+            days_ahead = target - today.weekday() + 7
+            return timezone.make_aware(timezone.datetime.combine(today + _td(days=days_ahead), timezone.datetime.max.time()))
+
+        tw = re.match(r'本周([一二三四五六日天])', date_str)
+        if tw:
+            target = wd[tw.group(1)]
+            days_ahead = target - today.weekday()
+            if days_ahead < 0:
+                days_ahead += 7
+            return timezone.make_aware(timezone.datetime.combine(today + _td(days=days_ahead), timezone.datetime.max.time()))
+
+        abs_m = re.search(r'(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})日?', date_str)
+        if abs_m:
+            y, m, d = (int(p) for p in abs_m.groups())
+            return timezone.make_aware(timezone.datetime(year=y, month=m, day=d, hour=23, minute=59, second=59))
+
+        md_m = re.search(r'(\d{1,2})[-/.月](\d{1,2})日?', date_str)
+        if md_m:
+            m, d = int(md_m.group(1)), int(md_m.group(2))
+            target_date = today.replace(month=m, day=d)
+            if target_date < today:
+                target_date = target_date.replace(year=today.year + 1)
+            return timezone.make_aware(timezone.datetime.combine(target_date, timezone.datetime.max.time()))
+
+        return None
+
+    @staticmethod
     def _parse_date_range_from_message(message: str):
         today = timezone.localdate()
         explicit_match = re.search(r'(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})日?', message)
@@ -802,6 +1028,9 @@ class BackendAgentService:
         if '昨天' in message:
             yesterday = today - timedelta(days=1)
             return yesterday, yesterday, '昨天'
+        if '明天' in message:
+            tomorrow_date = today + timedelta(days=1)
+            return tomorrow_date, tomorrow_date, '明天'
         if '今天' in message:
             return today, today, '今天'
         if '本周' in message or '这周' in message:

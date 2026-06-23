@@ -11,7 +11,7 @@ from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_date, parse_datetime
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
@@ -25,7 +25,7 @@ from .choices import (
     TaskPriorityChoices,
     TaskStatusChoices,
 )
-from .models import Hardware, HardwareImportBatch, Task, TaskAttachment
+from .models import CheckInRecord, Hardware, HardwareImportBatch, MemberOpenRecord, Task, TaskAttachment
 from .services import PlatformDataError, PlatformDataService
 
 VIDEO_EXTENSIONS = {'.mp4', '.webm', '.avi', '.mov', '.mkv', '.m4v'}
@@ -482,6 +482,183 @@ class SearchTasksAPIView(AgentAPIView):
                     'deadline': task.deadline.isoformat() if task.deadline else None,
                     'completed_at': task.completed_at.isoformat() if task.completed_at else None,
                     'completion_note': task.completion_note,
+                }
+            )
+
+        return self.success_response(
+            {
+                'total': total,
+                'date_from': date_from.isoformat() if date_from else None,
+                'date_to': date_to.isoformat() if date_to else None,
+                'date_label': date_label,
+                'items': items,
+            }
+        )
+
+
+class CreateTaskAPIView(AgentAPIView):
+    def post(self, request):
+        admin_error = self.ensure_admin()
+        if admin_error:
+            return admin_error
+
+        payload = self.parse_json_body(request)
+        if isinstance(payload, JsonResponse):
+            return payload
+
+        title = str(payload.get('title', '')).strip()
+        description = str(payload.get('description', '')).strip()
+        assigned_to_value = str(payload.get('assigned_to', '') or payload.get('assignee', '')).strip()
+        priority = str(payload.get('priority') or TaskPriorityChoices.MEDIUM).strip()
+        deadline_raw = str(payload.get('deadline', '')).strip()
+
+        if not title:
+            return self.error_response('缺少 title', code='40002', status=400)
+        if not description:
+            description = title
+        if not assigned_to_value:
+            return self.error_response('缺少 assigned_to', code='40002', status=400)
+        if priority not in TASK_PRIORITY_VALUES:
+            return self.error_response('priority 不合法', code='40003', status=400)
+
+        assignee = User.objects.filter(
+            Q(username__iexact=assigned_to_value) |
+            Q(email__iexact=assigned_to_value) |
+            Q(first_name__icontains=assigned_to_value) |
+            Q(last_name__icontains=assigned_to_value)
+        ).first()
+        if assignee is None:
+            return self.error_response('执行人不存在', code='40401', status=404)
+
+        deadline = parse_datetime(deadline_raw) if deadline_raw else None
+        if deadline_raw and deadline is None:
+            parsed_date = parse_date(deadline_raw)
+            deadline = timezone.make_aware(
+                timezone.datetime.combine(parsed_date, timezone.datetime.max.time())
+            ) if parsed_date else None
+        if deadline_raw and deadline is None:
+            return self.error_response('deadline 不合法', code='40003', status=400)
+
+        task = Task.objects.create(
+            title=title,
+            description=description,
+            priority=priority,
+            status=TaskStatusChoices.PENDING,
+            created_by=self.acting_user,
+            assigned_to=assignee,
+            deadline=deadline,
+        )
+
+        return self.success_response(
+            {
+                'id': task.pk,
+                'title': task.title,
+                'description': task.description,
+                'priority': task.priority,
+                'priority_label': task.get_priority_display(),
+                'status': task.status,
+                'status_label': task.get_status_display(),
+                'created_by': task.created_by.username,
+                'assigned_to': task.assigned_to.username,
+                'assigned_to_name': task.assigned_to.get_full_name() or task.assigned_to.username,
+                'deadline': task.deadline.isoformat() if task.deadline else None,
+            },
+            message='created',
+            status=201,
+        )
+
+
+class SearchCheckInsAPIView(AgentAPIView):
+    def post(self, request):
+        payload = self.parse_json_body(request)
+        if isinstance(payload, JsonResponse):
+            return payload
+
+        queryset = CheckInRecord.objects.select_related('user').order_by('-created')
+        if not self.acting_user.is_superuser:
+            queryset = queryset.filter(user=self.acting_user)
+
+        user_value = payload.get('user')
+        if user_value:
+            queryset = queryset.filter(_user_lookup_q('user', user_value))
+
+        date_from, date_to, date_label = _parse_agent_date_range(payload)
+        if date_from:
+            queryset = queryset.filter(created__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created__date__lte=date_to)
+
+        offset = max(_safe_int(payload.get('offset', 0), 0), 0)
+        limit = min(max(_safe_int(payload.get('limit', 20), 20), 1), 100)
+        total = queryset.count()
+        items = []
+        for record in queryset[offset:offset + limit]:
+            items.append(
+                {
+                    'id': record.pk,
+                    'user': record.user.username,
+                    'user_name': record.user.get_full_name() or record.user.username,
+                    'photo_url': record.photo.url if record.photo else '',
+                    'latitude': str(record.latitude),
+                    'longitude': str(record.longitude),
+                    'accuracy': str(record.accuracy) if record.accuracy is not None else '',
+                    'address': record.address,
+                    'note': record.note,
+                    'created': record.created.isoformat() if record.created else None,
+                }
+            )
+
+        return self.success_response(
+            {
+                'total': total,
+                'date_from': date_from.isoformat() if date_from else None,
+                'date_to': date_to.isoformat() if date_to else None,
+                'date_label': date_label,
+                'items': items,
+            }
+        )
+
+
+class SearchMemberOpenRecordsAPIView(AgentAPIView):
+    def post(self, request):
+        admin_error = self.ensure_admin()
+        if admin_error:
+            return admin_error
+
+        payload = self.parse_json_body(request)
+        if isinstance(payload, JsonResponse):
+            return payload
+
+        queryset = MemberOpenRecord.objects.select_related('user').order_by('-created')
+        user_value = payload.get('user')
+        if user_value:
+            queryset = queryset.filter(_user_lookup_q('user', user_value))
+        target_type = str(payload.get('target_type', '')).strip()
+        if target_type:
+            queryset = queryset.filter(target_type=target_type)
+
+        date_from, date_to, date_label = _parse_agent_date_range(payload)
+        if date_from:
+            queryset = queryset.filter(created__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created__date__lte=date_to)
+
+        offset = max(_safe_int(payload.get('offset', 0), 0), 0)
+        limit = min(max(_safe_int(payload.get('limit', 20), 20), 1), 100)
+        total = queryset.count()
+        items = []
+        for record in queryset[offset:offset + limit]:
+            items.append(
+                {
+                    'id': record.pk,
+                    'user': record.user.username,
+                    'user_name': record.user.get_full_name() or record.user.username,
+                    'page_title': record.page_title,
+                    'path': record.path,
+                    'target_type': record.target_type,
+                    'target_id': record.target_id,
+                    'ip_address': record.ip_address,
+                    'created': record.created.isoformat() if record.created else None,
                 }
             )
 

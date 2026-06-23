@@ -1,0 +1,64 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "成员打开记录" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "成员打开记录" %}</h1>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="search" class="form-control" name="username" value="{{ username }}" placeholder="{% trans '成员账号、姓名或邮箱' %}">
+    </div>
+    <div class="col-md-3">
+        <input type="search" class="form-control" name="target_type" value="{{ target_type }}" placeholder="{% trans '对象类型' %}">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">
+            <i class="mdi mdi-magnify"></i> {% trans "筛选" %}
+        </button>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'plugins:lab_manager:member_open_records' %}" class="btn btn-outline-secondary">
+            {% trans "重置" %}
+        </a>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% trans "时间" %}</th>
+                    <th>{% trans "成员" %}</th>
+                    <th>{% trans "页面" %}</th>
+                    <th>{% trans "对象" %}</th>
+                    <th>{% trans "路径" %}</th>
+                    <th>{% trans "IP" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.created }}</td>
+                    <td>{{ record.user }}</td>
+                    <td>{{ record.page_title|default:'-' }}</td>
+                    <td>{{ record.target_type|default:'-' }}{% if record.target_id %} #{{ record.target_id }}{% endif %}</td>
+                    <td class="text-break">{{ record.path }}</td>
+                    <td>{{ record.ip_address|default:'-' }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-muted text-center py-4">{% trans "暂无打开记录" %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

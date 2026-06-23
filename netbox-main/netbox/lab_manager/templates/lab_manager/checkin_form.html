@@ -1,0 +1,160 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "拍照定位打卡" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "拍照定位打卡" %}</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'plugins:lab_manager:checkin_list' %}" class="btn btn-outline-primary">
+            <i class="mdi mdi-format-list-bulleted"></i> {% trans "打卡记录" %}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card">
+            <h5 class="card-header">{% trans "提交打卡" %}</h5>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="checkin-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.photo.id_for_label }}">{% trans "现场照片" %}</label>
+                        {{ form.photo }}
+                        {% if form.photo.errors %}<div class="text-danger small">{{ form.photo.errors }}</div>{% endif %}
+                    </div>
+                    {{ form.latitude }}
+                    {{ form.longitude }}
+                    {{ form.accuracy }}
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary" id="locate-button">
+                            <i class="mdi mdi-crosshairs-gps"></i> {% trans "获取当前位置" %}
+                        </button>
+                        <span class="ms-2 text-muted" id="location-status">{% trans "尚未获取定位" %}</span>
+                    </div>
+                    <div class="alert alert-warning d-none" id="location-help">
+                        {% trans "定位权限已被浏览器拒绝。请点击地址栏左侧的权限图标，将位置权限改为允许后刷新页面；也可以手动填写经纬度继续打卡。" %}
+                    </div>
+                    <div class="row d-none" id="manual-location-fields">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="manual-latitude">{% trans "纬度" %}</label>
+                            <input type="number" step="0.0000001" min="-90" max="90" class="form-control" id="manual-latitude" placeholder="31.2304000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="manual-longitude">{% trans "经度" %}</label>
+                            <input type="number" step="0.0000001" min="-180" max="180" class="form-control" id="manual-longitude" placeholder="121.4737000">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.address.id_for_label }}">{% trans "地址备注" %}</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.note.id_for_label }}">{% trans "备注" %}</label>
+                        {{ form.note }}
+                        {% if form.note.errors %}<div class="text-danger small">{{ form.note.errors }}</div>{% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-success" id="submit-button" disabled>
+                        <i class="mdi mdi-check-bold"></i> {% trans "提交打卡" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <h5 class="card-header">{% trans "最近打卡" %}</h5>
+            <div class="card-body">
+                {% if recent_checkins %}
+                <div class="list-group list-group-flush">
+                    {% for record in recent_checkins %}
+                    <a class="list-group-item list-group-item-action" href="{{ record.get_absolute_url }}">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ record.created }}</span>
+                            <span class="text-muted">{{ record.latitude }}, {{ record.longitude }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">{% trans "暂无打卡记录" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const button = document.getElementById('locate-button');
+    const submitButton = document.getElementById('submit-button');
+    const status = document.getElementById('location-status');
+    const latitude = document.getElementById('id_latitude');
+    const longitude = document.getElementById('id_longitude');
+    const accuracy = document.getElementById('id_accuracy');
+    const help = document.getElementById('location-help');
+    const manualFields = document.getElementById('manual-location-fields');
+    const manualLatitude = document.getElementById('manual-latitude');
+    const manualLongitude = document.getElementById('manual-longitude');
+
+    function enableSubmitIfReady() {
+        submitButton.disabled = !(latitude.value && longitude.value);
+    }
+
+    function showManualLocation() {
+        manualFields.classList.remove('d-none');
+        help.classList.remove('d-none');
+    }
+
+    function syncManualLocation() {
+        latitude.value = manualLatitude.value;
+        longitude.value = manualLongitude.value;
+        accuracy.value = '';
+        enableSubmitIfReady();
+        if (latitude.value && longitude.value) {
+            status.textContent = '已手动填写定位：' + latitude.value + ', ' + longitude.value;
+        }
+    }
+
+    manualLatitude.addEventListener('input', syncManualLocation);
+    manualLongitude.addEventListener('input', syncManualLocation);
+
+    button.addEventListener('click', function () {
+        if (!navigator.geolocation) {
+            status.textContent = '当前浏览器不支持定位';
+            showManualLocation();
+            return;
+        }
+        status.textContent = '正在获取定位...';
+        navigator.geolocation.getCurrentPosition(function (position) {
+            latitude.value = position.coords.latitude.toFixed(7);
+            longitude.value = position.coords.longitude.toFixed(7);
+            accuracy.value = position.coords.accuracy ? position.coords.accuracy.toFixed(2) : '';
+            status.textContent = '已获取定位：' + latitude.value + ', ' + longitude.value + '，精度约 ' + (accuracy.value || '-') + ' 米';
+            manualFields.classList.add('d-none');
+            help.classList.add('d-none');
+            enableSubmitIfReady();
+        }, function (error) {
+            const messages = {
+                1: '定位权限被拒绝',
+                2: '无法获取当前位置',
+                3: '定位超时'
+            };
+            status.textContent = messages[error.code] || '定位失败';
+            showManualLocation();
+        }, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        });
+    });
+
+    enableSubmitIfReady();
+});
+</script>
+{% endblock %}

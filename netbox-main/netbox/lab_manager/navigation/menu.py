@@ -33,6 +33,23 @@ menu = PluginMenu(
                 link='plugins:lab_manager:my_tasks',
                 link_text='我的任务',
             ),
+            PluginMenuItem(
+                link='plugins:lab_manager:member_open_records',
+                link_text='成员打开记录',
+            ),
+        )),
+        ('打卡管理', (
+            PluginMenuItem(
+                link='plugins:lab_manager:checkin_create',
+                link_text='拍照定位打卡',
+                buttons=(
+                    PluginMenuButton(
+                        link='plugins:lab_manager:checkin_list',
+                        title='打卡记录',
+                        icon_class='mdi mdi-format-list-bulleted',
+                    ),
+                )
+            ),
         )),
         ('智能体', (
             PluginMenuItem(

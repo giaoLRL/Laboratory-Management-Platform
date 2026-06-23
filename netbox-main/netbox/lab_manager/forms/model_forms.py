@@ -3,7 +3,32 @@ from django import forms as django_forms
 from netbox.forms import NetBoxModelForm
 from utilities.forms.widgets import DateTimePicker
 
-from ..models import Hardware, Task, TaskComment
+from ..models import CheckInRecord, Hardware, Task, TaskComment
+
+
+class CheckInForm(django_forms.ModelForm):
+    class Meta:
+        model = CheckInRecord
+        fields = ('photo', 'latitude', 'longitude', 'accuracy', 'address', 'note')
+        widgets = {
+            'photo': django_forms.ClearableFileInput(attrs={
+                'accept': 'image/*',
+                'capture': 'environment',
+                'class': 'form-control',
+            }),
+            'latitude': django_forms.HiddenInput(),
+            'longitude': django_forms.HiddenInput(),
+            'accuracy': django_forms.HiddenInput(),
+            'address': django_forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '例如：A 楼 302 实验室',
+            }),
+            'note': django_forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': '可填写打卡说明',
+            }),
+        }
 
 
 class TaskCommentForm(django_forms.ModelForm):

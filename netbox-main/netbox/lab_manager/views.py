@@ -1,7 +1,7 @@
 ﻿import json
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import connection
 from django.db.models import Count, Q
 from django.http import JsonResponse
@@ -17,8 +17,8 @@ from utilities.views import register_model_view
 from .choices import HardwareApprovalStatusChoices, TaskStatusChoices
 from .filtersets import HardwareFilterSet, TaskFilterSet
 from .forms.filtersets import HardwareFilterForm, TaskFilterForm
-from .forms.model_forms import HardwareForm, HardwareMemberForm, TaskForm, TaskMemberForm, TaskCommentForm
-from .models import AgentConversation, AgentMessage, Hardware, Task, TaskAttachment, TaskComment
+from .forms.model_forms import CheckInForm, HardwareForm, HardwareMemberForm, TaskForm, TaskMemberForm, TaskCommentForm
+from .models import AgentConversation, AgentMessage, CheckInRecord, Hardware, MemberOpenRecord, Task, TaskAttachment, TaskComment
 from .services import AgentToolOrchestrator, BackendAgentService, DifyGateway, DifyGatewayConfigError, DifyGatewayRequestError, LangChainAgentService
 from .tables.hardware import HardwareTable
 from .tables.task import TaskTable
@@ -234,6 +234,120 @@ class MyTasksView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+def _client_ip(request):
+    forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if forwarded_for:
+        return forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
+def record_member_open(request, *, page_title='', target_type='', target_id=None):
+    if not request.user.is_authenticated:
+        return
+    MemberOpenRecord.objects.create(
+        user=request.user,
+        path=request.get_full_path()[:500],
+        page_title=page_title[:100],
+        target_type=target_type[:50],
+        target_id=target_id,
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:1000],
+        ip_address=_client_ip(request),
+    )
+
+
+class MemberOpenRecordListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'lab_manager/member_open_record_list.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        records = MemberOpenRecord.objects.select_related('user').order_by('-created')
+        username = self.request.GET.get('username')
+        target_type = self.request.GET.get('target_type')
+        if username:
+            records = records.filter(
+                Q(user__username__icontains=username) |
+                Q(user__first_name__icontains=username) |
+                Q(user__last_name__icontains=username) |
+                Q(user__email__icontains=username)
+            )
+        if target_type:
+            records = records.filter(target_type=target_type)
+        ctx['records'] = records[:300]
+        ctx['username'] = username or ''
+        ctx['target_type'] = target_type or ''
+        return ctx
+
+
+# ── 拍照定位打卡 ──
+
+class CheckInCreateView(LoginRequiredMixin, TemplateView):
+    template_name = 'lab_manager/checkin_form.html'
+
+    def get(self, request, *args, **kwargs):
+        record_member_open(request, page_title='拍照定位打卡', target_type='checkin_create')
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['form'] = CheckInForm()
+        ctx['recent_checkins'] = CheckInRecord.objects.filter(user=self.request.user).order_by('-created')[:5]
+        return ctx
+
+    def post(self, request):
+        form = CheckInForm(request.POST, request.FILES)
+        if form.is_valid():
+            checkin = form.save(commit=False)
+            checkin.user = request.user
+            checkin.save()
+            form.save_m2m()
+            messages.success(request, _('打卡成功'))
+            return redirect('plugins:lab_manager:checkin_detail', pk=checkin.pk)
+
+        messages.error(request, _('打卡失败，请确认已上传照片并允许浏览器获取定位'))
+        return self.render_to_response({
+            'form': form,
+            'recent_checkins': CheckInRecord.objects.filter(user=request.user).order_by('-created')[:5],
+        })
+
+
+class CheckInListView(LoginRequiredMixin, TemplateView):
+    template_name = 'lab_manager/checkin_list.html'
+
+    def get(self, request, *args, **kwargs):
+        record_member_open(request, page_title='打卡记录', target_type='checkin_list')
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        records = CheckInRecord.objects.select_related('user').order_by('-created')
+        if not self.request.user.is_superuser:
+            records = records.filter(user=self.request.user)
+        ctx['records'] = records[:200]
+        ctx['is_superuser'] = self.request.user.is_superuser
+        return ctx
+
+
+class CheckInDetailView(LoginRequiredMixin, TemplateView):
+    template_name = 'lab_manager/checkin_detail.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        record = CheckInRecord.objects.select_related('user').get(pk=self.kwargs['pk'])
+        if not request.user.is_superuser and record.user != request.user:
+            messages.error(request, _('你没有权限查看此打卡记录'))
+            return redirect('plugins:lab_manager:checkin_list')
+        self.record = record
+        record_member_open(request, page_title='打卡详情', target_type='checkin', target_id=record.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['record'] = self.record
+        return ctx
+
+
 # ── 上传附件 ──
 
 class TaskUploadAttachmentView(LoginRequiredMixin, TemplateView):
@@ -432,11 +546,13 @@ class LabHomeView(LoginRequiredMixin, TemplateView):
             ctx['task_total'] = Task.objects.count()
             ctx['task_in_progress'] = Task.objects.filter(status='in_progress').count()
             ctx['task_completed'] = Task.objects.filter(status='completed').count()
+            ctx['checkin_today'] = CheckInRecord.objects.filter(created__date=timezone.localdate()).count()
         else:
             ctx['my_pending_tasks'] = Task.objects.filter(
                 assigned_to=user,
                 status__in=[TaskStatusChoices.PENDING, TaskStatusChoices.IN_PROGRESS],
             ).order_by('-created')[:5]
+            ctx['my_recent_checkins'] = CheckInRecord.objects.filter(user=user).order_by('-created')[:3]
 
         return ctx
 
@@ -451,9 +567,10 @@ class AgentAssistantView(LoginRequiredMixin, TemplateView):
         conversations = AgentConversation.objects.filter(user=self.request.user).order_by('-last_updated', '-created')
         active_conversation = None
         conversation_pk = self.request.GET.get('conversation')
+        start_new = self.request.GET.get('new') == '1'
         if conversation_pk:
             active_conversation = conversations.filter(pk=conversation_pk).first()
-        if active_conversation is None:
+        if active_conversation is None and not start_new:
             active_conversation = conversations.first()
 
         ctx['quick_prompts'] = [
@@ -540,16 +657,25 @@ class AgentChatProxyView(LoginRequiredMixin, View):
         try:
             # 默认走 AI 工具编排：先理解用户问题，再调用平台安全工具，最后总结。
             if not workflow_alias and not force_external:
-                langchain_response = LangChainAgentService().process_message(
-                    user=request.user,
-                    message=message,
-                    conversation=conversation,
-                )
-                agent_response = langchain_response if langchain_response.handled else AgentToolOrchestrator().process_message(
-                    user=request.user,
-                    message=message,
-                    conversation=conversation,
-                )
+                # 写操作（布置任务等）跳过 LangChain，直接走本地确定性编排器
+                is_write_op = any(w in message for w in ('布置任务', '安排任务', '创建任务', '新建任务', '派发任务', '分配任务'))
+                if is_write_op:
+                    agent_response = AgentToolOrchestrator().process_message(
+                        user=request.user,
+                        message=message,
+                        conversation=conversation,
+                    )
+                else:
+                    langchain_response = LangChainAgentService().process_message(
+                        user=request.user,
+                        message=message,
+                        conversation=conversation,
+                    )
+                    agent_response = langchain_response if langchain_response.handled else AgentToolOrchestrator().process_message(
+                        user=request.user,
+                        message=message,
+                        conversation=conversation,
+                    )
                 if agent_response.handled:
                     final_answer = agent_response.answer_text
                     AgentMessage.objects.create(

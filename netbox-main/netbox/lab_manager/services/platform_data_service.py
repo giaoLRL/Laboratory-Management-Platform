@@ -6,11 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from django.db.models import Count, Q, Sum
+from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from users.models import User
 
 from ..choices import HardwareApprovalStatusChoices
-from ..models import Hardware, Task, TaskAttachment
+from ..models import CheckInRecord, Hardware, MemberOpenRecord, Task, TaskAttachment
 
 
 LOOKUP_MAP = {
@@ -163,6 +164,47 @@ class PlatformDataService:
             default_ordering=('-created',),
             selectable_related=('task', 'task__assigned_to', 'uploaded_by'),
         ),
+        'checkin': ModelSpec(
+            key='checkin',
+            model=CheckInRecord,
+            fields={
+                'id': FieldSpec('id', 'ID', 'number'),
+                'user': FieldSpec('user__username', '打卡人'),
+                'user_name': FieldSpec('user', '打卡人姓名', 'user_display'),
+                'photo_url': FieldSpec('photo', '照片URL', 'file_url'),
+                'latitude': FieldSpec('latitude', '纬度', 'decimal'),
+                'longitude': FieldSpec('longitude', '经度', 'decimal'),
+                'accuracy': FieldSpec('accuracy', '定位精度', 'decimal'),
+                'address': FieldSpec('address', '地址备注'),
+                'note': FieldSpec('note', '备注'),
+                'created': FieldSpec('created', '打卡时间', 'datetime'),
+                'last_updated': FieldSpec('last_updated', '更新时间', 'datetime'),
+            },
+            default_fields=('id', 'user_name', 'latitude', 'longitude', 'accuracy', 'address', 'photo_url', 'created'),
+            search_fields=('user__username', 'user__first_name', 'user__last_name', 'user__email', 'address', 'note'),
+            default_ordering=('-created',),
+            selectable_related=('user',),
+        ),
+        'member_open_record': ModelSpec(
+            key='member_open_record',
+            model=MemberOpenRecord,
+            fields={
+                'id': FieldSpec('id', 'ID', 'number'),
+                'user': FieldSpec('user__username', '成员'),
+                'user_name': FieldSpec('user', '成员姓名', 'user_display'),
+                'page_title': FieldSpec('page_title', '页面名称'),
+                'path': FieldSpec('path', '打开路径'),
+                'target_type': FieldSpec('target_type', '对象类型'),
+                'target_id': FieldSpec('target_id', '对象ID', 'number'),
+                'ip_address': FieldSpec('ip_address', 'IP地址'),
+                'created': FieldSpec('created', '打开时间', 'datetime'),
+                'last_updated': FieldSpec('last_updated', '更新时间', 'datetime'),
+            },
+            default_fields=('id', 'user_name', 'page_title', 'target_type', 'target_id', 'path', 'ip_address', 'created'),
+            search_fields=('user__username', 'user__first_name', 'user__last_name', 'user__email', 'page_title', 'path', 'target_type'),
+            default_ordering=('-created',),
+            selectable_related=('user',),
+        ),
         'user': ModelSpec(
             key='user',
             model=User,
@@ -248,6 +290,32 @@ class PlatformDataService:
 
         if any(word in message for word in ('人员名单', '人员信息', '成员名单', '成员信息', '用户列表', '用户信息', '有哪些成员', '有哪些人员')):
             return {'action': 'list_records', 'model': 'user', 'limit': 50}
+
+        if any(word in message for word in ('打开记录', '访问记录', '浏览记录', '打开了什么', '谁打开')):
+            query = {
+                'action': 'list_records',
+                'model': 'member_open_record',
+                'limit': 50,
+                'filters': {},
+            }
+            member = self._find_member_name(message)
+            if member:
+                query['filters']['user'] = member
+            return query
+
+        if any(word in message for word in ('打卡记录', '定位打卡', '拍照打卡', '谁打卡', '今日打卡')):
+            query = {
+                'action': 'list_records',
+                'model': 'checkin',
+                'limit': 50,
+                'filters': {},
+            }
+            if any(word in message for word in ('今天', '今日')):
+                query['filters']['created__gte'] = timezone.localdate().isoformat()
+            member = self._find_member_name(message)
+            if member:
+                query['filters']['user'] = member
+            return query
 
         if '待审核' in message or '待审批' in message:
             return {
@@ -338,6 +406,12 @@ class PlatformDataService:
         elif spec.model is TaskAttachment:
             if not user.is_superuser:
                 queryset = queryset.filter(Q(task__created_by=user) | Q(task__assigned_to=user))
+        elif spec.model is CheckInRecord:
+            if not user.is_superuser:
+                queryset = queryset.filter(user=user)
+        elif spec.model is MemberOpenRecord:
+            if not user.is_superuser:
+                queryset = queryset.none()
         elif spec.model is User:
             queryset = queryset.filter(is_active=True)
 

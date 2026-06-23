@@ -14,6 +14,8 @@ MODEL_LABELS = {
     'hardware_approval': '硬件审批',
     'task': '任务',
     'task_attachment': '任务附件',
+    'checkin': '打卡记录',
+    'member_open_record': '成员打开记录',
     'user': '人员',
 }
 
@@ -57,15 +59,19 @@ class AgentToolOrchestrator:
         for call in tool_calls:
             tool_results.append(self._execute_tool_call(user=user, call=call))
 
-        answer_text = self._summarize_with_llm(
-            user=user,
-            message=normalized_message,
-            tool_calls=tool_calls,
-            tool_results=tool_results,
-            context=context,
-        )
-        if not answer_text:
+        # 写操作（如 task.create）直接走本地确定性回复，避免外部 LLM 跑偏
+        if any(call.tool in ('task.create',) for call in tool_calls):
             answer_text = self._summarize_locally(normalized_message, tool_results, context)
+        else:
+            answer_text = self._summarize_with_llm(
+                user=user,
+                message=normalized_message,
+                tool_calls=tool_calls,
+                tool_results=tool_results,
+                context=context,
+            )
+            if not answer_text:
+                answer_text = self._summarize_locally(normalized_message, tool_results, context)
 
         raw_payload = {
             'intent': 'agent_tools',
@@ -94,6 +100,15 @@ class AgentToolOrchestrator:
                     tool='platform.query',
                     args={'action': 'describe_registry', 'model': 'hardware'},
                     reason='用户询问智能体可读取哪些平台数据',
+                )
+            ]
+
+        if any(word in message for word in ('布置任务', '安排任务', '创建任务', '新建任务', '派发任务', '分配任务')):
+            return [
+                AgentToolCall(
+                    tool='task.create',
+                    args={'message': message},
+                    reason='用户要求管理员通过智能体布置任务',
                 )
             ]
 
@@ -139,6 +154,15 @@ class AgentToolOrchestrator:
                     tool='platform.query',
                     args=inferred_query,
                     reason='用户问题可映射为平台通用数据查询',
+                )
+            ]
+
+        if any(word in message for word in ('打卡记录', '定位打卡', '拍照打卡', '今日打卡', '谁打卡', '打开记录', '访问记录', '浏览记录')):
+            return [
+                AgentToolCall(
+                    tool='platform.query',
+                    args={'action': 'describe_registry', 'model': 'hardware'},
+                    reason='用户要读取打卡或成员打开记录，但未形成具体查询条件',
                 )
             ]
 
@@ -235,6 +259,12 @@ class AgentToolOrchestrator:
                     'ok': True,
                     'result': self.backend._analyze_hardware_gap(user, str(call.args.get('message') or '')),
                 }
+            if call.tool == 'task.create':
+                return {
+                    'tool': call.tool,
+                    'ok': True,
+                    'result': self.backend._create_task_from_message(user, str(call.args.get('message') or '')),
+                }
             return {'tool': call.tool, 'ok': False, 'error': f'未知工具: {call.tool}'}
         except (PlatformDataError, ValueError) as exc:
             return {'tool': call.tool, 'ok': False, 'error': str(exc)}
@@ -287,6 +317,8 @@ class AgentToolOrchestrator:
             return self.backend._format_hardware_gap_answer(result)
         if tool == 'task.video_search':
             return self.backend._format_task_video_answer(result)
+        if tool == 'task.create':
+            return self.backend._format_task_create_answer(result)
         if tool == 'platform.query':
             return self._format_platform_result(result)
         return '我已经完成工具查询，但暂时没有可展示的结果。'
@@ -359,6 +391,17 @@ class AgentToolOrchestrator:
             'file_type': '类型',
             'file_url': '链接',
             'uploaded_by_name': '上传人',
+            'user_name': '成员',
+            'page_title': '页面',
+            'path': '路径',
+            'target_type': '对象类型',
+            'target_id': '对象ID',
+            'ip_address': 'IP',
+            'latitude': '纬度',
+            'longitude': '经度',
+            'accuracy': '精度',
+            'address': '地址',
+            'photo_url': '照片',
             'created': '创建时间',
         }
         parts = []

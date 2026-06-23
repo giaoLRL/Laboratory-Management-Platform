@@ -13,7 +13,10 @@ urlpatterns = [
     path('api/agent/members/search/', agent_api.SearchMembersAPIView.as_view(), name='agent_members_search'),
     path('api/agent/platform/query/', agent_api.PlatformQueryAPIView.as_view(), name='agent_platform_query'),
     path('api/agent/tasks/search/', agent_api.SearchTasksAPIView.as_view(), name='agent_tasks_search'),
+    path('api/agent/tasks/create/', agent_api.CreateTaskAPIView.as_view(), name='agent_task_create'),
     path('api/agent/tasks/videos/', agent_api.SearchTaskVideosAPIView.as_view(), name='agent_task_videos'),
+    path('api/agent/checkins/search/', agent_api.SearchCheckInsAPIView.as_view(), name='agent_checkin_search'),
+    path('api/agent/member-open-records/search/', agent_api.SearchMemberOpenRecordsAPIView.as_view(), name='agent_member_open_records_search'),
     path('api/agent/hardware/import/validate/', agent_api.ValidateHardwareImportAPIView.as_view(), name='agent_hardware_import_validate'),
     path('api/agent/hardware/import/commit/', agent_api.CommitHardwareImportAPIView.as_view(), name='agent_hardware_import_commit'),
 
@@ -34,6 +37,12 @@ urlpatterns = [
 
     # 我的任务
     path('my-tasks/', views.MyTasksView.as_view(), name='my_tasks'),
+    path('member-open-records/', views.MemberOpenRecordListView.as_view(), name='member_open_records'),
+
+    # 拍照定位打卡
+    path('checkins/', views.CheckInListView.as_view(), name='checkin_list'),
+    path('checkins/new/', views.CheckInCreateView.as_view(), name='checkin_create'),
+    path('checkins/<int:pk>/', views.CheckInDetailView.as_view(), name='checkin_detail'),
 
     # 附件上传
     path('tasks/<int:pk>/upload/', views.TaskUploadAttachmentView.as_view(), name='task_upload'),

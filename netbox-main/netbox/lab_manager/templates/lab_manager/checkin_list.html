@@ -1,0 +1,58 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "打卡记录" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "打卡记录" %}</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'plugins:lab_manager:checkin_create' %}" class="btn btn-success">
+            <i class="mdi mdi-camera"></i> {% trans "拍照打卡" %}
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% trans "时间" %}</th>
+                    {% if is_superuser %}<th>{% trans "打卡人" %}</th>{% endif %}
+                    <th>{% trans "位置" %}</th>
+                    <th>{% trans "精度" %}</th>
+                    <th>{% trans "地址备注" %}</th>
+                    <th>{% trans "照片" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td><a href="{{ record.get_absolute_url }}">{{ record.created }}</a></td>
+                    {% if is_superuser %}<td>{{ record.user }}</td>{% endif %}
+                    <td>{{ record.latitude }}, {{ record.longitude }}</td>
+                    <td>{{ record.accuracy|default:'-' }}</td>
+                    <td>{{ record.address|default:'-' }}</td>
+                    <td>
+                        {% if record.photo %}
+                        <a href="{{ record.photo.url }}" target="_blank">{% trans "查看" %}</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if is_superuser %}6{% else %}5{% endif %}" class="text-muted text-center py-4">
+                        {% trans "暂无打卡记录" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

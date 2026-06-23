@@ -1016,7 +1016,7 @@
         <div class="agent-sidebar-header">
             <div class="agent-sidebar-title">{% trans "智能体助手" %}</div>
             <div class="agent-sidebar-subtitle">{% trans "像聊天一样调用实验室知识、工作流和硬件能力。" %}</div>
-            <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-light agent-new-chat">
+            <a href="{% url 'plugins:lab_manager:agent_console' %}?new=1" class="btn btn-light agent-new-chat">
                 <i class="mdi mdi-plus"></i> {% trans "新建会话" %}
             </a>
         </div>
@@ -1337,7 +1337,7 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
                 var tokens = (result.data && result.data.total_tokens) || 0;
                 var elapsedSec = (result.data && result.data.elapsed_time) || 0;
                 var elapsed = typeof elapsedSec === 'number' ? elapsedSec.toFixed(2) : String(elapsedSec);
-                appendMessage('assistant', displayText + '\n\n---\n🤖 DeepSeek · ' + tokens + ' tokens · ' + elapsed + 's');
+                appendMessage('assistant', displayText + '\n\n---\n[智能体] DeepSeek · ' + tokens + ' tokens · ' + elapsed + 's');
             } else {
                 appendMessage('assistant', result.answer_text || '未获取到回答文本，请查看原始响应。');
             }

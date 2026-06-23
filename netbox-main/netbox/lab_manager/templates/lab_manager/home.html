@@ -64,6 +64,14 @@
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card text-bg-secondary">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ checkin_today }}</h3>
+                <small>{% trans "今日打卡" %}</small>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
@@ -87,15 +95,57 @@
             <i class="mdi mdi-robot-outline"></i> {% trans "智能体助手" %}
         </a>
     </div>
+    <div class="col-md-3 mt-3">
+        <a href="{% url 'plugins:lab_manager:checkin_list' %}" class="btn btn-secondary w-100 py-3">
+            <i class="mdi mdi-map-marker-check"></i> {% trans "打卡记录" %}
+        </a>
+    </div>
 </div>
 
 {% else %}
 {# 成员首页 #}
 <div class="row mb-3">
     <div class="col">
+        <a href="{% url 'plugins:lab_manager:checkin_create' %}" class="btn btn-success me-2">
+            <i class="mdi mdi-camera"></i> {% trans "拍照定位打卡" %}
+        </a>
         <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-dark">
             <i class="mdi mdi-robot-outline"></i> {% trans "打开智能体助手" %}
         </a>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header d-flex justify-content-between">
+                {% trans "我的最近打卡" %}
+                <a href="{% url 'plugins:lab_manager:checkin_list' %}" class="btn btn-sm btn-outline-primary">{% trans "查看全部" %}</a>
+            </h5>
+            <div class="card-body">
+                {% if my_recent_checkins %}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{% trans "时间" %}</th>
+                            <th>{% trans "位置" %}</th>
+                            <th>{% trans "地址备注" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in my_recent_checkins %}
+                        <tr>
+                            <td><a href="{{ record.get_absolute_url }}">{{ record.created }}</a></td>
+                            <td>{{ record.latitude }}, {{ record.longitude }}</td>
+                            <td>{{ record.address|default:'-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">{% trans "暂无打卡记录" %}</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 <div class="row mb-3">

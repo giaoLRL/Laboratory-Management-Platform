@@ -193,7 +193,7 @@ class LangChainAgentService:
             '重要规则：\n'
             '1. 不要声称自己无法访问后台、数据库或系统；你必须先尝试调用工具。\n'
             '2. 只能通过工具查询数据，不能编造人员、任务、硬件或附件。\n'
-            '3. 平台模型包括 hardware、hardware_approval、task、task_attachment、user。\n'
+            '3. 平台模型包括 hardware、hardware_approval、task、task_attachment、checkin、member_open_record、user。\n'
             '4. 用户问附件、视频、任务文件时优先使用 task_attachment 或 find_task_videos。\n'
             '5. 用户问项目缺什么硬件、采购建议、做某个系统时，使用 analyze_hardware_gap。\n'
             '6. 用户说“他/这个人/该用户/这个任务”时，结合最近会话上下文解析引用。\n'
