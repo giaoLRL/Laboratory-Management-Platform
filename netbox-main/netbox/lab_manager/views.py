@@ -19,7 +19,7 @@ from .filtersets import HardwareFilterSet, TaskFilterSet
 from .forms.filtersets import HardwareFilterForm, TaskFilterForm
 from .forms.model_forms import HardwareForm, HardwareMemberForm, TaskForm, TaskMemberForm, TaskCommentForm
 from .models import AgentConversation, AgentMessage, Hardware, Task, TaskAttachment, TaskComment
-from .services import BackendAgentService, DifyGateway, DifyGatewayConfigError, DifyGatewayRequestError
+from .services import AgentToolOrchestrator, BackendAgentService, DifyGateway, DifyGatewayConfigError, DifyGatewayRequestError, LangChainAgentService
 from .tables.hardware import HardwareTable
 from .tables.task import TaskTable
 
@@ -538,7 +538,46 @@ class AgentChatProxyView(LoginRequiredMixin, View):
         )
 
         try:
-            # 优先走 Dify Chat（如果已配置），本地 BackendAgentService 作为 fallback
+            # 默认走 AI 工具编排：先理解用户问题，再调用平台安全工具，最后总结。
+            if not workflow_alias and not force_external:
+                langchain_response = LangChainAgentService().process_message(
+                    user=request.user,
+                    message=message,
+                    conversation=conversation,
+                )
+                agent_response = langchain_response if langchain_response.handled else AgentToolOrchestrator().process_message(
+                    user=request.user,
+                    message=message,
+                    conversation=conversation,
+                )
+                if agent_response.handled:
+                    final_answer = agent_response.answer_text
+                    AgentMessage.objects.create(
+                        conversation=conversation,
+                        role='assistant',
+                        content=final_answer,
+                        raw_payload=agent_response.raw_payload,
+                        coze_chat_id='',
+                    )
+                    conversation.mode = 'langchain_agent' if agent_response.intent == 'langchain_agent' else 'agent_tools'
+                    conversation.last_message_preview = final_answer[:255]
+                    conversation.workflow_alias = ''
+                    conversation.save()
+                    return JsonResponse(
+                        {
+                            'success': True,
+                            'mode': conversation.mode,
+                            'message': 'ok',
+                            'conversation_pk': conversation.pk,
+                            'created_new_conversation': created_new_conversation,
+                            'intent': agent_response.intent,
+                            'answer_text': final_answer,
+                            'data': agent_response.data,
+                            'raw_payload': agent_response.raw_payload,
+                        }
+                    )
+
+            # 其他闲聊/方案类问题优先走 Dify Chat（如果已配置），本地 BackendAgentService 作为 fallback
             gateway_check = DifyGateway()
             if not workflow_alias and not force_external and not gateway_check.has_chat_bot():
                 backend_response = BackendAgentService().process_message(
@@ -547,38 +586,6 @@ class AgentChatProxyView(LoginRequiredMixin, View):
                 )
                 if backend_response.handled:
                     final_answer = backend_response.answer_text
-                    
-                    # === 尝试调用外部工作流，让其基于本地真实数据做二次润色 ===
-                    gateway = DifyGateway()
-                    if gateway.has_site_workflow():
-                        try:
-                            # 提取本地查询到的结构化数据转为文本，或者直接传完整回答作为参考
-                            # 如果有具体数据，就传 data 里的，如果没有，就传拼接好的 text
-                            if backend_response.data:
-                                hardware_items_str = json.dumps(backend_response.data, ensure_ascii=False)
-                            else:
-                                hardware_items_str = backend_response.answer_text
-
-                            parameters = {
-                                'user_query': message,
-                                'hardware_items_str': hardware_items_str,
-                                'intent': backend_response.intent,
-                            }
-                            
-                            workflow_response = gateway.run_workflow(
-                                workflow_alias='site_workflow',
-                                parameters=parameters,
-                                user_id=str(request.user.pk),
-                            )
-                            workflow_data = workflow_response.payload.get('data')
-                            
-                            # 只有当工作流真正返回了有意义的字符串内容，才替换掉本地的 Markdown
-                            if isinstance(workflow_data, str) and len(workflow_data.strip()) > 5:
-                                final_answer = workflow_data.strip()
-                        except Exception as e:
-                            # 如果请求工作流超时、报错，静默失败，保留使用本地高质量 Markdown
-                            print(f"[Agent] Workflow fallback failed: {e}")
-                    
                     AgentMessage.objects.create(
                         conversation=conversation,
                         role='assistant',

@@ -8,16 +8,19 @@ from typing import Any
 
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from users.models import User
 
 from ..choices import HardwareApprovalStatusChoices, HardwareCategoryChoices, HardwareStatusChoices, TaskStatusChoices
 from ..models import Hardware, HardwareImportBatch, Task, TaskAttachment
+from .platform_data_service import PlatformDataError, PlatformDataService
 
 
 VIDEO_EXTENSIONS = {'.mp4', '.webm', '.avi', '.mov', '.mkv', '.m4v'}
 STOP_WORDS = {
     '现在', '目前', '实验室', '帮我', '一下', '看看', '查询', '检索', '读取', '统计', '列出', '告诉我',
     '有哪些', '有什么', '多少', '情况', '资源', '硬件', '库存', '设备', '任务', '最近', '完成',
-    '上传', '视频', '附件', '列表', '导入', '批量', '两段式', '应该', '怎么', '使用',
+    '上传', '视频', '附件', '列表', '导入', '导出', '下载', '批量', '两段式', '应该', '怎么', '使用', '某某',
+    '什么时候', '时间', '日期', '哪天', '今天', '昨天', '本周', '上周', '本月', '上月',
 }
 GENERIC_HARDWARE_TERMS = {
     '开发板', '单片机', '主控', '传感器', '模块', '电源', '电池', '工具', '线材', '设备', '库存', '硬件',
@@ -26,6 +29,9 @@ MESSAGE_NOISE_PATTERNS = (
     '现在实验室', '当前实验室', '实验室里', '实验室内', '实验室', '帮我', '请帮我', '看一下', '看一看',
     '看看', '查询', '检索', '读取', '统计', '列出', '告诉我', '有哪些', '有什么', '多少', '情况',
     '资源', '最近', '已完成', '完成的', '完成时', '任务里', '任务中的',
+    '导出', '下载', '视频附件', '任务视频', '的任务', '什么时候', '哪天', '时间', '日期',
+    '今天', '昨天', '本周', '这周', '上周', '本月', '这个月', '上月', '上个月', '近一周',
+    '最近一周', '近一个月', '最近一个月',
 )
 PROJECT_TEMPLATES = (
     {
@@ -129,6 +135,28 @@ class BackendAgentService:
                 raw_payload={'intent': intent, 'data': data},
             )
 
+        if intent == 'platform_query':
+            try:
+                service = PlatformDataService()
+                query = service.infer_query(normalized_message)
+                if query:
+                    data = service.execute(user=user, payload=query)
+                    return BackendAgentResponse(
+                        handled=True,
+                        intent=intent,
+                        answer_text=self._format_platform_query_answer(data),
+                        data={'query': query, 'result': data},
+                        raw_payload={'intent': intent, 'query': query, 'data': data},
+                    )
+            except PlatformDataError as exc:
+                return BackendAgentResponse(
+                    handled=True,
+                    intent=intent,
+                    answer_text=f'🤖 我理解这是平台数据查询，但查询条件没有通过安全校验：{exc}',
+                    data={'error': str(exc)},
+                    raw_payload={'intent': intent, 'error': str(exc)},
+                )
+
         data = self._build_overview(user)
         return BackendAgentResponse(
             handled=True,
@@ -141,12 +169,16 @@ class BackendAgentService:
     def _detect_intent(self, message: str) -> str:
         if self._contains_any(message, ('导入', '批量上传', '批量导入', '一键上传', '一键导入', '两段式')):
             return 'import_guide'
-        if self._contains_any(message, ('视频', '录像', '录屏', '附件')) and self._contains_any(message, ('任务', '完成', '已完成')):
+        if self._contains_any(message, ('视频', '录像', '录屏', '附件')) and self._contains_any(message, ('任务', '完成', '已完成', '导出', '下载')):
             return 'task_videos'
-        if self._contains_any(message, ('任务', '待办', '进度', '负责人', '执行人', '成员')):
-            return 'task_summary'
         if self._contains_any(message, ('缺什么', '缺哪些', '还缺', '采购', '购买', '方案', '做一个', '做个', '产品', '项目', '系统')):
             return 'hardware_gap'
+        if PlatformDataService().infer_query(message):
+            return 'platform_query'
+        if self._contains_any(message, ('人员名单', '成员名单', '用户列表', '用户信息', '管理员', '超级管理员', '报废', '待审核', '待审批', '已驳回', '每个人', '每位成员', '按成员', '按人员')):
+            return 'platform_query'
+        if self._contains_any(message, ('任务', '待办', '进度', '负责人', '执行人', '成员')):
+            return 'task_summary'
         if self._contains_any(message, ('硬件', '库存', '资源', '设备', '开发板', '模块', '传感器', '有哪些', '有什么')):
             return 'hardware_search'
         return 'overview'
@@ -289,18 +321,22 @@ class BackendAgentService:
         if requested_status:
             queryset = queryset.filter(status=requested_status)
 
-        date_from = self._parse_date_from_message(message)
+        date_from, date_to, date_label = self._parse_date_range_from_message(message)
+        date_field = 'completed_at__date' if requested_status == TaskStatusChoices.COMPLETED else 'created__date'
         if date_from:
-            if requested_status == TaskStatusChoices.COMPLETED:
-                queryset = queryset.filter(completed_at__gte=date_from)
-            else:
-                queryset = queryset.filter(created__gte=date_from)
+            queryset = queryset.filter(**{f'{date_field}__gte': date_from})
+        if date_to:
+            queryset = queryset.filter(**{f'{date_field}__lte': date_to})
 
-        usernames = self._find_usernames_in_message(message, queryset.values_list('assigned_to__username', flat=True))
-        if usernames:
-            queryset = queryset.filter(assigned_to__username__in=usernames)
+        matched_users = self._find_members_in_message(message)
+        if matched_users:
+            queryset = queryset.filter(assigned_to__in=matched_users)
 
-        keyword_fragments = self._extract_keywords(message)
+        keyword_fragments = [
+            keyword for keyword in self._extract_keywords(message)
+            if keyword not in {'给我', '找出', '查找', '查询', '任务视频', '视频附件'}
+        ]
+        keyword_fragments = self._remove_member_keywords(keyword_fragments, matched_users)
         keyword_query = Q()
         for keyword in keyword_fragments:
             keyword_query |= (
@@ -335,17 +371,35 @@ class BackendAgentService:
             'total': total,
             'requested_status': requested_status,
             'date_from': date_from.isoformat() if date_from else None,
+            'date_to': date_to.isoformat() if date_to else None,
+            'date_label': date_label,
+            'members': [self._serialize_user(user) for user in matched_users],
             'items': items,
             'status_summary': status_summary,
         }
 
     def _search_task_videos(self, user, message: str) -> dict[str, Any]:
-        queryset = self._visible_task_queryset(user).filter(status=TaskStatusChoices.COMPLETED)
-        date_from = self._parse_date_from_message(message)
-        if date_from:
-            queryset = queryset.filter(completed_at__gte=date_from)
+        queryset = self._visible_task_queryset(user)
+        requested_status = TaskStatusChoices.COMPLETED if self._contains_any(message, ('已完成', '完成的', '完成任务')) else None
+        if requested_status:
+            queryset = queryset.filter(status=requested_status)
 
-        keyword_fragments = self._extract_keywords(message)
+        date_from, date_to, date_label = self._parse_date_range_from_message(message)
+        if date_from:
+            queryset = queryset.filter(completed_at__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(completed_at__date__lte=date_to)
+
+        matched_users = self._find_members_in_message(message)
+        if matched_users:
+            queryset = queryset.filter(assigned_to__in=matched_users)
+
+        keyword_fragments = [] if matched_users else [
+            keyword for keyword in self._extract_keywords(message)
+            if keyword not in {'给我', '找出', '查找', '查询', '任务视频', '视频附件', '视频', '附件'}
+        ]
+        if keyword_fragments:
+            keyword_fragments = self._remove_member_keywords(keyword_fragments, matched_users)
         keyword_query = Q()
         for keyword in keyword_fragments:
             keyword_query |= (
@@ -360,20 +414,30 @@ class BackendAgentService:
         attachments = TaskAttachment.objects.filter(task__in=tasks).select_related('task', 'uploaded_by').order_by('-created')
 
         results = []
+        export_items = []
         total_videos = 0
         videos_by_task_id: dict[int, list[dict[str, Any]]] = {}
         for attachment in attachments:
             file_name = attachment.file.name or ''
             if Path(file_name).suffix.lower() not in VIDEO_EXTENSIONS:
                 continue
-            videos_by_task_id.setdefault(attachment.task_id, []).append(
-                {
+            video_item = {
                     'attachment_id': attachment.pk,
                     'file_name': Path(file_name).name,
                     'file_url': attachment.file.url if attachment.file else '',
                     'remark': attachment.remark,
                     'uploaded_by': attachment.uploaded_by.username,
                     'created': attachment.created.isoformat() if attachment.created else None,
+                }
+            videos_by_task_id.setdefault(attachment.task_id, []).append(video_item)
+            export_items.append(
+                {
+                    **video_item,
+                    'task_id': attachment.task_id,
+                    'task_title': attachment.task.title,
+                    'assigned_to': attachment.task.assigned_to.username,
+                    'assigned_to_name': attachment.task.assigned_to.get_full_name(),
+                    'completed_at': attachment.task.completed_at.isoformat() if attachment.task.completed_at else None,
                 }
             )
             total_videos += 1
@@ -394,9 +458,13 @@ class BackendAgentService:
 
         return {
             'date_from': date_from.isoformat() if date_from else None,
+            'date_to': date_to.isoformat() if date_to else None,
+            'date_label': date_label,
+            'members': [self._serialize_user(user) for user in matched_users],
             'task_count': len(results),
             'video_count': total_videos,
             'tasks': results,
+            'export_items': export_items,
         }
 
     def _build_import_guide(self, user) -> dict[str, Any]:
@@ -529,12 +597,84 @@ class BackendAgentService:
         if data['video_count'] == 0:
             return '🤖 找了一圈，没有找到匹配的任务视频附件。你可以试着放宽时间范围或换一个关键词。'
 
-        lines = [f"🤖 我找到了 **{data['task_count']}** 个相关任务，共提取出 **{data['video_count']}** 个视频附件：", ""]
+        scope_parts = []
+        if data.get('members'):
+            scope_parts.append('成员：' + '、'.join(member['display'] for member in data['members']))
+        if data.get('date_label'):
+            scope_parts.append('时间：' + data['date_label'])
+        scope_text = f"（{'；'.join(scope_parts)}）" if scope_parts else ''
+        lines = [f"🤖 已为你整理好{scope_text}的任务视频附件：共 **{data['task_count']}** 个任务、**{data['video_count']}** 个视频。", ""]
         for task in data['tasks'][:5]:
             lines.append(f"📁 **任务：{task['task_title']}** (负责人: {task['assigned_to']})")
-            for video in task['videos'][:2]:
+            for video in task['videos']:
                 lines.append(f"  - 🎬 `{video['file_name']}` [点击查看]({video['file_url'] or '#'})")
             lines.append("")
+        lines.append('结构化结果已同步返回 `export_items`，外部工作流可以直接拿它生成导出表或下载清单。')
+        return '\n'.join(lines)
+
+    def _format_platform_query_answer(self, data: dict[str, Any]) -> str:
+        if 'models' in data:
+            model_names = {
+                'hardware': '硬件',
+                'hardware_approval': '硬件审批',
+                'task': '任务',
+                'task_attachment': '任务附件',
+                'user': '人员/用户',
+            }
+            lines = ['🤖 我现在可以通过平台数据工具读取这些实验室数据：', '']
+            for model_key, meta in data['models'].items():
+                fields = meta.get('fields') or []
+                field_labels = [field.get('label') or field.get('name') for field in fields[:12]]
+                lines.append(f"- **{model_names.get(model_key, model_key)}** (`{model_key}`)：{'、'.join(field_labels)}")
+            lines.append('')
+            lines.append('你可以直接问：“管理员的信息”“有哪些报废硬件”“哪些硬件待审核”“张三的任务”“每个人手上有多少未完成任务”。')
+            return '\n'.join(lines)
+
+        action = data.get('action')
+        model = data.get('model')
+        total = data.get('total')
+        model_label = {
+            'hardware': '硬件',
+            'hardware_approval': '硬件审批',
+            'task': '任务',
+            'task_attachment': '附件',
+            'user': '人员',
+        }.get(model, model or '数据')
+
+        if action == 'count_records':
+            return f"🤖 查询完成：**{model_label}** 共 **{total}** 条。"
+
+        if action == 'aggregate_records':
+            items = data.get('items') or []
+            if not items:
+                return f"🤖 没有找到可统计的 **{model_label}** 数据。"
+            lines = [f"🤖 已按条件统计 **{model_label}**：", ""]
+            for item in items[:12]:
+                parts = [f"{key}: {value}" for key, value in item.items()]
+                lines.append(f"- {' | '.join(parts)}")
+            return '\n'.join(lines)
+
+        item = data.get('item')
+        if item:
+            lines = [f"🤖 找到这条 **{model_label}** 记录：", ""]
+            for key, value in item.items():
+                lines.append(f"- **{key}**：{value if value not in (None, '') else '-'}")
+            return '\n'.join(lines)
+
+        items = data.get('items') or []
+        if not items:
+            return f"🤖 没有查询到匹配的 **{model_label}** 数据。"
+
+        lines = [f"🤖 查询完成：找到 **{total}** 条 **{model_label}** 数据，先展示前 **{len(items[:8])}** 条：", ""]
+        for index, item in enumerate(items[:8], start=1):
+            parts = []
+            for key, value in item.items():
+                if value in (None, ''):
+                    continue
+                parts.append(f"{key}: {value}")
+            lines.append(f"{index}. {' | '.join(parts) if parts else item}")
+        if total and total > len(items[:8]):
+            lines.append(f"\n*还有 {total - len(items[:8])} 条未展示，可以继续加条件缩小范围。*")
         return '\n'.join(lines)
 
     def _format_import_guide_answer(self, data: dict[str, Any]) -> str:
@@ -585,6 +725,8 @@ class BackendAgentService:
 
     def _extract_keywords(self, message: str) -> list[str]:
         normalized_message = message
+        normalized_message = re.sub(r'最近\s*\d+\s*天', ' ', normalized_message)
+        normalized_message = re.sub(r'20\d{2}[-/.年]\d{1,2}[-/.月]\d{1,2}日?', ' ', normalized_message)
         for noise in MESSAGE_NOISE_PATTERNS:
             normalized_message = normalized_message.replace(noise, ' ')
         tokens: list[str] = []
@@ -641,25 +783,66 @@ class BackendAgentService:
         return cleaned_message[:40] or '当前项目'
 
     @staticmethod
-    def _parse_date_from_message(message: str):
+    def _parse_date_range_from_message(message: str):
+        today = timezone.localdate()
+        explicit_match = re.search(r'(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})日?', message)
+        if explicit_match:
+            year, month, day = (int(part) for part in explicit_match.groups())
+            matched_date = today.replace(year=year, month=month, day=day)
+            return matched_date, matched_date, matched_date.isoformat()
+
         match = re.search(r'最近\s*(\d+)\s*天', message)
         if match:
-            return timezone.now() - timedelta(days=int(match.group(1)))
+            days = int(match.group(1))
+            return today - timedelta(days=max(days - 1, 0)), today, f'最近{days}天'
         if '最近一周' in message or '近一周' in message:
-            return timezone.now() - timedelta(days=7)
+            return today - timedelta(days=6), today, '最近一周'
         if '最近一个月' in message or '近一个月' in message:
-            return timezone.now() - timedelta(days=30)
+            return today - timedelta(days=29), today, '最近一个月'
+        if '昨天' in message:
+            yesterday = today - timedelta(days=1)
+            return yesterday, yesterday, '昨天'
         if '今天' in message:
-            return timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        return None
+            return today, today, '今天'
+        if '本周' in message or '这周' in message:
+            return today - timedelta(days=today.weekday()), today, '本周'
+        if '上周' in message:
+            start = today - timedelta(days=today.weekday() + 7)
+            return start, start + timedelta(days=6), '上周'
+        if '本月' in message or '这个月' in message:
+            return today.replace(day=1), today, '本月'
+        if '上月' in message or '上个月' in message:
+            first_this_month = today.replace(day=1)
+            last_previous_month = first_this_month - timedelta(days=1)
+            return last_previous_month.replace(day=1), last_previous_month, '上月'
+        return None, None, ''
 
     @staticmethod
-    def _find_usernames_in_message(message: str, usernames) -> list[str]:
-        found = []
-        for username in usernames:
-            if username and str(username) in message:
-                found.append(str(username))
-        return found
+    def _find_members_in_message(message: str):
+        matched_users = []
+        users = User.objects.filter(is_active=True).only('id', 'username', 'first_name', 'last_name', 'email')
+        for user in users:
+            candidates = {user.username, user.email, user.first_name, user.last_name, user.get_full_name()}
+            if any(candidate and str(candidate) in message for candidate in candidates):
+                matched_users.append(user)
+        return matched_users
+
+    @staticmethod
+    def _remove_member_keywords(keywords: list[str], users) -> list[str]:
+        member_terms = set()
+        for user in users:
+            member_terms.update(term.lower() for term in (user.username, user.email, user.first_name, user.last_name, user.get_full_name()) if term)
+        return [keyword for keyword in keywords if keyword.lower() not in member_terms]
+
+    @staticmethod
+    def _serialize_user(user) -> dict[str, str]:
+        full_name = user.get_full_name()
+        return {
+            'id': user.pk,
+            'username': user.username,
+            'full_name': full_name,
+            'display': full_name or user.username,
+        }
 
     @staticmethod
     def _get_hardware_category_label(category: str | None) -> str:

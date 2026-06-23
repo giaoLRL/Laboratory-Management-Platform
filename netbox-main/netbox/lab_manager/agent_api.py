@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.dateparse import parse_date
 from django.views import View
@@ -24,6 +26,7 @@ from .choices import (
     TaskStatusChoices,
 )
 from .models import Hardware, HardwareImportBatch, Task, TaskAttachment
+from .services import PlatformDataError, PlatformDataService
 
 VIDEO_EXTENSIONS = {'.mp4', '.webm', '.avi', '.mov', '.mkv', '.m4v'}
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
@@ -58,6 +61,56 @@ def _detect_file_type(file_name: str) -> str:
     if suffix in IMAGE_EXTENSIONS:
         return 'image'
     return 'other'
+
+
+def _user_lookup_q(field_name: str, value: Any) -> Q:
+    keyword = str(value or '').strip()
+    if not keyword:
+        return Q()
+    return (
+        Q(**{f'{field_name}__username__icontains': keyword}) |
+        Q(**{f'{field_name}__first_name__icontains': keyword}) |
+        Q(**{f'{field_name}__last_name__icontains': keyword}) |
+        Q(**{f'{field_name}__email__icontains': keyword})
+    )
+
+
+def _serialize_user(user) -> dict[str, Any]:
+    full_name = user.get_full_name()
+    return {
+        'id': user.pk,
+        'username': user.username,
+        'full_name': full_name,
+        'display': full_name or user.username,
+        'email': user.email,
+    }
+
+
+def _parse_agent_date_range(payload: dict[str, Any]) -> tuple[Any, Any, str]:
+    date_from = parse_date(str(payload.get('date_from', '')).strip()) if payload.get('date_from') else None
+    date_to = parse_date(str(payload.get('date_to', '')).strip()) if payload.get('date_to') else None
+    label = ''
+    if date_from or date_to:
+        return date_from, date_to, label
+
+    today = timezone.localdate()
+    date_range = str(payload.get('date_range', '') or payload.get('when', '')).strip().lower()
+    if payload.get('relative_days'):
+        days = max(_safe_int(payload.get('relative_days'), 0), 1)
+        return today - timedelta(days=days - 1), today, f'最近{days}天'
+    if date_range in {'today', '今天'}:
+        return today, today, '今天'
+    if date_range in {'yesterday', '昨天'}:
+        yesterday = today - timedelta(days=1)
+        return yesterday, yesterday, '昨天'
+    if date_range in {'this_week', '本周', '这周'}:
+        return today - timedelta(days=today.weekday()), today, '本周'
+    if date_range in {'last_week', '上周'}:
+        start = today - timedelta(days=today.weekday() + 7)
+        return start, start + timedelta(days=6), '上周'
+    if date_range in {'this_month', '本月', '这个月'}:
+        return today.replace(day=1), today, '本月'
+    return None, None, label
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -306,6 +359,62 @@ class AnalyzeHardwareGapAPIView(AgentAPIView):
         )
 
 
+class SearchMembersAPIView(AgentAPIView):
+    def post(self, request):
+        payload = self.parse_json_body(request)
+        if isinstance(payload, JsonResponse):
+            return payload
+
+        queryset = User.objects.filter(is_active=True)
+        keyword = str(payload.get('keyword', '') or payload.get('name', '') or '').strip()
+        if keyword:
+            queryset = queryset.filter(
+                Q(username__icontains=keyword) |
+                Q(first_name__icontains=keyword) |
+                Q(last_name__icontains=keyword) |
+                Q(email__icontains=keyword)
+            )
+
+        offset = max(_safe_int(payload.get('offset', 0), 0), 0)
+        limit = min(max(_safe_int(payload.get('limit', 20), 20), 1), 100)
+        total = queryset.count()
+
+        visible_tasks = self.get_visible_task_queryset()
+        items = []
+        for member in queryset.order_by('username')[offset:offset + limit]:
+            member_tasks = visible_tasks.filter(assigned_to=member)
+            items.append(
+                {
+                    **_serialize_user(member),
+                    'task_total': member_tasks.count(),
+                    'task_pending': member_tasks.filter(status=TaskStatusChoices.PENDING).count(),
+                    'task_in_progress': member_tasks.filter(status=TaskStatusChoices.IN_PROGRESS).count(),
+                    'task_completed': member_tasks.filter(status=TaskStatusChoices.COMPLETED).count(),
+                }
+            )
+
+        return self.success_response(
+            {
+                'total': total,
+                'items': items,
+            }
+        )
+
+
+class PlatformQueryAPIView(AgentAPIView):
+    def post(self, request):
+        payload = self.parse_json_body(request)
+        if isinstance(payload, JsonResponse):
+            return payload
+
+        try:
+            data = PlatformDataService().execute(user=self.acting_user, payload=payload)
+        except PlatformDataError as exc:
+            return self.error_response(str(exc), code='40004', status=400)
+
+        return self.success_response(data)
+
+
 class SearchTasksAPIView(AgentAPIView):
     def post(self, request):
         payload = self.parse_json_body(request)
@@ -315,11 +424,11 @@ class SearchTasksAPIView(AgentAPIView):
         queryset = self.get_visible_task_queryset()
         assigned_to = payload.get('assigned_to')
         if assigned_to:
-            queryset = queryset.filter(assigned_to__username__icontains=str(assigned_to).strip())
+            queryset = queryset.filter(_user_lookup_q('assigned_to', assigned_to))
 
         created_by = payload.get('created_by')
         if created_by:
-            queryset = queryset.filter(created_by__username__icontains=str(created_by).strip())
+            queryset = queryset.filter(_user_lookup_q('created_by', created_by))
 
         status = payload.get('status')
         if status:
@@ -342,8 +451,7 @@ class SearchTasksAPIView(AgentAPIView):
                 Q(completion_note__icontains=keyword)
             )
 
-        date_from = parse_date(str(payload.get('date_from', '')).strip()) if payload.get('date_from') else None
-        date_to = parse_date(str(payload.get('date_to', '')).strip()) if payload.get('date_to') else None
+        date_from, date_to, date_label = _parse_agent_date_range(payload)
         if status == TaskStatusChoices.COMPLETED:
             if date_from:
                 queryset = queryset.filter(completed_at__date__gte=date_from)
@@ -380,6 +488,9 @@ class SearchTasksAPIView(AgentAPIView):
         return self.success_response(
             {
                 'total': total,
+                'date_from': date_from.isoformat() if date_from else None,
+                'date_to': date_to.isoformat() if date_to else None,
+                'date_label': date_label,
                 'items': items,
             }
         )
@@ -398,7 +509,7 @@ class SearchTaskVideosAPIView(AgentAPIView):
 
         assigned_to = payload.get('assigned_to')
         if assigned_to:
-            queryset = queryset.filter(assigned_to__username__icontains=str(assigned_to).strip())
+            queryset = queryset.filter(_user_lookup_q('assigned_to', assigned_to))
 
         status = payload.get('status')
         if status:
@@ -415,8 +526,7 @@ class SearchTaskVideosAPIView(AgentAPIView):
                 Q(completion_note__icontains=keyword)
             )
 
-        date_from = parse_date(str(payload.get('date_from', '')).strip()) if payload.get('date_from') else None
-        date_to = parse_date(str(payload.get('date_to', '')).strip()) if payload.get('date_to') else None
+        date_from, date_to, date_label = _parse_agent_date_range(payload)
         if date_from:
             queryset = queryset.filter(completed_at__date__gte=date_from)
         if date_to:
@@ -426,23 +536,35 @@ class SearchTaskVideosAPIView(AgentAPIView):
         attachments = TaskAttachment.objects.filter(task__in=tasks).select_related('task', 'uploaded_by')
 
         videos_by_task_id: dict[int, list[dict[str, Any]]] = {}
+        export_items = []
+        video_count = 0
         for attachment in attachments:
             file_name = attachment.file.name or ''
             file_type = _detect_file_type(file_name)
             if file_type != 'video':
                 continue
 
-            videos_by_task_id.setdefault(attachment.task_id, []).append(
+            video_item = {
+                'attachment_id': attachment.pk,
+                'file_name': Path(file_name).name,
+                'file_type': file_type,
+                'file_url': attachment.file.url if attachment.file else '',
+                'remark': attachment.remark,
+                'uploaded_by': attachment.uploaded_by.username,
+                'created': attachment.created.isoformat() if attachment.created else None,
+            }
+            videos_by_task_id.setdefault(attachment.task_id, []).append(video_item)
+            export_items.append(
                 {
-                    'attachment_id': attachment.pk,
-                    'file_name': Path(file_name).name,
-                    'file_type': file_type,
-                    'file_url': attachment.file.url if attachment.file else '',
-                    'remark': attachment.remark,
-                    'uploaded_by': attachment.uploaded_by.username,
-                    'created': attachment.created.isoformat() if attachment.created else None,
+                    **video_item,
+                    'task_id': attachment.task_id,
+                    'task_title': attachment.task.title,
+                    'assigned_to': attachment.task.assigned_to.username,
+                    'assigned_to_name': attachment.task.assigned_to.get_full_name(),
+                    'completed_at': attachment.task.completed_at.isoformat() if attachment.task.completed_at else None,
                 }
             )
+            video_count += 1
 
         results = []
         for task in tasks:
@@ -454,13 +576,25 @@ class SearchTaskVideosAPIView(AgentAPIView):
                     'task_id': task.pk,
                     'task_title': task.title,
                     'assigned_to': task.assigned_to.username,
+                    'assigned_to_detail': _serialize_user(task.assigned_to),
                     'status': task.status,
                     'completed_at': task.completed_at.isoformat() if task.completed_at else None,
                     'videos': task_videos,
                 }
             )
 
-        return self.success_response({'tasks': results})
+        return self.success_response(
+            {
+                'total': len(results),
+                'task_count': len(results),
+                'video_count': video_count,
+                'date_from': date_from.isoformat() if date_from else None,
+                'date_to': date_to.isoformat() if date_to else None,
+                'date_label': date_label,
+                'tasks': results,
+                'export_items': export_items,
+            }
+        )
 
 
 class ValidateHardwareImportAPIView(AgentAPIView):

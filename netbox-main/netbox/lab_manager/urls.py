@@ -10,6 +10,8 @@ urlpatterns = [
     # Agent API
     path('api/agent/hardware/search/', agent_api.SearchHardwareAPIView.as_view(), name='agent_hardware_search'),
     path('api/agent/hardware/gap-analysis/', agent_api.AnalyzeHardwareGapAPIView.as_view(), name='agent_hardware_gap_analysis'),
+    path('api/agent/members/search/', agent_api.SearchMembersAPIView.as_view(), name='agent_members_search'),
+    path('api/agent/platform/query/', agent_api.PlatformQueryAPIView.as_view(), name='agent_platform_query'),
     path('api/agent/tasks/search/', agent_api.SearchTasksAPIView.as_view(), name='agent_tasks_search'),
     path('api/agent/tasks/videos/', agent_api.SearchTaskVideosAPIView.as_view(), name='agent_task_videos'),
     path('api/agent/hardware/import/validate/', agent_api.ValidateHardwareImportAPIView.as_view(), name='agent_hardware_import_validate'),

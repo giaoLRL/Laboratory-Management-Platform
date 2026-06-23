@@ -97,6 +97,11 @@ Jinja2
 # https://github.com/python-jsonschema/jsonschema/blob/main/CHANGELOG.rst
 jsonschema
 
+# LangChain agent runtime for lab manager tool calling
+# https://github.com/langchain-ai/langchain
+langchain>=1.0,<2.0
+langchain-openai>=1.0,<2.0
+
 # Simple markup language for rendering HTML
 # https://python-markdown.github.io/changelog/
 Markdown

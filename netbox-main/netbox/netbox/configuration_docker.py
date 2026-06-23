@@ -28,6 +28,13 @@ PLUGINS_CONFIG = {
         "dify_api_base_url": "http://nginx",
         "dify_api_key": "app-4a0955a232d44ddc985e4aaa",
         "dify_timeout": 60,
+        # Optional: enable LangChain tool-calling agent with any OpenAI-compatible endpoint.
+        # Keep langchain_api_key empty to use the local deterministic tool orchestrator fallback.
+        "langchain_api_key": os.getenv("LAB_MANAGER_LANGCHAIN_API_KEY", ""),
+        "langchain_base_url": os.getenv("LAB_MANAGER_LANGCHAIN_BASE_URL", ""),
+        "langchain_model": os.getenv("LAB_MANAGER_LANGCHAIN_MODEL", "gpt-4o-mini"),
+        "langchain_temperature": 0.1,
+        "langchain_timeout": 60,
         "dify_workflow_api_keys": {
             "hardware_query": "app-f4e774d913fa4ec5ac61c3fe",
             "hardware_gap_analysis": "app-70591b3157f74127b181f15f",
