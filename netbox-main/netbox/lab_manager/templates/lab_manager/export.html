@@ -1,0 +1,75 @@
+{% extends 'base/layout.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "数据导出" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "数据导出" %}</h1>
+        <p class="text-muted">{% trans "选择要导出的数据类型和格式。" %}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <h5 class="card-header">{% trans "导出选项" %}</h5>
+            <div class="card-body">
+                <form method="get" class="mb-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="model" class="form-label">{% trans "数据类型" %}</label>
+                            <select name="model" id="model" class="form-select">
+                                <option value="hardware" {% if model == 'hardware' %}selected{% endif %}>{% trans "硬件库存" %}</option>
+                                <option value="tasks" {% if model == 'tasks' %}selected{% endif %}>{% trans "任务" %}</option>
+                                <option value="checkins" {% if model == 'checkins' %}selected{% endif %}>{% trans "签到记录" %}</option>
+                                <option value="borrow_records" {% if model == 'borrow_records' %}selected{% endif %}>{% trans "借出记录" %}</option>
+                                <option value="projects" {% if model == 'projects' %}selected{% endif %}>{% trans "项目" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="format" class="form-label">{% trans "导出格式" %}</label>
+                            <select name="format" id="format" class="form-select">
+                                <option value="csv" {% if format == 'csv' %}selected{% endif %}>CSV</option>
+                                <option value="json" {% if format == 'json' %}selected{% endif %}>JSON</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-download"></i> {% trans "导出" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <h5 class="card-header">{% trans "说明" %}</h5>
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    {% trans "也可以通过命令行导出数据：" %}
+                </p>
+                <pre class="bg-light p-2 mt-2 mb-0 rounded"><code>python manage.py export_lab_data --model {{ model }}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if model and format %}
+<div class="row mt-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header">{% trans "导出结果" %}</h5>
+            <div class="card-body">
+                <p class="text-muted">{% trans "已选择：" %} <strong>{{ model }}</strong> → <strong>{{ format|upper }}</strong></p>
+                <p class="text-muted mb-0">{% trans "导出功能通过管理命令实现，请在服务器终端运行上述命令。" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

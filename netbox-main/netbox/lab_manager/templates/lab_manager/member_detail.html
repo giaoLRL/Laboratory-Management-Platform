@@ -1,0 +1,359 @@
+{% extends 'base/layout.html' %}
+{% load i18n humanize %}
+
+{% block title %}{% trans "成员详情" %} — {{ member.username }}{% endblock %}
+
+{% block content %}
+<style>
+/* 活动日历样式 */
+.activity-calendar { table-layout: fixed; }
+.calendar-day { font-size: 0.85rem; border-radius: 4px; transition: background 0.15s, transform 0.1s; vertical-align: middle; }
+.calendar-day:hover { transform: scale(1.05); z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.calendar-day-checkin { background: #198754 !important; color: #fff !important; }
+.calendar-day-browse { background: #cfe2ff !important; color: #084298 !important; }
+.calendar-day-today { border: 3px solid #0d6efd !important; font-weight: 700; }
+</style>
+
+{# ── 顶部：用户信息 ── #}
+<div class="row mb-3 align-items-center">
+    <div class="col-auto">
+        <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white"
+             style="width:64px;height:64px;font-size:1.6rem;font-weight:700">
+            {{ member.first_name|default:member.username|slice:':1'|upper }}
+        </div>
+    </div>
+    <div class="col">
+        <h2 class="mb-0">
+            {% if member.get_full_name %}{{ member.get_full_name }}{% else %}{{ member.username }}{% endif %}
+        </h2>
+        <div class="text-muted">
+            @{{ member.username }}
+            {% if member.email %} &middot; {{ member.email }}{% endif %}
+            {% if member.is_superuser %}<span class="badge text-bg-danger ms-1">{% trans "管理员" %}</span>{% endif %}
+        </div>
+    </div>
+    <div class="col-auto text-end">
+        <small class="text-muted d-block">{% trans "注册时间" %}</small>
+        <span>{{ member.date_joined|date:"Y-m-d" }}</span>
+    </div>
+</div>
+
+{# ── 第一行：4 个统计卡片 ── #}
+<div class="row mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-primary">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ task_total }}</h3>
+                <small>{% trans "任务总数" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-info">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ task_in_progress }}</h3>
+                <small>{% trans "进行中" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-success">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ task_completed }}</h3>
+                <small>{% trans "已完成" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card {% if completion_rate >= 80 %}text-bg-success{% elif completion_rate >= 50 %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ completion_rate }}%</h3>
+                <small>{% trans "完成率" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 第二行：任务完成可视化进度条 ── #}
+<div class="row mb-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header">{% trans "任务完成进度" %}</h5>
+            <div class="card-body">
+                {% if task_total > 0 %}
+                <div class="progress mb-3" style="height:28px">
+                    <div class="progress-bar bg-success d-flex align-items-center justify-content-center fw-bold"
+                         style="width:{% widthratio task_completed task_total 100 %}%"
+                         title="{% trans '已完成' %}: {{ task_completed }}">
+                        {% if task_completed > 0 %}{{ task_completed }}{% endif %}
+                    </div>
+                    <div class="progress-bar bg-primary d-flex align-items-center justify-content-center fw-bold"
+                         style="width:{% widthratio task_in_progress task_total 100 %}%"
+                         title="{% trans '进行中' %}: {{ task_in_progress }}">
+                        {% if task_in_progress > 0 %}{{ task_in_progress }}{% endif %}
+                    </div>
+                    <div class="progress-bar bg-secondary d-flex align-items-center justify-content-center fw-bold"
+                         style="width:{% widthratio task_pending task_total 100 %}%"
+                         title="{% trans '待开始' %}: {{ task_pending }}">
+                        {% if task_pending > 0 %}{{ task_pending }}{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center gap-4">
+                    <span><span class="badge bg-success">　</span> {% trans "已完成" %} {{ task_completed }}</span>
+                    <span><span class="badge bg-primary">　</span> {% trans "进行中" %} {{ task_in_progress }}</span>
+                    <span><span class="badge bg-secondary">　</span> {% trans "待开始" %} {{ task_pending }}</span>
+                    {% if task_overdue > 0 %}
+                    <span class="text-danger">⚠ {% trans "已逾期" %} {{ task_overdue }}</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">{% trans "暂无任务" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 活动日历 ── #}
+<div class="row mb-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header d-flex justify-content-between align-items-center">
+                {% trans "活动日历" %}
+                <div>
+                    <a href="?cal_year={{ activity_calendar.prev_year }}&cal_month={{ activity_calendar.prev_month }}" class="btn btn-sm btn-outline-secondary me-1">&laquo;</a>
+                    <span class="fw-bold">{{ activity_calendar.month_label }}</span>
+                    <a href="?cal_year={{ activity_calendar.next_year }}&cal_month={{ activity_calendar.next_month }}" class="btn btn-sm btn-outline-secondary ms-1">&raquo;</a>
+                </div>
+            </h5>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <table class="table table-bordered text-center mb-0 activity-calendar">
+                            <thead>
+                                <tr class="table-light">
+                                    {% for w in activity_calendar.weekday_names %}
+                                    <th class="py-1"><small>{{ w }}</small></th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in activity_calendar.weeks %}
+                                <tr>
+                                    {% for day in week %}
+                                    <td class="calendar-day p-1
+                                        {% if day == 0 %}bg-light text-muted{% endif %}
+                                        {% if day in activity_calendar.checkin_day_nums %}calendar-day-checkin{% endif %}
+                                        {% if day in activity_calendar.active_day_nums and day not in activity_calendar.checkin_day_nums %}calendar-day-browse{% endif %}
+                                        {% if day == activity_calendar.today.day and activity_calendar.year == activity_calendar.today.year and activity_calendar.month == activity_calendar.today.month %}calendar-day-today{% endif %}
+                                    " style="height:36px;width:14.28%">
+                                        {% if day != 0 %}
+                                        <span class="fw-bold small">{{ day }}</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge" style="background:#198754;width:16px;height:16px;display:inline-block;border-radius:4px"></span>
+                                <small class="text-muted">{% trans "打卡" %} ({{ activity_calendar.total_checkin_days }} {% trans "天" %})</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge" style="background:#0d6efd;width:16px;height:16px;display:inline-block;border-radius:4px"></span>
+                                <small class="text-muted">{% trans "有浏览" %} ({{ activity_calendar.total_active_days }} {% trans "天" %})</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge" style="border:2px solid #0d6efd;background:transparent;width:20px;height:20px;display:inline-block;border-radius:4px"></span>
+                                <small class="text-muted">{% trans "今天" %}</small>
+                            </div>
+                            <hr class="my-2">
+                            <div>
+                                <strong>{{ activity_calendar.total_active_days }}</strong> <small class="text-muted">{% trans "天有活动" %}</small><br>
+                                <strong>{{ activity_calendar.total_checkin_days }}</strong> <small class="text-muted">{% trans "天有打卡" %}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 第三行：统计 + 活跃度 ── #}
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "个人统计" %}</h5>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr><td>{% trans "借出中硬件" %}</td><td><strong>{{ borrowed_current }}</strong> {% if borrowed_overdue > 0 %}<span class="text-danger">({% trans "其中逾期" %} {{ borrowed_overdue }})</span>{% endif %}</td></tr>
+                        <tr><td>{% trans "总打卡次数" %}</td><td><strong>{{ checkin_total }}</strong></td></tr>
+                        <tr><td>{% trans "本周活跃天数" %}</td><td><strong>{{ active_days_this_week }}</strong> / 7</td></tr>
+                        <tr><td>{% trans "负责项目" %}</td><td><strong>{{ led_projects.count }}</strong></td></tr>
+                        <tr><td>{% trans "参与项目" %}</td><td><strong>{{ member_projects.count }}</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "最近任务" %}</h5>
+            <div class="card-body p-0">
+                {% if recent_tasks %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>{% trans "标题" %}</th>
+                            <th>{% trans "状态" %}</th>
+                            <th>{% trans "优先级" %}</th>
+                            <th>{% trans "截止日期" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in recent_tasks %}
+                        <tr class="cursor-pointer" onclick="window.location='{{ t.get_absolute_url }}'" role="button">
+                            <td>
+                                <a href="{{ t.get_absolute_url }}" class="text-decoration-none">{{ t.title }}</a>
+                                {% if t.project %}<br><small class="text-muted">{{ t.project.name }}</small>{% endif %}
+                            </td>
+                            <td>{% badge t.get_status_display %}</td>
+                            <td>{% badge t.get_priority_display %}</td>
+                            <td>{{ t.deadline|date:"Y-m-d"|default:'—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="p-3 text-muted mb-0">{% trans "暂无任务" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 第四行：借出记录 + 打卡记录 ── #}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between align-items-center">
+                {% trans "借出记录" %}
+                <span class="badge text-bg-primary">{{ borrow_records|length }}</span>
+            </h5>
+            <div class="card-body p-0">
+                {% if borrow_records %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "硬件" %}</th><th>{% trans "状态" %}</th><th>{% trans "日期" %}</th></tr></thead>
+                    <tbody>
+                        {% for br in borrow_records %}
+                        <tr class="cursor-pointer" onclick="window.location='{{ br.get_absolute_url }}'" role="button">
+                            <td><a href="{{ br.get_absolute_url }}">{{ br.hardware.name }}</a></td>
+                            <td>
+                                {% if br.status == 'borrowed' %}
+                                <span class="badge text-bg-warning">{% trans "借出中" %}</span>
+                                {% elif br.status == 'returned' %}
+                                <span class="badge text-bg-success">{% trans "已归还" %}</span>
+                                {% else %}
+                                <span class="badge text-bg-danger">{% trans "已逾期" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ br.borrow_date|date:"Y-m-d" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="p-3 text-muted mb-0">{% trans "暂无借出记录" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between align-items-center">
+                {% trans "最近打卡" %}
+                <span class="badge text-bg-info">{{ checkin_total }}</span>
+            </h5>
+            <div class="card-body p-0">
+                {% if checkins %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "时间" %}</th><th>{% trans "地址" %}</th><th>{% trans "照片" %}</th></tr></thead>
+                    <tbody>
+                        {% for c in checkins %}
+                        <tr>
+                            <td>{{ c.created|naturaltime }}</td>
+                            <td>{{ c.address|default:'—'|truncatechars:20 }}</td>
+                            <td>
+                                {% if c.photo %}
+                                <a href="{{ c.photo.url }}" target="_blank" class="badge text-bg-light text-decoration-none">📷</a>
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="p-3 text-muted mb-0">{% trans "暂无打卡记录" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 第五行：项目 + 最近活动 ── #}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "参与项目" %}</h5>
+            <div class="card-body">
+                {% if led_projects or member_projects %}
+                {% for p in led_projects %}
+                <div class="mb-2">
+                    <a href="{{ p.get_absolute_url }}" class="fw-bold">{{ p.name }}</a>
+                    <span class="badge text-bg-primary">{% trans "负责人" %}</span>
+                </div>
+                {% endfor %}
+                {% for p in member_projects %}
+                <div class="mb-2">
+                    <a href="{{ p.get_absolute_url }}">{{ p.name }}</a>
+                    <span class="badge text-bg-light">{% trans "成员" %}</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted mb-0">{% trans "暂未参与任何项目" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "最近活动" %}</h5>
+            <div class="card-body p-0">
+                {% if recent_activity %}
+                <div class="list-group list-group-flush">
+                    {% for act in recent_activity %}
+                    <div class="list-group-item py-2">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-truncate">{{ act.page_title|default:act.path }}</small>
+                            <small class="text-muted flex-shrink-0 ms-2">{{ act.created|naturaltime }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="p-3 text-muted mb-0">{% trans "暂无活动记录" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

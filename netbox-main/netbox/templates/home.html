@@ -5,23 +5,6 @@
 
 {% block header %}
   {{ block.super }}
-  {% if new_release %}
-    <div class="alert alert-info bg-info-subtle mx-3" role="alert">
-      <div class="d-flex">
-        <div>
-          <i class="mdi mdi-information-outline p-2"></i>
-        </div>
-        <div>
-          <h4 class="alert-title">{% trans "New Release Available" %}</h4>
-          <a href="{{ new_release.url }}">NetBox v{{ new_release.version }}</a> {% trans "is available" %}.
-          <a href="https://docs.netbox.dev/en/stable/installation/upgrading/" target="_blank">
-            {% trans "Upgrade Instructions" context "Document title" %}
-            <i class="mdi mdi-open-in-new"></i>
-          </a>
-        </div>
-      </div>
-    </div>
-  {% endif %}
 {% endblock %}
 
 {% block title %}{% trans "Home" %}{% endblock %}

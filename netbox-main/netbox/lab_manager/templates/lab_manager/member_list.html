@@ -1,0 +1,104 @@
+{% extends 'base/layout.html' %}
+{% load i18n humanize %}
+
+{% block title %}{% trans "成员列表" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+    <div class="col">
+        <h2 class="mb-0">{% trans "成员列表" %}</h2>
+    </div>
+    <div class="col-auto">
+        <span class="text-muted">{% trans "共" %} <strong>{{ total_members }}</strong> {% trans "位成员" %}</span>
+    </div>
+</div>
+
+<div class="row">
+    {% for m in members %}
+    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
+        <div class="card h-100 shadow-sm cursor-pointer hover-shadow" onclick="window.location='{% url 'plugins:lab_manager:member_detail' m.user.pk %}'" role="button">
+            <div class="card-body">
+                {# 头像 + 基本信息 #}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white me-3 flex-shrink-0"
+                         style="width:48px;height:48px;font-size:1.2rem;font-weight:600">
+                        {{ m.user.first_name|default:m.user.username|slice:':1'|upper }}
+                    </div>
+                    <div class="flex-grow-1 min-width-0">
+                        <h6 class="mb-0 text-truncate">
+                            {% if m.user.get_full_name %}{{ m.user.get_full_name }}{% else %}{{ m.user.username }}{% endif %}
+                        </h6>
+                        <small class="text-muted">@{{ m.user.username }}</small>
+                    </div>
+                </div>
+
+                {# 任务完成进度条 #}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">{% trans "任务完成率" %}</span>
+                        <strong>{{ m.completion_rate }}%</strong>
+                    </div>
+                    <div class="progress" style="height:8px">
+                        {% if m.task_total > 0 %}
+                        <div class="progress-bar bg-success" style="width:{{ m.completion_rate }}%"
+                             title="{% trans '已完成' %}: {{ m.task_completed }}"></div>
+                        <div class="progress-bar bg-primary" style="width:{% widthratio m.task_in_progress m.task_total 100 %}"
+                             title="{% trans '进行中' %}: {{ m.task_in_progress }}"></div>
+                        <div class="progress-bar bg-secondary" style="width:{% widthratio m.task_pending m.task_total 100 %}"
+                             title="{% trans '待开始' %}: {{ m.task_pending }}"></div>
+                        {% else %}
+                        <div class="progress-bar bg-light w-100"></div>
+                        {% endif %}
+                    </div>
+                    {% if m.task_overdue > 0 %}
+                    <small class="text-danger">⚠ {{ m.task_overdue }} {% trans "个逾期任务" %}</small>
+                    {% endif %}
+                </div>
+
+                {# 统计小标签 #}
+                <div class="d-flex gap-1 flex-wrap">
+                    <span class="badge text-bg-light" title="{% trans '任务' %}">
+                        📋 {{ m.task_total }}
+                    </span>
+                    {% if m.borrowed_current > 0 %}
+                    <span class="badge text-bg-warning" title="{% trans '借出中' %}">
+                        📦 {{ m.borrowed_current }}
+                    </span>
+                    {% endif %}
+                    <span class="badge text-bg-info" title="{% trans '打卡' %}">
+                        📍 {{ m.checkin_total }}
+                    </span>
+                    {% if m.project_count > 0 %}
+                    <span class="badge text-bg-light" title="{% trans '项目' %}">
+                        🔬 {{ m.project_count }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                {# 今日打卡标记 #}
+                {% if m.checkin_today > 0 %}
+                <div class="mt-2">
+                    <span class="badge text-bg-success">✓ {% trans "今日已打卡" %}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">
+                    {% if m.last_checkin %}
+                    {% trans "最近打卡" %}: {{ m.last_checkin.created|naturaltime }}
+                    {% elif m.last_open %}
+                    {% trans "最近活动" %}: {{ m.last_open.created|naturaltime }}
+                    {% else %}
+                    {% trans "暂无活动" %}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col">
+        <div class="alert alert-info">{% trans "暂无活跃成员" %}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

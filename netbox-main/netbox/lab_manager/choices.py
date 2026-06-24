@@ -69,6 +69,42 @@ class TaskStatusChoices(ChoiceSet):
     ]
 
 
+class AgentToolTypeChoices(ChoiceSet):
+    key = 'AgentTool.tool_type'
+
+    PLATFORM_QUERY = 'platform_query'
+    TASK_CREATE = 'task_create'
+    VIDEO_SEARCH = 'video_search'
+    HARDWARE_GAP = 'hardware_gap'
+    DESCRIBE_DATA = 'describe_data'
+    CUSTOM_FUNCTION = 'custom_function'
+
+    CHOICES = [
+        (PLATFORM_QUERY, '平台数据查询'),
+        (TASK_CREATE, '任务创建'),
+        (VIDEO_SEARCH, '视频检索'),
+        (HARDWARE_GAP, '硬件缺口分析'),
+        (DESCRIBE_DATA, '数据模型描述'),
+        (CUSTOM_FUNCTION, '自定义函数'),
+    ]
+
+
+class AgentToolCategoryChoices(ChoiceSet):
+    key = 'AgentTool.category'
+
+    DATA_QUERY = 'data_query'
+    TASK_MANAGEMENT = 'task_management'
+    ANALYSIS = 'analysis'
+    SYSTEM = 'system'
+
+    CHOICES = [
+        (DATA_QUERY, '数据查询'),
+        (TASK_MANAGEMENT, '任务管理'),
+        (ANALYSIS, '分析诊断'),
+        (SYSTEM, '系统管理'),
+    ]
+
+
 class TaskPriorityChoices(ChoiceSet):
     key = 'Task.priority'
 

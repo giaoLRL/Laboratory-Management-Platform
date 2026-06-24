@@ -1,5 +1,6 @@
 {% extends 'base/layout.html' %}
 {% load i18n %}
+{% load humanize %}
 
 {% block title %}{% trans "实验室首页" %}{% endblock %}
 
@@ -11,62 +12,53 @@
 </div>
 
 {% if is_admin %}
-{# 管理员首页 #}
+{# ═══════════════════════ 管理员仪表板 ═══════════════════════ #}
+
+{# 统计卡片行1 #}
 <div class="row mb-3">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card text-bg-primary">
-            <div class="card-body text-center">
+            <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ hardware_total }}</h3>
                 <small>{% trans "硬件总数" %}</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card text-bg-success">
-            <div class="card-body text-center">
+            <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ hardware_in_use }}</h3>
-                <small>{% trans "在用硬件" %}</small>
+                <small>{% trans "使用中" %}</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card text-bg-warning">
-            <div class="card-body text-center">
+            <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ hardware_idle }}</h3>
-                <small>{% trans "闲置硬件" %}</small>
+                <small>{% trans "闲置" %}</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card text-bg-info">
-            <div class="card-body text-center">
+            <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ task_total }}</h3>
                 <small>{% trans "任务总数" %}</small>
             </div>
         </div>
     </div>
-</div>
-
-<div class="row mb-3">
-    <div class="col-md-3">
-        <div class="card text-bg-danger">
-            <div class="card-body text-center">
-                <h3 class="mb-0">{{ task_in_progress }}</h3>
-                <small>{% trans "进行中任务" %}</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card text-bg-dark">
-            <div class="card-body text-center">
-                <h3 class="mb-0">{{ task_completed }}</h3>
-                <small>{% trans "已完成任务" %}</small>
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ task_in_progress }}</h3>
+                <small>{% trans "进行中" %}</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card text-bg-secondary">
-            <div class="card-body text-center">
+            <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ checkin_today }}</h3>
                 <small>{% trans "今日打卡" %}</small>
             </div>
@@ -74,46 +66,270 @@
     </div>
 </div>
 
+{# 统计卡片行2 #}
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card border-danger">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0 text-danger">{{ pending_approval_count }}</h3>
+                <small class="text-muted">{% trans "待审批硬件" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-warning">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0 text-warning">{{ overdue_tasks }}</h3>
+                <small class="text-muted">{% trans "逾期任务" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-info">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0 text-info">{{ borrowed_count }}</h3>
+                <small class="text-muted">{% trans "当前借出" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-success">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0 text-success">{{ task_completed }}</h3>
+                <small class="text-muted">{% trans "已完成任务" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 待审批硬件 + 逾期借出 #}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between">
+                <span>{% trans "待审批硬件" %}</span>
+                {% if pending_approval_count %}
+                <span class="badge text-bg-danger">{{ pending_approval_count }}</span>
+                {% endif %}
+            </h5>
+            <div class="card-body p-0">
+                {% if pending_approvals %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "名称" %}</th><th>{% trans "提交人" %}</th><th>{% trans "时间" %}</th></tr></thead>
+                    <tbody>
+                        {% for hw in pending_approvals %}
+                        <tr>
+                            <td><a href="{{ hw.get_absolute_url }}">{{ hw.name }}</a></td>
+                            <td>{{ hw.submitted_by }}</td>
+                            <td>{{ hw.created|naturaltime }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted text-center">{% trans "暂无待审批硬件" %}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between">
+                <span>{% trans "逾期未还硬件" %}</span>
+                {% if overdue_borrows %}
+                <span class="badge text-bg-danger">{{ overdue_borrows|length }}</span>
+                {% endif %}
+            </h5>
+            <div class="card-body p-0">
+                {% if overdue_borrows %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "硬件" %}</th><th>{% trans "借用人" %}</th><th>{% trans "预计归还" %}</th></tr></thead>
+                    <tbody>
+                        {% for br in overdue_borrows %}
+                        <tr>
+                            <td><a href="{{ br.get_absolute_url }}">{{ br.hardware.name }}</a></td>
+                            <td>{{ br.borrower }}</td>
+                            <td>{{ br.expected_return_date|naturaltime }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted text-center">{% trans "无逾期借出记录" %}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 低库存告警 + 最近活动 #}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between">
+                <span>{% trans "低库存告警" %}</span>
+                {% if low_stock_items %}
+                <span class="badge text-bg-warning">{{ low_stock_items|length }}</span>
+                {% endif %}
+            </h5>
+            <div class="card-body p-0">
+                {% if low_stock_items %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "硬件" %}</th><th>{% trans "当前库存" %}</th><th>{% trans "最低阈值" %}</th></tr></thead>
+                    <tbody>
+                        {% for hw in low_stock_items %}
+                        <tr>
+                            <td><a href="{{ hw.get_absolute_url }}">{{ hw.name }}</a></td>
+                            <td><span class="text-danger fw-bold">{{ hw.quantity }}</span></td>
+                            <td>{{ hw.minimum_stock }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted text-center">{% trans "库存充足" %}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "最近活动" %}</h5>
+            <div class="card-body p-0">
+                {% if recent_activity %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "成员" %}</th><th>{% trans "操作" %}</th><th>{% trans "时间" %}</th></tr></thead>
+                    <tbody>
+                        {% for act in recent_activity %}
+                        <tr>
+                            <td>{{ act.user }}</td>
+                            <td>{{ act.page_title|default:act.path|truncatechars:30 }}</td>
+                            <td>{{ act.created|naturaltime }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted text-center">{% trans "暂无活动记录" %}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 快捷操作 #}
 <div class="row">
-    <div class="col-md-3">
-        <a href="{% url 'plugins:lab_manager:hardware_add' %}" class="btn btn-primary w-100 py-3">
+    <div class="col-md-2">
+        <a href="{% url 'plugins:lab_manager:hardware_add' %}" class="btn btn-primary w-100 py-3 mb-2">
             <i class="mdi mdi-plus-thick"></i> {% trans "录入新硬件" %}
         </a>
     </div>
-    <div class="col-md-3">
-        <a href="{% url 'plugins:lab_manager:task_add' %}" class="btn btn-success w-100 py-3">
+    <div class="col-md-2">
+        <a href="{% url 'plugins:lab_manager:task_add' %}" class="btn btn-success w-100 py-3 mb-2">
             <i class="mdi mdi-plus-thick"></i> {% trans "创建任务" %}
         </a>
     </div>
-    <div class="col-md-3">
-        <a href="{% url 'plugins:lab_manager:task_list' %}" class="btn btn-info w-100 py-3">
+    <div class="col-md-2">
+        <a href="{% url 'plugins:lab_manager:labproject_add' %}" class="btn btn-info w-100 py-3 mb-2">
+            <i class="mdi mdi-folder-plus"></i> {% trans "创建项目" %}
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="{% url 'plugins:lab_manager:task_list' %}" class="btn btn-outline-primary w-100 py-3 mb-2">
             <i class="mdi mdi-format-list-bulleted"></i> {% trans "全部任务" %}
         </a>
     </div>
-    <div class="col-md-3">
-        <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-dark w-100 py-3">
+    <div class="col-md-2">
+        <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-outline-dark w-100 py-3 mb-2">
             <i class="mdi mdi-robot-outline"></i> {% trans "智能体助手" %}
         </a>
     </div>
-    <div class="col-md-3 mt-3">
-        <a href="{% url 'plugins:lab_manager:checkin_list' %}" class="btn btn-secondary w-100 py-3">
-            <i class="mdi mdi-map-marker-check"></i> {% trans "打卡记录" %}
+    <div class="col-md-2">
+        <a href="{% url 'plugins:lab_manager:hardwareborrowrecord_list' %}" class="btn btn-outline-warning w-100 py-3 mb-2">
+            <i class="mdi mdi-hand-back-left"></i> {% trans "借出记录" %}
         </a>
     </div>
 </div>
 
 {% else %}
-{# 成员首页 #}
+{# ═══════════════════════ 成员首页 ═══════════════════════ #}
+
+{# 快捷操作 #}
 <div class="row mb-3">
     <div class="col">
         <a href="{% url 'plugins:lab_manager:checkin_create' %}" class="btn btn-success me-2">
             <i class="mdi mdi-camera"></i> {% trans "拍照定位打卡" %}
         </a>
-        <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-dark">
-            <i class="mdi mdi-robot-outline"></i> {% trans "打开智能体助手" %}
+        <a href="{% url 'plugins:lab_manager:agent_console' %}" class="btn btn-dark me-2">
+            <i class="mdi mdi-robot-outline"></i> {% trans "智能体助手" %}
+        </a>
+        <a href="{% url 'plugins:lab_manager:my_tasks' %}" class="btn btn-outline-primary me-2">
+            <i class="mdi mdi-clipboard-check"></i> {% trans "我的任务" %}
+        </a>
+        <a href="{% url 'plugins:lab_manager:hardwareborrowrecord_add' %}" class="btn btn-outline-warning">
+            <i class="mdi mdi-hand-back-left"></i> {% trans "申请借用硬件" %}
         </a>
     </div>
 </div>
+
+<div class="row mb-3">
+    {# 我的待处理任务 #}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between">
+                {% trans "我的待处理任务" %}
+                <a href="{% url 'plugins:lab_manager:my_tasks' %}" class="btn btn-sm btn-outline-primary">{% trans "查看全部" %}</a>
+            </h5>
+            <div class="card-body p-0">
+                {% if my_pending_tasks %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "任务" %}</th><th>{% trans "状态" %}</th><th>{% trans "截止日期" %}</th></tr></thead>
+                    <tbody>
+                        {% for task in my_pending_tasks %}
+                        <tr>
+                            <td><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></td>
+                            <td>{% badge task.get_status_display %}</td>
+                            <td>{{ task.deadline|date:"Y-m-d"|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted text-center">{% trans "暂无待处理任务" %}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {# 我的借出 #}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header d-flex justify-content-between">
+                {% trans "我借出的硬件" %}
+                <a href="{% url 'plugins:lab_manager:hardwareborrowrecord_list' %}" class="btn btn-sm btn-outline-primary">{% trans "查看全部" %}</a>
+            </h5>
+            <div class="card-body p-0">
+                {% if my_borrowed %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "硬件" %}</th><th>{% trans "借出时间" %}</th><th>{% trans "预计归还" %}</th></tr></thead>
+                    <tbody>
+                        {% for br in my_borrowed %}
+                        <tr>
+                            <td><a href="{{ br.get_absolute_url }}">{{ br.hardware.name }}</a></td>
+                            <td>{{ br.borrow_date|date:"Y-m-d" }}</td>
+                            <td>{{ br.expected_return_date|date:"Y-m-d"|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted text-center">{% trans "暂无借出记录" %}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 最近打卡 #}
 <div class="row mb-3">
     <div class="col">
         <div class="card">
@@ -121,64 +337,22 @@
                 {% trans "我的最近打卡" %}
                 <a href="{% url 'plugins:lab_manager:checkin_list' %}" class="btn btn-sm btn-outline-primary">{% trans "查看全部" %}</a>
             </h5>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if my_recent_checkins %}
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>{% trans "时间" %}</th>
-                            <th>{% trans "位置" %}</th>
-                            <th>{% trans "地址备注" %}</th>
-                        </tr>
-                    </thead>
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "时间" %}</th><th>{% trans "位置" %}</th><th>{% trans "地址" %}</th></tr></thead>
                     <tbody>
                         {% for record in my_recent_checkins %}
                         <tr>
-                            <td><a href="{{ record.get_absolute_url }}">{{ record.created }}</a></td>
-                            <td>{{ record.latitude }}, {{ record.longitude }}</td>
-                            <td>{{ record.address|default:'-' }}</td>
+                            <td><a href="{{ record.get_absolute_url }}">{{ record.created|date:"Y-m-d H:i" }}</a></td>
+                            <td>{{ record.latitude|floatformat:4 }}, {{ record.longitude|floatformat:4 }}</td>
+                            <td>{{ record.address|default:'—' }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
                 {% else %}
-                <p class="text-muted">{% trans "暂无打卡记录" %}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row mb-3">
-    <div class="col">
-        <div class="card">
-            <h5 class="card-header d-flex justify-content-between">
-                {% trans "我的待处理任务" %}
-                <a href="{% url 'plugins:lab_manager:my_tasks' %}" class="btn btn-sm btn-outline-primary">{% trans "查看全部" %}</a>
-            </h5>
-            <div class="card-body">
-                {% if my_pending_tasks %}
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>{% trans "任务" %}</th>
-                            <th>{% trans "状态" %}</th>
-                            <th>{% trans "优先级" %}</th>
-                            <th>{% trans "截止日期" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for task in my_pending_tasks %}
-                        <tr>
-                            <td><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></td>
-                            <td>{% badge task.get_status_display %}</td>
-                            <td>{% badge task.get_priority_display %}</td>
-                            <td>{{ task.deadline|default:'—' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted">{% trans "暂无待处理任务" %}</p>
+                <div class="p-3 text-muted text-center">{% trans "暂无打卡记录" %}</div>
                 {% endif %}
             </div>
         </div>

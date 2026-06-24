@@ -1,12 +1,15 @@
 from django.urls import include, path
 
-from . import agent_api
+from . import agent_api, views
+from .api import urls as api_urls
 from utilities.urls import get_model_urls
-from . import views
 
 app_name = 'lab_manager'
 
 urlpatterns = [
+    # REST API (DRF)
+    path('api/', include(api_urls)),
+
     # Agent API
     path('api/agent/hardware/search/', agent_api.SearchHardwareAPIView.as_view(), name='agent_hardware_search'),
     path('api/agent/hardware/gap-analysis/', agent_api.AnalyzeHardwareGapAPIView.as_view(), name='agent_hardware_gap_analysis'),
@@ -56,6 +59,34 @@ urlpatterns = [
 
     # 删除附件
     path('attachments/<int:pk>/delete/', views.TaskAttachmentDeleteView.as_view(), name='task_attachment_delete'),
+
+    # 硬件借出/归还
+    path('borrow-records/', include(get_model_urls('lab_manager', 'hardwareborrowrecord', detail=False))),
+    path('borrow-records/<int:pk>/', include(get_model_urls('lab_manager', 'hardwareborrowrecord'))),
+    path('borrow-records/<int:pk>/return/', views.HardwareBorrowReturnView.as_view(), name='borrow_return'),
+
+    # 实验项目管理
+    path('projects/', include(get_model_urls('lab_manager', 'labproject', detail=False))),
+    path('projects/<int:pk>/', include(get_model_urls('lab_manager', 'labproject'))),
+
+    # 智能体工具管理（管理员）
+    path('agent-tools/', include(get_model_urls('lab_manager', 'agenttool', detail=False))),
+    path('agent-tools/<int:pk>/', include(get_model_urls('lab_manager', 'agenttool'))),
+
+    # 站内通知
+    path('notifications/', views.NotificationListView.as_view(), name='notifications'),
+    path('notifications/read-all/', views.NotificationMarkReadView.as_view(), name='notification_read_all'),
+    path('notifications/<int:pk>/read/', views.NotificationMarkReadView.as_view(), name='notification_read'),
+
+    # 任务日历
+    path('calendar/', views.TaskCalendarView.as_view(), name='calendar'),
+
+    # 数据导出
+    path('export/', views.ExportDataView.as_view(), name='export_data'),
+
+    # 成员管理
+    path('members/', views.MemberListView.as_view(), name='member_list'),
+    path('members/<int:pk>/', views.MemberDetailView.as_view(), name='member_detail'),
 
     # 实验室首页
     path('', views.LabHomeView.as_view(), name='home'),

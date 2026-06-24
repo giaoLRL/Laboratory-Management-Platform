@@ -1,0 +1,43 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "借用信息" %}</h5>
+            <table class="table table-hover attr-table">
+                <tr><th scope="row">{% trans "硬件" %}</th><td><a href="{{ object.hardware.get_absolute_url }}">{{ object.hardware.name }}</a></td></tr>
+                <tr><th scope="row">{% trans "借用人" %}</th><td>{{ object.borrower }}</td></tr>
+                <tr><th scope="row">{% trans "状态" %}</th><td>
+                    {% if object.status == 'borrowed' %}
+                        <span class="badge text-bg-warning">{% trans "借出中" %}</span>
+                    {% elif object.status == 'returned' %}
+                        <span class="badge text-bg-success">{% trans "已归还" %}</span>
+                    {% elif object.status == 'overdue' %}
+                        <span class="badge text-bg-danger">{% trans "已逾期" %}</span>
+                    {% endif %}
+                    {% if is_overdue %}
+                        <span class="badge text-bg-danger ms-1">⚠️ {% trans "逾期未还" %}</span>
+                    {% endif %}
+                </td></tr>
+                <tr><th scope="row">{% trans "借出时间" %}</th><td>{{ object.borrow_date|date:"Y-m-d H:i" }}</td></tr>
+                <tr><th scope="row">{% trans "预计归还" %}</th><td>{{ object.expected_return_date|date:"Y-m-d H:i"|default:_("未设定") }}</td></tr>
+                <tr><th scope="row">{% trans "实际归还" %}</th><td>{{ object.actual_return_date|date:"Y-m-d H:i"|default:_("—") }}</td></tr>
+                <tr><th scope="row">{% trans "借用用途" %}</th><td>{{ object.purpose|default:_("—")|linebreaksbr }}</td></tr>
+                <tr><th scope="row">{% trans "备注" %}</th><td>{{ object.notes|default:_("—")|linebreaksbr }}</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if can_return %}
+<div class="row mb-3">
+    <div class="col">
+        <a href="{% url 'plugins:lab_manager:borrow_return' pk=object.pk %}" class="btn btn-success">
+            <i class="mdi mdi-check-circle"></i> {% trans "归还硬件" %}
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

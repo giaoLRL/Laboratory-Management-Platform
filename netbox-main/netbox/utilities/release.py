@@ -43,7 +43,7 @@ class ReleaseInfo:
 
     @property
     def name(self):
-        return f"NetBox {self.edition} v{self.full_version}"
+        return f"v{self.full_version}"
 
     def asdict(self):
         return asdict(self)

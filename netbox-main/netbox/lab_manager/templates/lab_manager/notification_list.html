@@ -1,0 +1,62 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{% trans "通知" %}{% endblock %}
+
+{% block controls %}
+{% if unread_count %}
+<button type="button" class="btn btn-sm btn-outline-primary" onclick="markAllRead()">
+    <i class="mdi mdi-check-all"></i> {% trans "全部标为已读" %}
+</button>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "站内通知" %}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col col-md-8 offset-md-2">
+        {% if notifications %}
+        {% for notif in notifications %}
+        <div class="card mb-2 {% if not notif.is_read %}border-primary{% endif %}">
+            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                <div class="{% if not notif.is_read %}fw-bold{% endif %}" style="flex:1;min-width:0">
+                    <a href="{% url 'plugins:lab_manager:notification_read' pk=notif.pk %}" class="text-decoration-none {% if not notif.is_read %}text-primary{% endif %}">
+                        {{ notif.title }}
+                    </a>
+                    {% if notif.message %}
+                    <div class="text-muted small text-truncate">{{ notif.message|truncatechars:80 }}</div>
+                    {% endif %}
+                </div>
+                <div class="text-muted small flex-shrink-0 ms-3" style="white-space:nowrap">
+                    {% if not notif.is_read %}
+                    <span class="badge text-bg-primary me-1">{% trans "未读" %}</span>
+                    {% endif %}
+                    {{ notif.created|naturaltime }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="mdi mdi-bell-off-outline" style="font-size:3rem"></i>
+            <p class="mt-3">{% trans "暂无通知" %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+function markAllRead() {
+    // 使用 GET 导航标记全部已读，无需 CSRF token
+    window.location.href = "{% url 'plugins:lab_manager:notification_read_all' %}";
+}
+</script>
+{% endblock %}

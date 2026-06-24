@@ -5,6 +5,8 @@ from django.utils.translation import gettext_lazy as _
 from netbox.models import NetBoxModel
 from users.models import User
 
+from ..validators import validate_file_size
+
 
 class MemberOpenRecord(NetBoxModel):
     """成员打卡记录 —— 记录成员打开实验室平台页面的访问记录"""
@@ -13,6 +15,8 @@ class MemberOpenRecord(NetBoxModel):
         on_delete=models.CASCADE,
         related_name='lab_open_records',
         verbose_name=_('成员'),
+        db_index=True,
+        help_text=_('访问页面的成员'),
     )
     path = models.CharField(
         verbose_name=_('打开路径'),

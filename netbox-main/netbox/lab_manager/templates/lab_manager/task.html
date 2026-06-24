@@ -74,7 +74,7 @@
             {% for att in attachments %}
             <div class="col-md-4 mb-3">
                 <div class="card">
-                    {% with ext=att.file.name|lower|slice:'-4:' %}
+                    {% with ext=att.file.name|lower|slice:'-5:' %}
                     {% if '.jpg' in ext or '.png' in ext or '.gif' in ext or '.jpeg' in ext or '.webp' in ext or '.bmp' in ext %}
                     <a href="{{ att.file.url }}" target="_blank">
                         <img src="{{ att.file.url }}" class="card-img-top" style="max-height: 180px; object-fit: cover;" alt="{{ att.remark }}">

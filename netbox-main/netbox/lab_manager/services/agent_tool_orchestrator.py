@@ -6,6 +6,7 @@ from typing import Any
 
 from .backend_agent_service import BackendAgentResponse, BackendAgentService
 from .platform_data_service import PlatformDataError, PlatformDataService
+from .tool_registry import execute_tool as _registry_execute
 
 
 MODEL_LABELS = {
@@ -239,32 +240,23 @@ class AgentToolOrchestrator:
         ]
 
     def _execute_tool_call(self, *, user, call: AgentToolCall) -> dict[str, Any]:
+        """通过统一工具注册表执行工具调用。"""
+        # 将旧的 tool 名称映射到注册表 execution_key
+        tool_key_map = {
+            'platform.query': 'platform_query',
+            'task.video_search': 'video_search',
+            'hardware.gap_analysis': 'hardware_gap',
+            'task.create': 'task_create',
+        }
         try:
-            if call.tool == 'platform.query':
-                return {
-                    'tool': call.tool,
-                    'ok': True,
-                    'result': self.platform.execute(user=user, payload=call.args),
-                }
-            if call.tool == 'task.video_search':
-                return {
-                    'tool': call.tool,
-                    'ok': True,
-                    'result': self.backend._search_task_videos(user, str(call.args.get('message') or '')),
-                }
-            if call.tool == 'hardware.gap_analysis':
-                return {
-                    'tool': call.tool,
-                    'ok': True,
-                    'result': self.backend._analyze_hardware_gap(user, str(call.args.get('message') or '')),
-                }
-            if call.tool == 'task.create':
-                return {
-                    'tool': call.tool,
-                    'ok': True,
-                    'result': self.backend._create_task_from_message(user, str(call.args.get('message') or '')),
-                }
-            return {'tool': call.tool, 'ok': False, 'error': f'未知工具: {call.tool}'}
+            execution_key = tool_key_map.get(call.tool, call.tool)
+            result_json = _registry_execute(execution_key, user, call.args)
+            result = json.loads(result_json)
+            return {
+                'tool': call.tool,
+                'ok': result.get('ok', True),
+                'result': result,
+            }
         except (PlatformDataError, ValueError) as exc:
             return {'tool': call.tool, 'ok': False, 'error': str(exc)}
         except Exception as exc:

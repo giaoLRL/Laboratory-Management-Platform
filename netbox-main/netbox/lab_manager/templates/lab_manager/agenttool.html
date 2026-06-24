@@ -1,0 +1,118 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+
+{% block title %}{{ object.display_name|default:object.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "基本信息" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">{% trans "工具标识" %}</th>
+                        <td><code>{{ object.name }}</code></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "显示名称" %}</th>
+                        <td>{{ object.display_name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "工具类型" %}</th>
+                        <td>{% badge object.get_tool_type_display %}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "分类" %}</th>
+                        <td>{% badge object.get_category_display %}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "启用" %}</th>
+                        <td>
+                            {% if object.is_enabled %}
+                            <span class="badge text-bg-success">{% trans "已启用" %}</span>
+                            {% else %}
+                            <span class="badge text-bg-secondary">{% trans "已禁用" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "管理员权限" %}</th>
+                        <td>
+                            {% if object.requires_superuser %}
+                            <span class="badge text-bg-warning">{% trans "仅管理员" %}</span>
+                            {% else %}
+                            <span class="badge text-bg-info">{% trans "所有人可用" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "排序" %}</th>
+                        <td>{{ object.sort_order }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "执行配置" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">{% trans "执行标识" %}</th>
+                        <td><code>{{ object.effective_execution_key }}</code></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "工具类型" %}</th>
+                        <td><code>{{ object.tool_type }}</code></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col col-12">
+        <div class="card">
+            <h5 class="card-header">{% trans "工具描述（LLM 会看到此描述）" %}</h5>
+            <div class="card-body">
+                <pre class="p-3 bg-body-tertiary rounded" style="white-space: pre-wrap; font-size: 0.9rem;">{{ object.description }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if object.parameters_schema.keys %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "参数 Schema (JSON)" %}</h5>
+            <div class="card-body">
+                <pre class="p-3 bg-body-tertiary rounded" style="white-space: pre-wrap; font-size: 0.82rem; max-height: 360px; overflow-y: auto;">{{ params_schema_json }}</pre>
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "默认参数 (JSON)" %}</h5>
+            <div class="card-body">
+                <pre class="p-3 bg-body-tertiary rounded" style="white-space: pre-wrap; font-size: 0.82rem; max-height: 360px; overflow-y: auto;">{{ default_args_json }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "默认参数 (JSON)" %}</h5>
+            <div class="card-body">
+                <pre class="p-3 bg-body-tertiary rounded" style="white-space: pre-wrap; font-size: 0.82rem; max-height: 360px; overflow-y: auto;">{{ default_args_json }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

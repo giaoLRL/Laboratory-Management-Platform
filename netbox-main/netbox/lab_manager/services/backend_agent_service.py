@@ -299,7 +299,7 @@ class BackendAgentService:
         # 从消息中提取显式截止日期
         deadline = None
         date_label = ''
-        dl_match = re.search(r'(?:截止日期|截止时间|ddl|deadline|截止)[是为]?[：:]\s*([^，,]+?)(?:[，,]|$)', message, re.IGNORECASE)
+        dl_match = re.search(r'(?:截止日期|截止时间|ddl|deadline|截止时间|截止日期)[是为]?[：:]?\s*([^，,]+?)(?:[，,]|$)', message, re.IGNORECASE)
         if dl_match:
             parsed = self._parse_explicit_date(dl_match.group(1).strip())
             if parsed:
@@ -1087,13 +1087,34 @@ class BackendAgentService:
 
     @staticmethod
     def _find_members_in_message(message: str):
-        matched_users = []
-        users = User.objects.filter(is_active=True).only('id', 'username', 'first_name', 'last_name', 'email')
-        for user in users:
-            candidates = {user.username, user.email, user.first_name, user.last_name, user.get_full_name()}
-            if any(candidate and str(candidate) in message for candidate in candidates):
-                matched_users.append(user)
-        return matched_users
+        """Find users mentioned by name/username in the message.
+
+        Checks whether any active user's username, full name, or name parts
+        appear in the message text — handles Chinese names without delimiters.
+        """
+        from django.db.models import Q
+
+        matched = []
+        for user in User.objects.filter(is_active=True):
+            # Build all possible name variants for this user
+            variants = [user.username, user.email or '']
+            full_name = user.get_full_name()
+            if full_name:
+                variants.append(full_name)
+            if user.first_name:
+                variants.append(user.first_name)
+            if user.last_name:
+                variants.append(user.last_name)
+            # Combined Chinese name (e.g. "胡涵" from first="胡" last="涵")
+            if user.first_name and user.last_name:
+                variants.append(user.first_name + user.last_name)
+
+            for variant in variants:
+                if variant and variant in message:
+                    matched.append(user)
+                    break  # One match is enough
+
+        return matched
 
     @staticmethod
     def _remove_member_keywords(keywords: list[str], users) -> list[str]:

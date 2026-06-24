@@ -1,5 +1,5 @@
 {% extends 'base/layout.html' %}
-{% load i18n %}
+{% load i18n humanize %}
 
 {% block title %}{% trans "成员打卡记录" %}{% endblock %}
 
@@ -10,12 +10,139 @@
     </div>
 </div>
 
+{# ── 统计仪表盘 ── #}
+<div class="row mb-3">
+    {# 今日统计 #}
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-success h-100">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ today_total }}</h3>
+                <small>{% trans "今日记录" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-info h-100">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ today_users }}</h3>
+                <small>{% trans "今日活跃人数" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-primary h-100">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ week_total }}</h3>
+                <small>{% trans "本周记录" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-secondary h-100">
+            <div class="card-body text-center py-3">
+                <h3 class="mb-0">{{ week_users }}</h3>
+                <small>{% trans "本周活跃人数" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 第二行：本月统计 + 总览 ── #}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "本月概览" %}</h5>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td>{% trans "本月总记录" %}</td>
+                            <td><strong>{{ month_total }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "本月活跃人数" %}</td>
+                            <td><strong>{{ month_users }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "今日打卡记录" %}</td>
+                            <td><strong>{{ today_checkins }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "历史总记录" %}</td>
+                            <td><strong>{{ all_total }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "历史总人数" %}</td>
+                            <td><strong>{{ all_users }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <h5 class="card-header">{% trans "最近7天趋势" %}</h5>
+            <div class="card-body">
+                <div class="d-flex align-items-end gap-1" style="height:120px">
+                    {% for d in daily_trend %}
+                    <div class="flex-fill text-center" style="min-width:30px">
+                        <div class="mx-auto rounded-top"
+                             style="width:70%;height:{{ d.count }}px;max-height:100px;min-height:2px;
+                                    background:{% if d.is_today %}#198754{% else %}#0d6efd{% endif %};
+                                    opacity:0.75"
+                             title="{{ d.label }}: {{ d.count }} {% trans '条' %}, {{ d.users }} {% trans '人' %}">
+                        </div>
+                        <small class="text-muted {% if d.is_today %}fw-bold text-success{% endif %}" style="font-size:0.65rem">{{ d.label }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        <span style="color:#198754">■</span> {% trans "今天" %}
+                        <span style="color:#0d6efd" class="ms-2">■</span> {% trans "历史" %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 第三行：最活跃成员 ── #}
+{% if top_users %}
+<div class="row mb-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header">{% trans "最活跃成员 TOP 10" %}</h5>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    {% for u in top_users %}
+                    <span class="badge text-bg-light border d-flex align-items-center gap-1 px-3 py-2">
+                        <strong>{{ forloop.counter }}</strong>
+                        <span>
+                            {% if u.user__first_name or u.user__last_name %}
+                                {{ u.user__last_name }}{{ u.user__first_name }}
+                            {% else %}
+                                {{ u.user__username }}
+                            {% endif %}
+                        </span>
+                        <span class="badge text-bg-primary rounded-pill">{{ u.cnt }}</span>
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ── 筛选栏 ── #}
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-4">
         <input type="search" class="form-control" name="username" value="{{ username }}" placeholder="{% trans '成员账号、姓名或邮箱' %}">
     </div>
     <div class="col-md-3">
-        <input type="search" class="form-control" name="target_type" value="{{ target_type }}" placeholder="{% trans '对象类型' %}">
+        <input type="search" class="form-control" name="target_type" value="{{ target_type }}" placeholder="{% trans '对象类型 (checkin/task/hardware...)' %}">
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-primary">
@@ -29,6 +156,7 @@
     </div>
 </form>
 
+{# ── 记录表格 ── #}
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover mb-0">

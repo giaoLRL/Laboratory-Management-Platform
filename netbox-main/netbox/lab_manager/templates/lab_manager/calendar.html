@@ -1,0 +1,87 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "任务日历" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+    <div class="col-auto">
+        <a href="{{ prev_month }}" class="btn btn-outline-secondary">&lt;</a>
+    </div>
+    <div class="col text-center">
+        <h2 class="mb-0">{{ month_name }}</h2>
+    </div>
+    <div class="col-auto">
+        <a href="{{ next_month }}" class="btn btn-outline-secondary">&gt;</a>
+    </div>
+    <div class="col-auto">
+        <a href="?year={{ today|date:'Y' }}&month={{ today|date:'m' }}" class="btn btn-primary">{% trans "今天" %}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <table class="table table-bordered text-center">
+            <thead>
+                <tr>
+                    {% for wd in weekday_names %}
+                    <th style="width:14.28%">{{ wd }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in month_days %}
+                <tr style="height:100px">
+                    {% for day in week %}
+                    <td class="{% if day == today.day and calendar_month == today.month and calendar_year == today.year %}table-primary{% endif %}{% if not day %} text-muted{% endif %}" style="vertical-align:top;padding:4px">
+                        {% if day %}
+                        <div class="fw-bold small">{{ day }}</div>
+                        {% endif %}
+                        {% if day %}
+                            {% for item in tasks_by_day_items %}
+                                {% if item.0.day == day %}
+                                    {% for t in item.1 %}
+                                    <a href="{{ t.get_absolute_url }}" class="badge text-bg-light text-decoration-none d-block text-start text-truncate mb-1" title="{{ t.title }}" style="max-width:100%;font-size:0.7rem">
+                                        {% if t.priority == 'urgent' %}🔴{% elif t.priority == 'high' %}🟠{% endif %}
+                                        {{ t.title|truncatechars:12 }}
+                                    </a>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header">{% trans "本月截止任务" %}</h5>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>{% trans "任务" %}</th><th>{% trans "执行人" %}</th><th>{% trans "截止日期" %}</th><th>{% trans "状态" %}</th></tr></thead>
+                    <tbody>
+                        {% for d, tasks in tasks_by_day_items %}
+                            {% for task in tasks %}
+                            <tr>
+                                <td><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></td>
+                                <td>{{ task.assigned_to }}</td>
+                                <td>{{ task.deadline|date:"Y-m-d H:i" }}</td>
+                                <td>{% badge task.get_status_display %}</td>
+                            </tr>
+                            {% endfor %}
+                        {% empty %}
+                        <tr><td colspan="4" class="text-muted text-center">{% trans "本月暂无截止任务" %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

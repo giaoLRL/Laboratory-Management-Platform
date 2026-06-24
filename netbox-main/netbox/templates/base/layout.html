@@ -50,13 +50,7 @@ Blocks:
 
           {# Release info #}
           <div class="text-muted text-center fs-5 my-3 px-3">
-            {{ settings.RELEASE.name }}
-            {% if not settings.RELEASE.features.commercial and not settings.ISOLATED_DEPLOYMENT %}
-              <div>
-                <a href="https://netboxlabs.com/netbox-cloud/" class="text-muted">{% trans "Get" %} Cloud</a> |
-                <a href="https://netboxlabs.com/netbox-enterprise/" class="text-muted">{% trans "Get" %} Enterprise</a>
-              </div>
-            {% endif %}
+            <!-- Release info removed -->
           </div>
 
         </div>
@@ -152,18 +146,6 @@ Blocks:
             {# Footer links #}
             <ul class="list-inline mb-0 fs-2">
               {% block footer_links %}
-                {# Documentation #}
-                <li class="list-inline-item">
-                  <a href="{% static 'docs/' %}" target="_blank" class="link-secondary" rel="noopener" aria-label="{% trans "Docs" %}">
-                    <i title="{% trans "Docs" %}" class="mdi mdi-book-open-variant text-primary" data-bs-placement="top" data-bs-toggle="tooltip"></i>
-                  </a>
-                </li>
-                {# Source code #}
-                <li class="list-inline-item">
-                  <a href="https://github.com/netbox-community/netbox" target="_blank" class="link-secondary" rel="noopener" aria-label="{% trans "Source Code" %}">
-                    <i title="{% trans "Source Code" %}" class="mdi mdi-github text-primary" data-bs-placement="top" data-bs-toggle="tooltip"></i>
-                  </a>
-                </li>
               {% endblock footer_links %}
             </ul>
             {# /Footer links #}

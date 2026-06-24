@@ -3,13 +3,13 @@ from django import forms as django_forms
 from netbox.forms import NetBoxModelForm
 from utilities.forms.widgets import DateTimePicker
 
-from ..models import CheckInRecord, Hardware, Task, TaskComment
+from ..models import AgentTool, CheckInRecord, Hardware, HardwareBorrowRecord, LabProject, Task, TaskComment
 
 
-class CheckInForm(django_forms.ModelForm):
+class CheckInForm(NetBoxModelForm):
     class Meta:
         model = CheckInRecord
-        fields = ('photo', 'latitude', 'longitude', 'accuracy', 'address', 'note')
+        fields = ('photo', 'latitude', 'longitude', 'accuracy', 'address', 'note', 'tags')
         widgets = {
             'photo': django_forms.ClearableFileInput(attrs={
                 'accept': 'image/*',
@@ -31,11 +31,11 @@ class CheckInForm(django_forms.ModelForm):
         }
 
 
-class TaskCommentForm(django_forms.ModelForm):
+class TaskCommentForm(NetBoxModelForm):
     """评论表单"""
     class Meta:
         model = TaskComment
-        fields = ('content',)
+        fields = ('content', 'tags')
         widgets = {
             'content': django_forms.Textarea(attrs={
                 'rows': 2,
@@ -83,7 +83,7 @@ class TaskForm(NetBoxModelForm):
         model = Task
         fields = (
             'title', 'description', 'priority', 'status',
-            'created_by', 'assigned_to', 'deadline', 'completion_note', 'tags',
+            'assigned_to', 'deadline', 'completion_note', 'tags',
         )
 
 
@@ -95,4 +95,67 @@ class TaskMemberForm(NetBoxModelForm):
         fields = ('completion_note',)
         widgets = {
             'completion_note': django_forms.Textarea(attrs={'rows': 6, 'placeholder': '请描述你的完成情况、遇到的问题、解决方案等...'}),
+        }
+
+
+class AgentToolForm(NetBoxModelForm):
+    """智能体工具管理表单"""
+
+    class Meta:
+        model = AgentTool
+        fields = (
+            'name', 'display_name', 'description', 'tool_type', 'category',
+            'is_enabled', 'parameters_schema', 'execution_key', 'default_args',
+            'requires_superuser', 'sort_order', 'tags',
+        )
+        widgets = {
+            'description': django_forms.Textarea(attrs={'rows': 4}),
+            'parameters_schema': django_forms.Textarea(attrs={'rows': 4}),
+            'default_args': django_forms.Textarea(attrs={'rows': 3}),
+        }
+
+
+class HardwareBorrowRecordForm(NetBoxModelForm):
+    """硬件借出/归还表单"""
+
+    expected_return_date = django_forms.DateTimeField(
+        widget=DateTimePicker(),
+        required=False,
+        label='预计归还日期',
+    )
+
+    class Meta:
+        model = HardwareBorrowRecord
+        fields = (
+            'hardware', 'borrower', 'expected_return_date',
+            'purpose', 'notes', 'tags',
+        )
+        widgets = {
+            'purpose': django_forms.Textarea(attrs={'rows': 2, 'placeholder': '说明借用该硬件的目的'}),
+            'notes': django_forms.Textarea(attrs={'rows': 2, 'placeholder': '备注信息'}),
+        }
+
+
+class LabProjectForm(NetBoxModelForm):
+    """实验室项目管理表单"""
+
+    start_date = django_forms.DateField(
+        widget=django_forms.DateInput(attrs={'type': 'date'}),
+        required=False,
+        label='开始日期',
+    )
+    end_date = django_forms.DateField(
+        widget=django_forms.DateInput(attrs={'type': 'date'}),
+        required=False,
+        label='截止日期',
+    )
+
+    class Meta:
+        model = LabProject
+        fields = (
+            'name', 'description', 'status', 'leader', 'members',
+            'start_date', 'end_date', 'tags',
+        )
+        widgets = {
+            'description': django_forms.Textarea(attrs={'rows': 4}),
         }

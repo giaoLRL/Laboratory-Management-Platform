@@ -12,8 +12,8 @@ __pycache__/
 .coverage
 
 # ── 用户上传的测试数据 ──
-netbox-main/netbox/media/*
-!netbox-main/netbox/media/.gitkeep
+netbox-main/netbox/netbox/media/*
+!netbox-main/netbox/netbox/media/.gitkeep
 
 # ── Django 收集的静态文件 ──
 netbox-main/netbox/static/
@@ -63,6 +63,7 @@ netbox-main/netbox/project-static/docs/
 /redis/
 /server.log
 *.log
+cbm_index.log
 
 # ── 自动生成的 OpenAPI schema (12MB) ──
 netbox-main/contrib/openapi.json

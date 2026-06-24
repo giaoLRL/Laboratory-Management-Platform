@@ -1,0 +1,39 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "归还硬件" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6 offset-md-3">
+        <div class="card">
+            <h5 class="card-header">{% trans "归还硬件" %}</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table mb-4">
+                    <tr><th scope="row">{% trans "硬件" %}</th><td>{{ record.hardware.name }}</td></tr>
+                    <tr><th scope="row">{% trans "借用人" %}</th><td>{{ record.borrower }}</td></tr>
+                    <tr><th scope="row">{% trans "借出时间" %}</th><td>{{ record.borrow_date|date:"Y-m-d H:i" }}</td></tr>
+                    <tr><th scope="row">{% trans "预计归还" %}</th><td>{{ record.expected_return_date|date:"Y-m-d H:i"|default:_("未设定") }}</td></tr>
+                    {% if is_overdue %}
+                    <tr class="table-danger"><th scope="row">{% trans "状态" %}</th><td><span class="text-danger fw-bold">⚠️ {% trans "已逾期" %}</span></td></tr>
+                    {% endif %}
+                </table>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">{% trans "归还备注" %}</label>
+                        <textarea name="notes" id="notes" rows="4" class="form-control" placeholder="{% trans '可填写使用情况、损坏说明等（选填）' %}"></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="mdi mdi-check-circle"></i> {% trans "确认归还" %}
+                        </button>
+                        <a href="{{ record.get_absolute_url }}" class="btn btn-outline-secondary">{% trans "取消" %}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

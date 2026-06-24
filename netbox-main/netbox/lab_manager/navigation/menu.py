@@ -16,6 +16,30 @@ menu = PluginMenu(
                     ),
                 )
             ),
+            PluginMenuItem(
+                link='plugins:lab_manager:hardwareborrowrecord_list',
+                link_text='借出记录',
+                buttons=(
+                    PluginMenuButton(
+                        link='plugins:lab_manager:hardwareborrowrecord_add',
+                        title='登记借出',
+                        icon_class='mdi mdi-plus-thick',
+                    ),
+                )
+            ),
+        )),
+        ('项目管理', (
+            PluginMenuItem(
+                link='plugins:lab_manager:labproject_list',
+                link_text='项目列表',
+                buttons=(
+                    PluginMenuButton(
+                        link='plugins:lab_manager:labproject_add',
+                        title='创建项目',
+                        icon_class='mdi mdi-plus-thick',
+                    ),
+                )
+            ),
         )),
         ('任务管理', (
             PluginMenuItem(
@@ -50,11 +74,37 @@ menu = PluginMenu(
                 link='plugins:lab_manager:member_open_records',
                 link_text='成员打卡记录',
             ),
+            PluginMenuItem(
+                link='plugins:lab_manager:member_list',
+                link_text='成员列表',
+            ),
         )),
         ('智能体', (
             PluginMenuItem(
                 link='plugins:lab_manager:agent_console',
                 link_text='智能体助手',
+            ),
+            PluginMenuItem(
+                link='plugins:lab_manager:agenttool_list',
+                link_text='智能体工具管理',
+                buttons=(
+                    PluginMenuButton(
+                        link='plugins:lab_manager:agenttool_add',
+                        title='添加工具',
+                        icon_class='mdi mdi-plus-thick',
+                    ),
+                ),
+                permissions=['lab_manager.view_agenttool'],
+            ),
+        )),
+        ('工具', (
+            PluginMenuItem(
+                link='plugins:lab_manager:calendar',
+                link_text='任务日历',
+            ),
+            PluginMenuItem(
+                link='plugins:lab_manager:notifications',
+                link_text='站内通知',
             ),
         )),
     ),

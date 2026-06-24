@@ -1,0 +1,79 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-8">
+        <div class="card">
+            <h5 class="card-header">{% trans "项目信息" %}</h5>
+            <table class="table table-hover attr-table">
+                <tr><th scope="row">{% trans "项目名称" %}</th><td>{{ object.name }}</td></tr>
+                <tr><th scope="row">{% trans "状态" %}</th><td>
+                    {% if object.status == 'planning' %}
+                        <span class="badge text-bg-secondary">{% trans "规划中" %}</span>
+                    {% elif object.status == 'active' %}
+                        <span class="badge text-bg-primary">{% trans "进行中" %}</span>
+                    {% elif object.status == 'completed' %}
+                        <span class="badge text-bg-success">{% trans "已完成" %}</span>
+                    {% elif object.status == 'archived' %}
+                        <span class="badge text-bg-dark">{% trans "已归档" %}</span>
+                    {% endif %}
+                </td></tr>
+                <tr><th scope="row">{% trans "负责人" %}</th><td>{{ object.leader|default:_("未指定") }}</td></tr>
+                <tr><th scope="row">{% trans "开始日期" %}</th><td>{{ object.start_date|date:"Y-m-d"|default:_("未设定") }}</td></tr>
+                <tr><th scope="row">{% trans "截止日期" %}</th><td>{{ object.end_date|date:"Y-m-d"|default:_("未设定") }}</td></tr>
+                <tr><th scope="row">{% trans "项目成员" %}</th><td>
+                    {% for m in object.members.all %}
+                        <span class="badge text-bg-light me-1">{{ m.username }}</span>
+                    {% empty %}
+                        {% trans "暂无成员" %}
+                    {% endfor %}
+                </td></tr>
+                <tr><th scope="row">{% trans "项目描述" %}</th><td>{{ object.description|default:_("—")|linebreaksbr }}</td></tr>
+            </table>
+        </div>
+    </div>
+    <div class="col col-md-4">
+        <div class="card mb-3">
+            <h5 class="card-header">{% trans "统计" %}</h5>
+            <div class="card-body">
+                <div class="d-flex justify-content-around text-center">
+                    <div>
+                        <div class="fs-2 fw-bold">{{ task_count }}</div>
+                        <small class="text-muted">{% trans "任务" %}</small>
+                    </div>
+                    <div>
+                        <div class="fs-2 fw-bold">{{ hardware_count }}</div>
+                        <small class="text-muted">{% trans "硬件" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if project_tasks %}
+<div class="row mb-3">
+    <div class="col">
+        <div class="card">
+            <h5 class="card-header">{% trans "关联任务" %}</h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>{% trans "标题" %}</th><th>{% trans "状态" %}</th><th>{% trans "执行人" %}</th><th>{% trans "截止日期" %}</th></tr>
+                </thead>
+                <tbody>
+                    {% for task in project_tasks %}
+                    <tr>
+                        <td><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></td>
+                        <td>{{ task.get_status_display }}</td>
+                        <td>{{ task.assigned_to }}</td>
+                        <td>{{ task.deadline|date:"Y-m-d"|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
