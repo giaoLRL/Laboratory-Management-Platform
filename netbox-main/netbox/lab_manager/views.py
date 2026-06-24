@@ -49,6 +49,7 @@ class HardwareListView(generic.ObjectListView):
     table = HardwareTable
     filterset = HardwareFilterSet
     filterset_form = HardwareFilterForm
+    template_name = 'lab_manager/object_list.html'
 
     def has_permission(self):
         return self.request.user.is_authenticated
@@ -82,6 +83,7 @@ class HardwareView(generic.ObjectView):
 class HardwareEditView(generic.ObjectEditView):
     queryset = Hardware.objects.all()
     form = HardwareForm
+    template_name = 'lab_manager/object_edit_base.html'
 
     def has_permission(self):
         return self.request.user.is_authenticated
@@ -128,6 +130,7 @@ class HardwareEditView(generic.ObjectEditView):
 @register_model_view(Hardware, 'delete')
 class HardwareDeleteView(generic.ObjectDeleteView):
     queryset = Hardware.objects.all()
+    template_name = 'lab_manager/object_delete_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -141,6 +144,7 @@ class TaskListView(generic.ObjectListView):
     table = TaskTable
     filterset = TaskFilterSet
     filterset_form = TaskFilterForm
+    template_name = 'lab_manager/object_list.html'
 
     def has_permission(self):
         """所有人可查看"""
@@ -245,6 +249,7 @@ class TaskEditView(generic.ObjectEditView):
 @register_model_view(Task, 'delete')
 class TaskDeleteView(generic.ObjectDeleteView):
     queryset = Task.objects.all()
+    template_name = 'lab_manager/object_delete_base.html'
 
     def has_permission(self):
         """仅超级管理员可删除"""
@@ -259,6 +264,7 @@ class HardwareBorrowRecordListView(generic.ObjectListView):
     table = HardwareBorrowRecordTable
     filterset = HardwareBorrowRecordFilterSet
     filterset_form = HardwareBorrowRecordFilterForm
+    template_name = 'lab_manager/object_list.html'
 
     def has_permission(self):
         return self.request.user.is_authenticated
@@ -292,6 +298,7 @@ class HardwareBorrowRecordView(generic.ObjectView):
 class HardwareBorrowRecordEditView(generic.ObjectEditView):
     queryset = HardwareBorrowRecord.objects.all()
     form = HardwareBorrowRecordForm
+    template_name = 'lab_manager/object_edit_base.html'
 
     def has_permission(self):
         return self.request.user.is_authenticated
@@ -306,6 +313,7 @@ class HardwareBorrowRecordEditView(generic.ObjectEditView):
 @register_model_view(HardwareBorrowRecord, 'delete')
 class HardwareBorrowRecordDeleteView(generic.ObjectDeleteView):
     queryset = HardwareBorrowRecord.objects.all()
+    template_name = 'lab_manager/object_delete_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -349,6 +357,7 @@ class LabProjectListView(generic.ObjectListView):
     table = LabProjectTable
     filterset = LabProjectFilterSet
     filterset_form = LabProjectFilterForm
+    template_name = 'lab_manager/object_list.html'
 
     def has_permission(self):
         return self.request.user.is_authenticated
@@ -376,6 +385,7 @@ class LabProjectView(generic.ObjectView):
 class LabProjectEditView(generic.ObjectEditView):
     queryset = LabProject.objects.all()
     form = LabProjectForm
+    template_name = 'lab_manager/object_edit_base.html'
 
     def has_permission(self):
         return self.request.user.is_authenticated
@@ -384,6 +394,7 @@ class LabProjectEditView(generic.ObjectEditView):
 @register_model_view(LabProject, 'delete')
 class LabProjectDeleteView(generic.ObjectDeleteView):
     queryset = LabProject.objects.all()
+    template_name = 'lab_manager/object_delete_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -1327,6 +1338,7 @@ class AgentToolListView(generic.ObjectListView):
     table = AgentToolTable
     filterset = AgentToolFilterSet
     filterset_form = AgentToolFilterForm
+    template_name = 'lab_manager/object_list.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -1352,6 +1364,7 @@ class AgentToolView(generic.ObjectView):
 class AgentToolEditView(generic.ObjectEditView):
     queryset = AgentTool.objects.all()
     form = AgentToolForm
+    template_name = 'lab_manager/object_edit_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -1360,6 +1373,7 @@ class AgentToolEditView(generic.ObjectEditView):
 @register_model_view(AgentTool, 'delete')
 class AgentToolDeleteView(generic.ObjectDeleteView):
     queryset = AgentTool.objects.all()
+    template_name = 'lab_manager/object_delete_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -1369,6 +1383,7 @@ class AgentToolDeleteView(generic.ObjectDeleteView):
 class AgentToolBulkDeleteView(generic.BulkDeleteView):
     queryset = AgentTool.objects.all()
     table = AgentToolTable
+    template_name = 'lab_manager/object_delete_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser
@@ -1380,6 +1395,7 @@ class AgentToolBulkEditView(generic.BulkEditView):
     filterset = AgentToolFilterSet
     table = AgentToolTable
     form = AgentToolForm
+    template_name = 'lab_manager/object_edit_base.html'
 
     def has_permission(self):
         return self.request.user.is_superuser

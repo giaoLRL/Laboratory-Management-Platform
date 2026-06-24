@@ -1,0 +1,1218 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   TERMINAL//PIXEL v5 — 亮色 / 暗色 双主题系统
+   使用 CSS 自定义属性，跟随 [data-bs-theme] 自动切换
+   亮色模式：清晰终端风（深色文字 + 浅色背景）
+   暗色模式：霓虹终端风（亮色文字 + 深色背景）
+   零 JS 依赖，覆盖 Tabler/Bootstrap 组件
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   0. 主题变量 — 所有颜色在此定义，规则层只引用 var()
+   ═══════════════════════════════════════════════════════════════════════ */
+:root,
+html[data-bs-theme=light] {
+  /* 页面 */
+  --tp-body-bg: #f4f6f9;
+  --tp-body-text: #1e293b;
+  --tp-page-bg: #f4f6f9;
+
+  /* 导航栏 */
+  --tp-nav-bg: #e8eaef;
+  --tp-nav-border: #d0d5dd;
+  --tp-nav-text: #374151;
+  --tp-nav-text-hover: #111827;
+  --tp-nav-hover-bg: #dde1e8;
+  --tp-nav-active-text: #0d6b63;
+  --tp-nav-active-bg: rgba(13, 107, 99, 0.1);
+  --tp-nav-active-border: #0d6b63;
+  --tp-nav-accent: #0d6b63;
+  --tp-nav-group-text: #4b5563;
+  --tp-nav-divider: #d0d5dd;
+  --tp-nav-brand-border: #d0d5dd;
+
+  /* 卡片 */
+  --tp-card-bg: #ffffff;
+  --tp-card-border: #dde1e6;
+  --tp-card-hover-border: #b0bec5;
+  --tp-card-hover-shadow: rgba(0, 0, 0, 0.06);
+  --tp-card-header-bg: #eef0f4;
+  --tp-card-header-text: #0d6b63;
+  --tp-card-header-border: #dde1e6;
+  --tp-card-body-text: #1e293b;
+  --tp-card-footer-text: #6b7280;
+  --tp-card-footer-border: #e8eaef;
+
+  /* 按钮 */
+  --tp-btn-bg: #eef0f4;
+  --tp-btn-border: #d0d5dd;
+  --tp-btn-text: #374151;
+  --tp-btn-hover-bg: rgba(13, 107, 99, 0.08);
+  --tp-btn-hover-border: #0d6b63;
+  --tp-btn-hover-text: #0d6b63;
+  --tp-btn-hover-shadow: rgba(13, 107, 99, 0.12);
+  --tp-btn-active-bg: rgba(13, 107, 99, 0.15);
+  --tp-btn-primary-bg: rgba(13, 107, 99, 0.1);
+  --tp-btn-primary-border: #0d6b63;
+  --tp-btn-primary-text: #0d6b63;
+  --tp-btn-success-bg: rgba(26, 138, 63, 0.1);
+  --tp-btn-success-border: #1a8a3f;
+  --tp-btn-success-text: #1a8a3f;
+  --tp-btn-danger-bg: rgba(201, 53, 53, 0.08);
+  --tp-btn-danger-border: #c93535;
+  --tp-btn-danger-text: #c93535;
+  --tp-btn-warning-bg: rgba(194, 117, 0, 0.08);
+  --tp-btn-warning-border: #c27500;
+  --tp-btn-warning-text: #c27500;
+  --tp-btn-info-bg: rgba(13, 122, 138, 0.08);
+  --tp-btn-info-border: #0d7a8a;
+  --tp-btn-info-text: #0d7a8a;
+  --tp-btn-outline-bg: transparent;
+  --tp-btn-outline-border: #d0d5dd;
+  --tp-btn-outline-text: #6b7280;
+
+  /* 表格 */
+  --tp-table-text: #1e293b;
+  --tp-table-hover-bg: #f0f2f5;
+  --tp-table-stripe-bg: rgba(0, 0, 0, 0.012);
+  --tp-table-head-bg: #e8eaef;
+  --tp-table-head-text: #374151;
+  --tp-table-head-border: #d0d5dd;
+  --tp-table-cell-border: #e8eaef;
+  --tp-table-link: #0d6b63;
+  --tp-table-link-hover: #085049;
+
+  /* 表单 */
+  --tp-input-bg: #ffffff;
+  --tp-input-border: #d0d5dd;
+  --tp-input-text: #1e293b;
+  --tp-input-focus-border: #0d6b63;
+  --tp-input-focus-shadow: rgba(13, 107, 99, 0.18);
+  --tp-input-placeholder: #9ca3af;
+  --tp-label-text: #4b5563;
+
+  /* 徽章 */
+  --tp-badge-success-bg: rgba(26, 138, 63, 0.1);
+  --tp-badge-success-text: #15803d;
+  --tp-badge-danger-bg: rgba(201, 53, 53, 0.1);
+  --tp-badge-danger-text: #b91c1c;
+  --tp-badge-warning-bg: rgba(194, 117, 0, 0.1);
+  --tp-badge-warning-text: #b45309;
+  --tp-badge-info-bg: rgba(13, 122, 138, 0.1);
+  --tp-badge-info-text: #0e7490;
+  --tp-badge-primary-bg: rgba(37, 99, 235, 0.1);
+  --tp-badge-primary-text: #2563eb;
+  --tp-badge-secondary-bg: rgba(107, 114, 128, 0.1);
+  --tp-badge-secondary-text: #6b7280;
+  --tp-badge-dark-bg: #1e293b;
+  --tp-badge-dark-text: #f1f5f9;
+
+  /* 其他 */
+  --tp-text-muted: #9ca3af;
+  --tp-link: #0d6b63;
+  --tp-link-hover: #085049;
+  --tp-code-bg: #eef0f4;
+  --tp-code-text: #0d6b63;
+  --tp-code-border: #dde1e6;
+  --tp-hr: #dde1e6;
+  --tp-alert-bg: #ffffff;
+  --tp-progress-bg: #e8eaef;
+  --tp-list-group-bg: #ffffff;
+  --tp-list-group-hover-bg: #f0f2f5;
+  --tp-pagination-bg: #ffffff;
+  --tp-pagination-border: #dde1e6;
+  --tp-pagination-text: #374151;
+  --tp-nav-tabs-border: #dde1e6;
+  --tp-nav-tabs-active-bg: rgba(13, 107, 99, 0.08);
+
+  /* 统计卡片数值辉光 (亮色模式使用投影而非辉光) */
+  --tp-stat-glow-success: 0 2px 8px rgba(26, 138, 63, 0.15);
+  --tp-stat-glow-info: 0 2px 8px rgba(13, 122, 138, 0.15);
+  --tp-stat-glow-warning: 0 2px 8px rgba(194, 117, 0, 0.15);
+  --tp-stat-glow-danger: 0 2px 8px rgba(201, 53, 53, 0.15);
+  --tp-stat-glow-primary: 0 2px 8px rgba(37, 99, 235, 0.15);
+  --tp-h1-glow: none;
+
+  /* Top navbar */
+  --tp-topnav-bg: #e8eaef;
+  --tp-topnav-border: #d0d5dd;
+
+  /* Agent Console（智能体助手） */
+  --tp-agent-shell-bg: #f4f6f9;
+  --tp-agent-sidebar-bg: #e8eaef;
+  --tp-agent-sidebar-text: #4b5563;
+  --tp-agent-sidebar-hover-bg: #dde1e8;
+  --tp-agent-bubble-user-bg: #eef0f4;
+  --tp-agent-bubble-user-border: #d0d5dd;
+  --tp-agent-bubble-assistant-bg: #ffffff;
+  --tp-agent-bubble-assistant-border: #dde1e6;
+  --tp-agent-composer-bg: #ffffff;
+  --tp-agent-composer-border: #d0d5dd;
+  --tp-agent-composer-focus-border: #0d6b63;
+  --tp-agent-composer-focus-shadow: rgba(13, 107, 99, 0.2);
+  --tp-agent-composer-text: #1e293b;
+  --tp-agent-composer-placeholder: #9ca3af;
+  --tp-agent-empty-card-bg: #ffffff;
+  --tp-agent-debug-bg: #eef0f4;
+  --tp-agent-hover-bg: #dde1e8;
+  --tp-agent-accent-green: #15803d;
+  --tp-agent-accent-green-bright: #0d6b63;
+  --tp-agent-accent-cyan: #0d7a8a;
+  --tp-agent-accent-amber: #b45309;
+  --tp-agent-accent-red: #c93535;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   暗色主题变量覆盖
+   ═══════════════════════════════════════════════════════════════════════ */
+html[data-bs-theme=dark] {
+  --tp-body-bg: #0b0e14;
+  --tp-body-text: #dde4ed;
+  --tp-page-bg: #0b0e14;
+
+  --tp-nav-bg: #090c13;
+  --tp-nav-border: #2a3245;
+  --tp-nav-text: #dde4ed;
+  --tp-nav-text-hover: #ffffff;
+  --tp-nav-hover-bg: rgba(0, 229, 255, 0.08);
+  --tp-nav-active-text: #00ff41;
+  --tp-nav-active-bg: rgba(0, 255, 65, 0.12);
+  --tp-nav-active-border: #00ff41;
+  --tp-nav-accent: #00e5ff;
+  --tp-nav-group-text: #00e5ff;
+  --tp-nav-divider: #2a3245;
+  --tp-nav-brand-border: #2a3245;
+
+  --tp-card-bg: #111820;
+  --tp-card-border: #2a3245;
+  --tp-card-hover-border: #3d5068;
+  --tp-card-hover-shadow: rgba(0, 229, 255, 0.04);
+  --tp-card-header-bg: #1a2030;
+  --tp-card-header-text: #00e5ff;
+  --tp-card-header-border: #364156;
+  --tp-card-body-text: #dde4ed;
+  --tp-card-footer-text: #8899aa;
+  --tp-card-footer-border: #2a3245;
+
+  --tp-btn-bg: #1a2030;
+  --tp-btn-border: #364156;
+  --tp-btn-text: #dde4ed;
+  --tp-btn-hover-bg: rgba(0, 255, 65, 0.12);
+  --tp-btn-hover-border: #00ff41;
+  --tp-btn-hover-text: #00ff41;
+  --tp-btn-hover-shadow: rgba(0, 255, 65, 0.15);
+  --tp-btn-active-bg: rgba(0, 255, 65, 0.2);
+  --tp-btn-primary-bg: rgba(0, 255, 65, 0.12);
+  --tp-btn-primary-border: #00cc34;
+  --tp-btn-primary-text: #00ff41;
+  --tp-btn-success-bg: rgba(0, 255, 65, 0.1);
+  --tp-btn-success-border: #00cc34;
+  --tp-btn-success-text: #00ff41;
+  --tp-btn-danger-bg: rgba(255, 85, 85, 0.1);
+  --tp-btn-danger-border: #dd3333;
+  --tp-btn-danger-text: #ff7777;
+  --tp-btn-warning-bg: rgba(255, 145, 0, 0.1);
+  --tp-btn-warning-border: #cc7400;
+  --tp-btn-warning-text: #ffaa33;
+  --tp-btn-info-bg: rgba(0, 229, 255, 0.1);
+  --tp-btn-info-border: #00b8d4;
+  --tp-btn-info-text: #33eeff;
+  --tp-btn-outline-bg: transparent;
+  --tp-btn-outline-border: #364156;
+  --tp-btn-outline-text: #dde4ed;
+
+  --tp-table-text: #dde4ed;
+  --tp-table-hover-bg: #1a2430;
+  --tp-table-stripe-bg: rgba(255, 255, 255, 0.012);
+  --tp-table-head-bg: #1a2030;
+  --tp-table-head-text: #00e5ff;
+  --tp-table-head-border: #455570;
+  --tp-table-cell-border: #2a3245;
+  --tp-table-link: #00e5ff;
+  --tp-table-link-hover: #00ff41;
+
+  --tp-input-bg: #0a0d12;
+  --tp-input-border: #364156;
+  --tp-input-text: #dde4ed;
+  --tp-input-focus-border: #00ff41;
+  --tp-input-focus-shadow: rgba(0, 255, 65, 0.2);
+  --tp-input-placeholder: #6b7d93;
+  --tp-label-text: #8899aa;
+
+  --tp-badge-success-bg: rgba(0, 255, 65, 0.15);
+  --tp-badge-success-text: #33ff66;
+  --tp-badge-danger-bg: rgba(255, 85, 85, 0.15);
+  --tp-badge-danger-text: #ff7777;
+  --tp-badge-warning-bg: rgba(255, 145, 0, 0.15);
+  --tp-badge-warning-text: #ffaa33;
+  --tp-badge-info-bg: rgba(0, 229, 255, 0.15);
+  --tp-badge-info-text: #33eeff;
+  --tp-badge-primary-bg: rgba(85, 153, 255, 0.15);
+  --tp-badge-primary-text: #77aaff;
+  --tp-badge-secondary-bg: rgba(170, 187, 204, 0.12);
+  --tp-badge-secondary-text: #dde4ed;
+  --tp-badge-dark-bg: #0a0d12;
+  --tp-badge-dark-text: #dde4ed;
+
+  --tp-text-muted: #8899aa;
+  --tp-link: #00e5ff;
+  --tp-link-hover: #00ff41;
+  --tp-code-bg: #0a0d12;
+  --tp-code-text: #00ff41;
+  --tp-code-border: #2a3245;
+  --tp-hr: #2a3245;
+  --tp-alert-bg: #111820;
+  --tp-progress-bg: #0a0d12;
+  --tp-list-group-bg: #111820;
+  --tp-list-group-hover-bg: #1a2430;
+  --tp-pagination-bg: #111820;
+  --tp-pagination-border: #2a3245;
+  --tp-pagination-text: #dde4ed;
+  --tp-nav-tabs-border: #2a3245;
+  --tp-nav-tabs-active-bg: rgba(0, 255, 65, 0.1);
+
+  --tp-stat-glow-success: 0 0 14px rgba(0, 255, 65, 0.3);
+  --tp-stat-glow-info: 0 0 14px rgba(0, 229, 255, 0.3);
+  --tp-stat-glow-warning: 0 0 14px rgba(255, 145, 0, 0.3);
+  --tp-stat-glow-danger: 0 0 14px rgba(255, 85, 85, 0.3);
+  --tp-stat-glow-primary: 0 0 14px rgba(85, 153, 255, 0.3);
+  --tp-h1-glow: 0 0 18px rgba(0, 255, 65, 0.25);
+
+  --tp-topnav-bg: #090c13;
+  --tp-topnav-border: #2a3245;
+
+  /* Agent Console（智能体助手） */
+  --tp-agent-shell-bg: #0b0e14;
+  --tp-agent-sidebar-bg: #090c13;
+  --tp-agent-sidebar-text: #8899aa;
+  --tp-agent-sidebar-hover-bg: #1a2030;
+  --tp-agent-bubble-user-bg: #1a2030;
+  --tp-agent-bubble-user-border: #364156;
+  --tp-agent-bubble-assistant-bg: #111820;
+  --tp-agent-bubble-assistant-border: #2a3245;
+  --tp-agent-composer-bg: #0a0d12;
+  --tp-agent-composer-border: #2a3245;
+  --tp-agent-composer-focus-border: #00ff41;
+  --tp-agent-composer-focus-shadow: rgba(0, 255, 65, 0.2);
+  --tp-agent-composer-text: #dde4ed;
+  --tp-agent-composer-placeholder: #6b7d93;
+  --tp-agent-empty-card-bg: #111820;
+  --tp-agent-debug-bg: #0a0d12;
+  --tp-agent-hover-bg: #1a2430;
+  --tp-agent-accent-green: #00cc34;
+  --tp-agent-accent-green-bright: #00ff41;
+  --tp-agent-accent-cyan: #00e5ff;
+  --tp-agent-accent-amber: #ffaa33;
+  --tp-agent-accent-red: #ff5555;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   1. 全局：body 级别兜底
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-body {
+  background: var(--tp-body-bg) !important;
+  color: var(--tp-body-text) !important;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+  font-size: 0.92rem;
+  -webkit-font-smoothing: antialiased;
+}
+/* body 级别的全局覆写 — modal/toast/dropdown 等直系子元素 */
+.tp-body .modal-content,
+.tp-body .toast,
+.tp-body .dropdown-menu {
+  background: var(--tp-card-bg) !important;
+  border-color: var(--tp-card-border) !important;
+  color: var(--tp-body-text) !important;
+}
+.tp-body .modal-header,
+.tp-body .toast-header {
+  background: var(--tp-card-header-bg) !important;
+  border-bottom-color: var(--tp-card-header-border) !important;
+  color: var(--tp-card-header-text) !important;
+}
+.tp-body .dropdown-item {
+  color: var(--tp-nav-text) !important;
+}
+.tp-body .dropdown-item:hover {
+  background: var(--tp-nav-hover-bg) !important;
+  color: var(--tp-nav-active-text) !important;
+}
+
+/* 装饰层（仅暗色模式显示） */
+.tp-scanlines {
+  position: fixed; top:0;left:0;right:0;bottom:0;
+  pointer-events: none; z-index: 99999;
+  background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.012) 4px, rgba(0,0,0,0.012) 8px);
+}
+html[data-bs-theme=light] .tp-scanlines { display: none; }
+.tp-grid-bg {
+  position: fixed; top:0;left:0;right:0;bottom:0;
+  pointer-events: none; z-index: -1;
+  background-image: radial-gradient(circle, rgba(0,255,65,0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+html[data-bs-theme=light] .tp-grid-bg { display: none; }
+
+/* 页面容器 */
+.tp-page { background: var(--tp-page-bg); min-height: 100vh; }
+.tp-page .page,
+.tp-page .page-wrapper,
+.tp-page #page-content { background: var(--tp-page-bg) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   2. 侧边栏
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .navbar-vertical,
+html body .tp-page .navbar-vertical {
+  background: var(--tp-nav-bg) !important;
+  border-right: 2px solid var(--tp-nav-border) !important;
+}
+/* 导航链接 */
+.tp-page .navbar-vertical a.nav-link,
+.tp-page .navbar-vertical .nav-link,
+.tp-page .navbar-vertical .navbar-nav a.nav-link,
+.tp-page .navbar-vertical .navbar-nav .nav-link,
+.tp-page .navbar-vertical li.nav-item a.nav-link,
+.tp-page .navbar-vertical li.nav-item .nav-link,
+html body .tp-page .navbar-vertical .nav-link,
+html body .tp-page .navbar-vertical a.nav-link {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  color: var(--tp-nav-text) !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  padding: 10px 14px !important;
+  border-left: 3px solid transparent !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.02em !important;
+  transition: color 0.15s, background 0.15s, border-color 0.15s !important;
+}
+.tp-page .navbar-vertical .nav-link:hover,
+.tp-page .navbar-vertical a.nav-link:hover,
+html body .tp-page .navbar-vertical .nav-link:hover {
+  color: var(--tp-nav-text-hover) !important;
+  background: var(--tp-nav-hover-bg) !important;
+  border-left-color: var(--tp-nav-accent) !important;
+}
+.tp-page .navbar-vertical .nav-link.active,
+.tp-page .navbar-vertical a.nav-link.active,
+html body .tp-page .navbar-vertical .nav-link.active {
+  color: var(--tp-nav-active-text) !important;
+  background: var(--tp-nav-active-bg) !important;
+  border-left-color: var(--tp-nav-active-border) !important;
+  font-weight: 600 !important;
+}
+.tp-page .navbar-vertical .nav-link.active::before { content: '> '; color: var(--tp-nav-active-text); font-weight: 700; }
+/* ★ 子元素 .nav-link-title / .nav-link-icon — Tabler 有独立颜色 */
+.tp-page .navbar-vertical .nav-link-title,
+.tp-page .navbar-vertical .nav-link-icon,
+html body .tp-page .navbar-vertical .nav-link-title,
+html body .tp-page .navbar-vertical .nav-link-icon {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  color: var(--tp-nav-text) !important;
+  font-size: 0.82rem !important;
+}
+.tp-page .navbar-vertical .nav-link:hover .nav-link-title,
+.tp-page .navbar-vertical .nav-link:hover .nav-link-icon {
+  color: var(--tp-nav-text-hover) !important;
+}
+.tp-page .navbar-vertical .nav-link.active .nav-link-title,
+.tp-page .navbar-vertical .nav-link.active .nav-link-icon {
+  color: var(--tp-nav-active-text) !important;
+}
+/* 图标 */
+.tp-page .navbar-vertical .nav-link i,
+.tp-page .navbar-vertical .nav-link .mdi,
+.tp-page .navbar-vertical .nav-link svg {
+  color: var(--tp-nav-accent) !important;
+  font-size: 1.1rem !important;
+  margin-right: 10px !important;
+}
+/* 分组标题 */
+.tp-page .navbar-vertical .nav-title,
+.tp-page .navbar-vertical .nav-group,
+.tp-page .navbar-vertical .nav-header,
+.tp-page .navbar-vertical h6,
+.tp-page .navbar-vertical .navbar-nav > li > span {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.7rem !important; font-weight: 700 !important;
+  color: var(--tp-nav-group-text) !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  padding: 18px 16px 8px 16px !important; opacity: 0.9 !important;
+}
+.tp-page .navbar-vertical .nav-title::before,
+.tp-page .navbar-vertical .nav-group::before,
+.tp-page .navbar-vertical .nav-header::before {
+  content: '// '; color: var(--tp-nav-active-text); font-weight: 700;
+}
+/* 分隔线 & 品牌 */
+.tp-page .navbar-vertical hr,
+.tp-page .navbar-vertical .dropdown-divider {
+  border-color: var(--tp-nav-divider) !important; margin: 6px 12px !important; opacity: 0.6 !important;
+}
+/* ── 品牌/Logo 区域：隐藏 NetBox SVG，替换为像素风实验室图标 ── */
+.tp-page .navbar-brand {
+  border-bottom: 2px solid var(--tp-nav-brand-border) !important; padding-bottom: 12px !important;
+}
+/* 隐藏原始 NetBox SVG logo */
+.tp-page .navbar-brand img.navbar-brand-image {
+  display: none !important;
+}
+/* 品牌链接布局 — SVG icon 由 JS 注入，CSS 只处理布局 */
+.tp-page .navbar-brand a {
+  display: flex !important; align-items: center !important;
+  gap: 10px !important; text-decoration: none !important;
+}
+.tp-page .navbar-brand .netbox-edition {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.85rem !important;
+  color: var(--tp-nav-active-text) !important;
+  letter-spacing: 0.08em !important; font-weight: 600 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   3. 顶部导航
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .navbar.sticky-top {
+  background: var(--tp-topnav-bg) !important;
+  border-bottom: 1px solid var(--tp-topnav-border) !important;
+}
+.tp-page .navbar.sticky-top .form-control {
+  background: var(--tp-input-bg);
+  border: 1px solid var(--tp-input-border);
+  color: var(--tp-input-text);
+  font-size: 0.9rem;
+}
+.tp-page .navbar.sticky-top .form-control:focus {
+  border-color: var(--tp-input-focus-border);
+  box-shadow: 0 0 0 3px var(--tp-input-focus-shadow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   4. 卡片
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .card {
+  background: var(--tp-card-bg) !important;
+  border: 1px solid var(--tp-card-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.tp-page .card:hover {
+  border-color: var(--tp-card-hover-border) !important;
+  box-shadow: 0 0 24px var(--tp-card-hover-shadow) !important;
+}
+.tp-page .card-header {
+  background: var(--tp-card-header-bg) !important;
+  border-bottom: 1px solid var(--tp-card-header-border) !important;
+  color: var(--tp-card-header-text) !important;
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  font-size: 0.88rem; font-weight: 600;
+  padding: 14px 18px; letter-spacing: 0.04em;
+}
+.tp-page .card-header::before { content: '> '; color: var(--tp-nav-active-text); font-weight: 700; }
+.tp-page .card-body {
+  color: var(--tp-card-body-text); font-size: 0.92rem; line-height: 1.65;
+}
+.tp-page .card-footer {
+  background: transparent; border-top: 1px solid var(--tp-card-footer-border);
+  color: var(--tp-card-footer-text); font-size: 0.82rem;
+}
+/* 统计卡片 */
+.tp-page .card.text-bg-primary,
+.tp-page .card.text-bg-success,
+.tp-page .card.text-bg-info,
+.tp-page .card.text-bg-warning,
+.tp-page .card.text-bg-danger,
+.tp-page .card.text-bg-dark,
+.tp-page .card.text-bg-secondary {
+  background: var(--tp-card-bg) !important;
+  text-align: center; padding: 20px 12px;
+}
+/* 统计数值 */
+.tp-page .card.text-bg-primary h3,
+.tp-page .card.text-bg-success h3,
+.tp-page .card.text-bg-info h3,
+.tp-page .card.text-bg-warning h3,
+.tp-page .card.text-bg-danger h3,
+.tp-page .card.text-bg-dark h3,
+.tp-page .card.text-bg-secondary h3 {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  font-size: 2rem; font-weight: 700; line-height: 1.2;
+}
+.tp-page .card.text-bg-success h3 { color: var(--tp-btn-success-text) !important; text-shadow: var(--tp-stat-glow-success) !important; }
+.tp-page .card.text-bg-info h3    { color: var(--tp-btn-info-text) !important; text-shadow: var(--tp-stat-glow-info) !important; }
+.tp-page .card.text-bg-warning h3 { color: var(--tp-btn-warning-text) !important; text-shadow: var(--tp-stat-glow-warning) !important; }
+.tp-page .card.text-bg-danger h3  { color: var(--tp-btn-danger-text) !important; text-shadow: var(--tp-stat-glow-danger) !important; }
+.tp-page .card.text-bg-primary h3 { color: var(--tp-badge-primary-text) !important; text-shadow: var(--tp-stat-glow-primary) !important; }
+.tp-page .card.text-bg-dark h3,
+.tp-page .card.text-bg-secondary h3 { color: var(--tp-card-body-text) !important; }
+/* 统计标签 */
+.tp-page .card.text-bg-primary small,
+.tp-page .card.text-bg-success small,
+.tp-page .card.text-bg-info small,
+.tp-page .card.text-bg-warning small,
+.tp-page .card.text-bg-danger small,
+.tp-page .card.text-bg-dark small,
+.tp-page .card.text-bg-secondary small {
+  color: var(--tp-text-muted) !important; font-size: 0.75rem; font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   5. 按钮
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .btn {
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 0.88rem !important; font-weight: 600 !important;
+  border-radius: 3px !important;
+  padding: 9px 18px; border: 1px solid var(--tp-btn-border);
+  background: var(--tp-btn-bg); color: var(--tp-btn-text) !important;
+  transition: all 0.15s ease; white-space: nowrap;
+}
+.tp-page .btn:hover {
+  border-color: var(--tp-btn-hover-border) !important;
+  color: var(--tp-btn-hover-text) !important;
+  background: var(--tp-btn-hover-bg) !important;
+  box-shadow: 0 0 16px var(--tp-btn-hover-shadow) !important;
+}
+.tp-page .btn:active { background: var(--tp-btn-active-bg) !important; }
+
+.tp-page .btn-primary {
+  background: var(--tp-btn-primary-bg) !important;
+  border-color: var(--tp-btn-primary-border) !important;
+  color: var(--tp-btn-primary-text) !important;
+}
+.tp-page .btn-primary:hover { background: var(--tp-btn-hover-bg) !important; }
+
+.tp-page .btn-success {
+  background: var(--tp-btn-success-bg) !important;
+  border-color: var(--tp-btn-success-border) !important;
+  color: var(--tp-btn-success-text) !important;
+}
+.tp-page .btn-success:hover { background: var(--tp-btn-hover-bg) !important; }
+
+.tp-page .btn-danger {
+  background: var(--tp-btn-danger-bg) !important;
+  border-color: var(--tp-btn-danger-border) !important;
+  color: var(--tp-btn-danger-text) !important;
+}
+.tp-page .btn-danger:hover { background: var(--tp-btn-hover-bg) !important; }
+
+.tp-page .btn-warning {
+  background: var(--tp-btn-warning-bg) !important;
+  border-color: var(--tp-btn-warning-border) !important;
+  color: var(--tp-btn-warning-text) !important;
+}
+.tp-page .btn-warning:hover { background: var(--tp-btn-hover-bg) !important; }
+
+.tp-page .btn-info {
+  background: var(--tp-btn-info-bg) !important;
+  border-color: var(--tp-btn-info-border) !important;
+  color: var(--tp-btn-info-text) !important;
+}
+.tp-page .btn-info:hover { background: var(--tp-btn-hover-bg) !important; }
+
+/* outline 按钮 */
+.tp-page .btn-outline-primary,
+.tp-page .btn-outline-secondary,
+.tp-page .btn-outline-success,
+.tp-page .btn-outline-danger,
+.tp-page .btn-outline-warning,
+.tp-page .btn-outline-info,
+.tp-page .btn-outline-dark {
+  background: var(--tp-btn-outline-bg) !important;
+  border-color: var(--tp-btn-outline-border) !important;
+  color: var(--tp-btn-outline-text) !important;
+}
+.tp-page .btn-outline-primary:hover,
+.tp-page .btn-outline-secondary:hover,
+.tp-page .btn-outline-success:hover,
+.tp-page .btn-outline-danger:hover,
+.tp-page .btn-outline-warning:hover,
+.tp-page .btn-outline-info:hover,
+.tp-page .btn-outline-dark:hover {
+  border-color: var(--tp-btn-hover-border) !important;
+  color: var(--tp-btn-hover-text) !important;
+  background: var(--tp-btn-hover-bg) !important;
+  box-shadow: 0 0 16px var(--tp-btn-hover-shadow) !important;
+}
+.tp-page .btn-sm { padding: 6px 14px !important; font-size: 0.8rem !important; }
+.tp-page .btn-lg { padding: 13px 26px !important; font-size: 0.95rem !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   6. 表格
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .table {
+  color: var(--tp-table-text) !important; font-size: 0.88rem; border-collapse: collapse;
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: var(--tp-table-hover-bg);
+  --bs-table-striped-bg: var(--tp-table-stripe-bg);
+}
+.tp-page .table thead th {
+  background: var(--tp-table-head-bg) !important;
+  color: var(--tp-table-head-text) !important;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--tp-table-head-border) !important;
+  padding: 12px 16px; vertical-align: middle;
+}
+.tp-page .table tbody td {
+  border-bottom: 1px solid var(--tp-table-cell-border) !important;
+  padding: 10px 16px; line-height: 1.5; vertical-align: middle;
+}
+.tp-page .table tbody tr:hover td {
+  background: var(--tp-table-hover-bg) !important;
+}
+.tp-page .table a { color: var(--tp-table-link); text-decoration: none; font-weight: 500; }
+.tp-page .table a:hover { color: var(--tp-table-link-hover); text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   7. 徽章
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .badge {
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.03em;
+  padding: 5px 10px; border-radius: 3px; border: 1px solid; line-height: 1.4;
+}
+.tp-page .badge.text-bg-success,
+.tp-page .badge.bg-success { background: var(--tp-badge-success-bg) !important; color: var(--tp-badge-success-text) !important; border-color: var(--tp-btn-success-border); }
+.tp-page .badge.text-bg-danger,
+.tp-page .badge.bg-danger   { background: var(--tp-badge-danger-bg) !important; color: var(--tp-badge-danger-text) !important; border-color: var(--tp-btn-danger-border); }
+.tp-page .badge.text-bg-warning,
+.tp-page .badge.bg-warning   { background: var(--tp-badge-warning-bg) !important; color: var(--tp-badge-warning-text) !important; border-color: var(--tp-btn-warning-border); }
+.tp-page .badge.text-bg-info,
+.tp-page .badge.bg-info      { background: var(--tp-badge-info-bg) !important; color: var(--tp-badge-info-text) !important; border-color: var(--tp-btn-info-border); }
+.tp-page .badge.text-bg-primary,
+.tp-page .badge.bg-primary   { background: var(--tp-badge-primary-bg) !important; color: var(--tp-badge-primary-text) !important; border-color: var(--tp-badge-primary-text); }
+.tp-page .badge.text-bg-secondary,
+.tp-page .badge.bg-secondary { background: var(--tp-badge-secondary-bg) !important; color: var(--tp-badge-secondary-text) !important; border-color: var(--tp-text-muted); }
+.tp-page .badge.text-bg-dark,
+.tp-page .badge.bg-dark      { background: var(--tp-badge-dark-bg) !important; color: var(--tp-badge-dark-text) !important; border-color: var(--tp-card-border); }
+.tp-page .badge.text-bg-light,
+.tp-page .badge.bg-light     { background: var(--tp-card-header-bg) !important; color: var(--tp-card-body-text) !important; border-color: var(--tp-card-border) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   8. 表单
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .form-control {
+  background: var(--tp-input-bg) !important;
+  border: 1.5px solid var(--tp-input-border) !important;
+  color: var(--tp-input-text) !important;
+  font-size: 0.92rem; border-radius: 3px !important;
+  padding: 10px 14px;
+}
+.tp-page .form-control:focus {
+  border-color: var(--tp-input-focus-border) !important;
+  box-shadow: 0 0 0 3px var(--tp-input-focus-shadow) !important;
+}
+.tp-page .form-control::placeholder { color: var(--tp-input-placeholder); opacity: 0.8; }
+.tp-page .form-label {
+  font-size: 0.8rem; font-weight: 600; color: var(--tp-label-text);
+  letter-spacing: 0.03em; margin-bottom: 6px;
+}
+.tp-page .form-select {
+  background: var(--tp-input-bg) !important;
+  border: 1.5px solid var(--tp-input-border) !important;
+  color: var(--tp-input-text) !important;
+  font-size: 0.92rem; border-radius: 3px !important;
+  padding: 10px 14px;
+}
+.tp-page .form-select:focus {
+  border-color: var(--tp-input-focus-border) !important;
+  box-shadow: 0 0 0 3px var(--tp-input-focus-shadow) !important;
+}
+.tp-page textarea.form-control { line-height: 1.7; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   9. 进度条
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .progress {
+  background: var(--tp-progress-bg) !important;
+  border: 1px solid var(--tp-card-border); border-radius: 3px; height: 26px;
+}
+.tp-page .progress-bar {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em;
+  color: #fff !important;
+}
+.tp-page .progress-bar.bg-success { background: linear-gradient(90deg, #00aa22, #00ff41) !important; }
+.tp-page .progress-bar.bg-primary { background: linear-gradient(90deg, #2255bb, #5599ff) !important; }
+.tp-page .progress-bar.bg-info    { background: linear-gradient(90deg, #0088aa, #00e5ff) !important; }
+.tp-page .progress-bar.bg-warning { background: linear-gradient(90deg, #bb6600, #ff9100) !important; }
+.tp-page .progress-bar.bg-danger  { background: linear-gradient(90deg, #aa2222, #ff5555) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   10. 标签页
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .nav-tabs {
+  border-bottom: 2px solid var(--tp-nav-tabs-border) !important;
+}
+.tp-page .nav-tabs .nav-link {
+  font-size: 0.85rem; font-weight: 600; color: var(--tp-text-muted);
+  border: 1px solid transparent; border-bottom: none;
+  padding: 10px 20px; border-radius: 3px 3px 0 0;
+}
+.tp-page .nav-tabs .nav-link:hover {
+  color: var(--tp-card-body-text); background: var(--tp-nav-hover-bg); border-color: transparent;
+}
+.tp-page .nav-tabs .nav-link.active {
+  color: var(--tp-nav-active-text) !important;
+  background: var(--tp-nav-tabs-active-bg) !important;
+  border-color: var(--tp-card-border) !important;
+  border-bottom-color: transparent !important;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   11. 警告框
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .alert {
+  font-size: 0.9rem; font-weight: 500; border-radius: 3px;
+  padding: 14px 18px; background: var(--tp-alert-bg) !important;
+  line-height: 1.6; border: 1px solid;
+}
+.tp-page .alert-success { border-color: var(--tp-btn-success-border); color: var(--tp-btn-success-text); }
+.tp-page .alert-success::before { content: '[ OK ] '; font-weight: 700; color: var(--tp-btn-success-text); }
+.tp-page .alert-danger  { border-color: var(--tp-btn-danger-border); color: var(--tp-btn-danger-text); }
+.tp-page .alert-danger::before  { content: '[ ERR ] '; font-weight: 700; color: var(--tp-btn-danger-text); }
+.tp-page .alert-warning { border-color: var(--tp-btn-warning-border); color: var(--tp-btn-warning-text); }
+.tp-page .alert-warning::before { content: '[ WARN ] '; font-weight: 700; color: var(--tp-btn-warning-text); }
+.tp-page .alert-info    { border-color: var(--tp-btn-info-border); color: var(--tp-btn-info-text); }
+.tp-page .alert-info::before    { content: '[ INFO ] '; font-weight: 700; color: var(--tp-btn-info-text); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   12. 标题 / 链接 / 列表 / 面包屑 / 代码
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page h1 {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--tp-nav-active-text) !important;
+  text-shadow: var(--tp-h1-glow) !important;
+}
+/* h1 不再加 $ 终端提示符 */
+.tp-page h2 {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  font-size: 1.25rem; font-weight: 700; color: var(--tp-card-body-text);
+}
+.tp-page h2::before { content: '> '; color: var(--tp-nav-active-text); }
+.tp-page h3 {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  font-size: 1.05rem; font-weight: 600; color: var(--tp-card-body-text);
+}
+.tp-page a { color: var(--tp-link); }
+.tp-page a:hover { color: var(--tp-link-hover); }
+.tp-page .list-group-item {
+  background: var(--tp-list-group-bg) !important; color: var(--tp-card-body-text);
+  border-bottom: 1px solid var(--tp-card-border); padding: 12px 18px;
+  font-size: 0.9rem;
+}
+.tp-page .list-group-item:hover { background: var(--tp-list-group-hover-bg) !important; }
+.tp-page .breadcrumb { font-size: 0.82rem; color: var(--tp-text-muted); }
+.tp-page .breadcrumb a { color: var(--tp-text-muted); }
+.tp-page .breadcrumb a:hover { color: var(--tp-link); }
+.tp-page code {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  background: var(--tp-code-bg); color: var(--tp-code-text);
+  border: 1px solid var(--tp-code-border);
+  padding: 3px 8px; border-radius: 3px; font-size: 0.88em;
+}
+.tp-page pre {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  background: var(--tp-code-bg); color: var(--tp-code-text);
+  border: 1px solid var(--tp-code-border);
+  padding: 18px; border-radius: 3px; font-size: 0.85rem; line-height: 1.7;
+  overflow-x: auto; white-space: pre-wrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   13. 杂项：分页 / 文本 / 日历
+   ═══════════════════════════════════════════════════════════════════════ */
+.tp-page .text-muted { color: var(--tp-text-muted) !important; }
+.tp-page .pagination .page-link {
+  background: var(--tp-pagination-bg);
+  border-color: var(--tp-pagination-border);
+  color: var(--tp-pagination-text);
+}
+.tp-page .pagination .page-link:hover {
+  background: var(--tp-list-group-hover-bg);
+  color: var(--tp-nav-active-text);
+  border-color: var(--tp-nav-active-border);
+}
+.tp-page .pagination .active .page-link {
+  background: var(--tp-nav-active-bg);
+  border-color: var(--tp-nav-active-border);
+  color: var(--tp-nav-active-text);
+}
+.tp-page hr { border-color: var(--tp-hr); }
+.tp-page .table-light { background: var(--tp-table-head-bg) !important; }
+
+/* 成员卡片 */
+.tp-page .card.shadow-sm { transition: all 0.2s ease; }
+.tp-page .card.shadow-sm:hover {
+  border-color: var(--tp-nav-active-border) !important;
+  box-shadow: 0 0 24px var(--tp-btn-hover-shadow) !important;
+  transform: translateY(-2px);
+}
+
+/* 活动日历 */
+.tp-page .activity-calendar { table-layout: fixed; }
+.tp-page .activity-calendar .calendar-day {
+  font-size: 0.82rem; font-weight: 600; border-radius: 2px;
+}
+.tp-page .calendar-day-checkin { background: #00cc34 !important; color: #0a0d12 !important; }
+.tp-page .calendar-day-browse  { background: rgba(0,229,255,0.35) !important; color: #0a4d5c !important; }
+html[data-bs-theme=dark] .tp-page .calendar-day-browse { color: #33eeff !important; }
+.tp-page .calendar-day-today {
+  border: 2px solid var(--tp-nav-active-border) !important; font-weight: 700;
+}
+
+/* ── 任务日历：单元格内任务项 ── */
+.tp-cal-task {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-weight: 500 !important;
+  border-radius: 0 !important;
+  border: 1px solid var(--tp-card-border) !important;
+  background: var(--tp-card-header-bg) !important;
+  color: var(--tp-card-body-text) !important;
+  padding: 2px 5px !important;
+  line-height: 1.5 !important;
+  transition: background 0.12s, border-color 0.12s;
+}
+.tp-cal-task:hover {
+  background: var(--tp-nav-hover-bg) !important;
+  border-color: var(--tp-nav-accent) !important;
+  color: var(--tp-nav-active-text) !important;
+}
+/* 优先级小圆点 */
+.tp-cal-dot {
+  display: inline-block; width: 6px; height: 6px;
+  margin-right: 3px; vertical-align: middle;
+  background: var(--tp-text-muted);
+}
+.tp-cal-task[data-priority="urgent"] .tp-cal-dot { background: #ff5555; box-shadow: 0 0 4px #ff5555; }
+.tp-cal-task[data-priority="high"] .tp-cal-dot    { background: #ff9100; box-shadow: 0 0 4px #ff9100; }
+.tp-cal-task[data-priority="medium"] .tp-cal-dot  { background: #ffaa33; }
+.tp-cal-task[data-priority="low"] .tp-cal-dot     { background: var(--tp-text-muted); }
+/* 日历暗色模式小圆点微调 */
+html[data-bs-theme=dark] .tp-cal-task[data-priority="urgent"] { border-left: 2px solid #ff5555; }
+html[data-bs-theme=dark] .tp-cal-task[data-priority="high"]   { border-left: 2px solid #ff9100; }
+
+/* 日历表格像素风增强 */
+.tp-page .table-bordered {
+  border: 2px solid var(--tp-card-border) !important;
+}
+.tp-page .table-bordered td,
+.tp-page .table-bordered th {
+  border: 1px solid var(--tp-card-border) !important;
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  font-size: 0.78rem;
+}
+.tp-page .table-bordered thead th {
+  font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tp-table-head-bg) !important;
+  color: var(--tp-table-head-text) !important;
+}
+/* 今天高亮 — 终端绿色边框 */
+.tp-page .table-primary,
+.tp-page .table .table-primary {
+  background: var(--tp-nav-active-bg) !important;
+  box-shadow: inset 0 0 0 2px var(--tp-nav-active-border);
+}
+/* 非本月日期灰色 */
+.tp-page .table-bordered td.text-muted {
+  background: var(--tp-progress-bg) !important; opacity: 0.5;
+}
+
+/* 通知卡片 */
+.tp-page .card.border-primary { border-left: 3px solid var(--tp-nav-active-border) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   14. 像素风细节增强 — 无 AI 味，纯手工像素/终端风格
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 14.1 像素化卡片边角 — 用 2px 阶梯制造锯齿像素感 ── */
+.tp-page .card {
+  clip-path: polygon(
+    0px 4px, 2px 2px, 4px 0px, calc(100% - 4px) 0px, calc(100% - 2px) 2px,
+    100% 4px, 100% calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 4px) 100%, 4px 100%, 2px calc(100% - 2px), 0px calc(100% - 4px)
+  );
+}
+/* 暗色模式微调锯齿可见度 */
+html[data-bs-theme=dark] .tp-page .card {
+  clip-path: polygon(
+    0px 3px, 2px 1px, 3px 0px, calc(100% - 3px) 0px, calc(100% - 2px) 1px,
+    100% 3px, 100% calc(100% - 3px), calc(100% - 2px) calc(100% - 1px),
+    calc(100% - 3px) 100%, 3px 100%, 2px calc(100% - 1px), 0px calc(100% - 3px)
+  );
+}
+
+/* ── 14.2 自定义滚动条 — 终端像素风 ── */
+.tp-page ::-webkit-scrollbar { width: 8px; height: 8px; }
+.tp-page ::-webkit-scrollbar-track { background: var(--tp-progress-bg); }
+.tp-page ::-webkit-scrollbar-thumb {
+  background: var(--tp-btn-border); border-radius: 0;
+  border: 1px solid var(--tp-card-border);
+}
+.tp-page ::-webkit-scrollbar-thumb:hover { background: var(--tp-nav-accent); }
+.tp-page ::-webkit-scrollbar-corner { background: var(--tp-progress-bg); }
+
+/* Firefox 滚动条 */
+.tp-page * { scrollbar-width: thin; scrollbar-color: var(--tp-btn-border) var(--tp-progress-bg); }
+
+/* ── 14.3 终端光标闪烁 — 输入框聚焦时模拟光标 ── */
+.tp-page .form-control:focus,
+.tp-page .form-select:focus {
+  caret-color: var(--tp-nav-active-text);
+  animation: none;
+}
+/* 聚焦输入框右侧加一个闪烁块 */
+.tp-page input.form-control:focus::after {
+  content: ''; display: inline-block; width: 8px; height: 1.1em;
+  background: var(--tp-nav-accent); vertical-align: text-bottom;
+  animation: tp-cursor-blink 1s step-end infinite;
+}
+@keyframes tp-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── 14.4 按钮像素边角 ── */
+.tp-page .btn {
+  clip-path: polygon(
+    0px 3px, 2px 0px, calc(100% - 2px) 0px, 100% 3px,
+    100% calc(100% - 3px), calc(100% - 2px) 100%, 2px 100%, 0px calc(100% - 3px)
+  );
+}
+
+/* ── 14.5 表格像素边框加粗 ── */
+.tp-page .table thead th {
+  border-bottom: 3px double var(--tp-table-head-border) !important;
+}
+.tp-page .table tbody tr:last-child td {
+  border-bottom: 2px solid var(--tp-table-head-border) !important;
+}
+
+/* ── 14.6 像素分隔线 ── */
+.tp-page hr {
+  border: none; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--tp-hr) 0px, var(--tp-hr) 4px, transparent 4px, transparent 8px);
+}
+
+/* ── 14.7 输入框像素边角 ── */
+.tp-page .form-control,
+.tp-page .form-select {
+  clip-path: polygon(
+    0px 3px, 2px 0px, calc(100% - 2px) 0px, 100% 3px,
+    100% calc(100% - 3px), calc(100% - 2px) 100%, 2px 100%, 0px calc(100% - 3px)
+  );
+}
+
+/* ── 14.8 进度条像素段 — 分段式像素风 ── */
+.tp-page .progress {
+  background: repeating-linear-gradient(90deg,
+    var(--tp-progress-bg) 0px, var(--tp-progress-bg) 6px,
+    transparent 6px, transparent 8px
+  ) !important;
+  border: 1px solid var(--tp-card-border);
+  border-radius: 0;
+}
+.tp-page .progress-bar {
+  position: relative; border-radius: 0 !important;
+}
+/* 像素段纹理覆盖 */
+.tp-page .progress-bar::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg,
+    transparent 0px, transparent 6px,
+    rgba(0,0,0,0.15) 6px, rgba(0,0,0,0.15) 8px
+  );
+  pointer-events: none;
+}
+
+/* ── 14.9 顶部导航栏像素底线 ── */
+.tp-page .navbar.sticky-top {
+  border-bottom: 2px solid var(--tp-topnav-border) !important;
+}
+
+/* ── 14.10 侧边栏导航项像素缩进标记 ── */
+.tp-page .navbar-vertical .nav-link {
+  border-left: 4px solid transparent !important;
+}
+.tp-page .navbar-vertical .nav-link.active {
+  border-left: 4px solid var(--tp-nav-active-border) !important;
+}
+
+/* ── 14.11 标签页像素激活指示器 ── */
+.tp-page .nav-tabs .nav-link.active {
+  border-bottom: 3px solid var(--tp-nav-active-border) !important;
+}
+
+/* ── 14.12 徽章像素菱形感 ── */
+.tp-page .badge {
+  clip-path: polygon(
+    2px 0px, calc(100% - 2px) 0px, 100% 2px,
+    100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%,
+    0px calc(100% - 2px), 0px 2px
+  );
+}
+
+/* ── 14.13 代码块左侧终端提示线 ── */
+.tp-page pre {
+  border-left: 3px solid var(--tp-nav-accent) !important;
+  position: relative;
+}
+
+/* ── 14.14 模态框/下拉菜单像素边框加粗 ── */
+.tp-body .modal-content,
+.tp-body .dropdown-menu {
+  border: 2px solid var(--tp-card-border) !important;
+  border-radius: 0 !important;
+}
+
+/* ── 14.15 分页按钮像素风格 ── */
+.tp-page .pagination .page-link {
+  border-radius: 0 !important;
+  font-family: 'JetBrains Mono',Consolas,monospace;
+  font-size: 0.82rem;
+}
+.tp-page .pagination .active .page-link {
+  border-left: 3px solid var(--tp-nav-active-border);
+}
+
+/* ── 14.16 暗色模式像素网格增强 ── */
+html[data-bs-theme=dark] .tp-grid-bg {
+  background-image:
+    radial-gradient(circle, rgba(0,255,65,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.008) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,255,65,0.008) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 24px 24px;
+}
+
+/* ── 14.17 亮色模式轻微像素纹理 ── */
+html[data-bs-theme=light] .tp-grid-bg {
+  display: block !important;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* ── 14.18 侧边导航 — 整体像素/终端感增强 ── */
+/* 导航项之间加像素分隔线 */
+.tp-page .navbar-vertical .navbar-nav .nav-item {
+  border-bottom: 1px dotted var(--tp-nav-divider);
+}
+.tp-page .navbar-vertical .navbar-nav .nav-item:last-child {
+  border-bottom: none;
+}
+/* 导航链接字符间距加宽，营造终端命令感 */
+.tp-page .navbar-vertical .nav-link-title {
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase;
+  font-size: 0.78rem !important;
+}
+/* 导航图标用 accent 色 + 像素风尺寸 */
+.tp-page .navbar-vertical .nav-link i,
+.tp-page .navbar-vertical .nav-link .mdi {
+  font-size: 1rem !important;
+  width: 18px; text-align: center;
+}
+
+/* ── 14.19 列表页：Results/Filters 标签栏 ── */
+.tp-page .nav-tabs .nav-link {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tp-page .nav-tabs .nav-link .badge {
+  font-family: 'JetBrains Mono',Consolas,monospace !important;
+  font-size: 0.7rem !important;
+}
+
+/* ── 14.20 列表页：控件按钮栏 (Add / Import / Bulk) ── */
+.tp-page .btn-list {
+  gap: 8px;
+}
+.tp-page .btn-list .btn {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.03em;
+}
+
+/* ── 14.21 列表页：表格控制栏 (page size / config) ── */
+.tp-page .table-controls,
+.tp-page .d-print-none .btn-sm {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.75rem !important;
+}
+
+/* ── 14.22 列表页：已应用筛选标签 ── */
+.tp-page .applied-filters .badge,
+.tp-page .filter-badge {
+  font-family: 'JetBrains Mono',Consolas,monospace !important;
+  font-size: 0.72rem !important;
+  border-radius: 0 !important;
+}
+
+/* ── 14.23 列表页：批量操作浮动按钮条 ── */
+.tp-page .sticky-actions {
+  background: var(--tp-card-header-bg) !important;
+  border: 1px solid var(--tp-card-border) !important;
+  border-radius: 0 !important;
+}
+.tp-page .sticky-actions .btn {
+  font-family: 'JetBrains Mono',Consolas,monospace !important;
+  font-size: 0.76rem !important;
+}
+
+/* ── 14.24 列表页：表格内链接高亮 ── */
+.tp-page .table a {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
+  font-size: 0.82rem; font-weight: 500;
+  text-decoration: none;
+}
+.tp-page .table a:hover {
+  text-decoration: underline;
+  color: var(--tp-link-hover) !important;
+}
+
+/* ── 14.25 详情页：对象详情卡片 ── */
+.tp-page .object-detail .card-header,
+.tp-page .panel-body .card-header {
+  font-family: 'JetBrains Mono',Consolas,monospace;
+}
+.tp-page .object-detail th,
+.tp-page .panel-body th {
+  font-family: 'JetBrains Mono',Consolas,monospace;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--tp-label-text);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ── 14.26 顶部导航栏像素风增强 ── */
+.tp-page .navbar.sticky-top .navbar-nav .nav-link {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.8rem !important;
+}
+.tp-page .navbar.sticky-top .dropdown-toggle {
+  font-family: 'JetBrains Mono',Consolas,monospace !important;
+}
+
+/* ── 14.27 "全选" 卡片 ── */
+.tp-page #select-all-box.card {
+  background: var(--tp-card-header-bg) !important;
+  border: 1px dashed var(--tp-nav-accent) !important;
+}
+.tp-page #select-all-box .form-check-label {
+  font-family: 'JetBrains Mono',Consolas,monospace;
+  font-size: 0.82rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   15. 响应式
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .tp-page h1 { font-size: 1.3rem; }
+  .tp-page .card-header { font-size: 0.82rem; }
+  .tp-page .btn { font-size: 0.82rem !important; padding: 8px 14px; }
+  .tp-page .table { font-size: 0.8rem; }
+}

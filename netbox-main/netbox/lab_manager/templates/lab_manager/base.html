@@ -1,0 +1,129 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block head %}
+{# 1. 保留 NetBox 自带的主题切换机制（data-bs-theme 由 light_toggle 控制） #}
+{#    terminal_pixel.css 通过 CSS 变量自动适配亮色/暗色两种模式 #}
+
+{# 2. NetBox 原始 CSS (Bootstrap/Tabler) #}
+{{ block.super }}
+
+{# 3. 我们的终端主题 CSS — CSS 变量驱动，跟随 [data-bs-theme] 自动切换 #}
+<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=9">
+
+{# 4. 自定义 favicon — 像素烧杯图标 #}
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M10 4h12v4h-2v4h-2v4h-4v-4h-2v-4h-2z' fill='%2300e5ff'/><rect x='14' y='16' width='4' height='8' fill='%2300ff41'/><rect x='8' y='0' width='4' height='4' fill='%2300e5ff' opacity='.7'/><rect x='22' y='2' width='4' height='4' fill='%2300e5ff' opacity='.5'/></svg>">
+
+{# 5. 仅保留临界 FOUC 防护 #}
+<style>
+  html{background:#0b0e14!important}
+  html[data-bs-theme=light]{background:#f4f6f9!important}
+</style>
+{% endblock %}
+
+{% block layout %}
+{# body 已存在，立刻加 tp-body 类 #}
+<script>document.body&&document.body.classList.add('tp-body')</script>
+<div class="tp-scanlines"></div>
+<div class="tp-grid-bg"></div>
+<div class="tp-page">{{ block.super }}</div>
+
+{# ═══════════════════════════════════════════════
+   品牌定制 & 清理
+   ═══════════════════════════════════════════════ #}
+<script>
+(function(){
+  // ── 1. 移除未使用的 NetBox 内置导航组 ──
+  var HIDDEN = ['操作','自定义','置备'];
+  var items = document.querySelectorAll('.navbar-vertical .nav-item');
+  for (var i = 0; i < items.length; i++) {
+    var titleEl = items[i].querySelector('.nav-link-title');
+    var text = titleEl ? titleEl.textContent : '';
+    if (!text) {
+      var linkEl = items[i].querySelector('.nav-link');
+      text = linkEl ? linkEl.textContent : '';
+    }
+    text = text.replace(/\s+/g, '');
+    for (var j = 0; j < HIDDEN.length; j++) {
+      if (text.indexOf(HIDDEN[j]) !== -1) {
+        items[i].style.display = 'none';
+        break;
+      }
+    }
+  }
+
+  // ── 2. 强制移除 NetBox SVG logo ──
+  var logos = document.querySelectorAll('.navbar-brand img');
+  for (var k = 0; k < logos.length; k++) {
+    logos[k].remove();
+  }
+
+  // ── 3. 注入像素风「烧杯」实验室图标 ──
+  var brandLink = document.querySelector('.navbar-brand a');
+  if (brandLink) {
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var icon = document.createElementNS(svgNS, 'svg');
+    icon.setAttribute('width', '28');
+    icon.setAttribute('height', '32');
+    icon.setAttribute('viewBox', '0 0 28 32');
+    icon.setAttribute('shape-rendering', 'crispEdges');
+    icon.setAttribute('style', 'flex-shrink:0;margin-right:10px;');
+    icon.style.color = 'var(--tp-nav-accent, #00e5ff)';
+
+    // 烧杯主体 — 简洁像素轮廓
+    var body = document.createElementNS(svgNS, 'path');
+    body.setAttribute('d',
+      'M10,2 h8 v4 h-1 v4 h-1 v4 h-4 v-4 h-1 v-4 h-1 z'  // 上半部收口
+    );
+    body.setAttribute('fill', 'currentColor');
+    body.setAttribute('opacity', '0.25');
+
+    var neck = document.createElementNS(svgNS, 'path');
+    neck.setAttribute('d',
+      'M12,10 h4 v6 h4 v8 h-12 v-8 h4 z'  // 下半部瓶身
+    );
+    neck.setAttribute('fill', 'currentColor');
+
+    // 液面 — 瓶子底部三分之一
+    var liquid = document.createElementNS(svgNS, 'path');
+    liquid.setAttribute('d',
+      'M10,22 h8 v4 h-8 z'
+    );
+    liquid.setAttribute('fill', '#00ff41');
+
+    // 气泡
+    var b1 = document.createElementNS(svgNS, 'rect');
+    b1.setAttribute('x', '6'); b1.setAttribute('y', '0');
+    b1.setAttribute('width', '4'); b1.setAttribute('height', '4');
+    b1.setAttribute('fill', 'currentColor');
+    b1.setAttribute('opacity', '0.7');
+
+    var b2 = document.createElementNS(svgNS, 'rect');
+    b2.setAttribute('x', '20'); b2.setAttribute('y', '1');
+    b2.setAttribute('width', '3'); b2.setAttribute('height', '3');
+    b2.setAttribute('fill', 'currentColor');
+    b2.setAttribute('opacity', '0.5');
+
+    icon.appendChild(body);
+    icon.appendChild(neck);
+    icon.appendChild(liquid);
+    icon.appendChild(b1);
+    icon.appendChild(b2);
+    brandLink.insertBefore(icon, brandLink.firstChild);
+  }
+
+  // ── 4. 替换页面残留 "NetBox" 文字 ──
+  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+  var node;
+  while (node = walker.nextNode()) {
+    if (node.textContent && node.textContent.indexOf('NetBox') !== -1) {
+      node.textContent = node.textContent.replace(/NetBox/g, '研究实验室');
+    }
+  }
+  if (document.title.indexOf('NetBox') !== -1) {
+    document.title = document.title.replace(/NetBox/g, '研究实验室');
+  }
+})();
+</script>
+{% endblock %}

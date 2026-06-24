@@ -1,4 +1,4 @@
-{% extends 'base/layout.html' %}
+{% extends 'lab_manager/base.html' %}
 {% load i18n humanize %}
 
 {% block title %}{% trans "成员打卡记录" %}{% endblock %}
@@ -121,7 +121,7 @@
                         <strong>{{ forloop.counter }}</strong>
                         <span>
                             {% if u.user__first_name or u.user__last_name %}
-                                {{ u.user__last_name }}{{ u.user__first_name }}
+                                {{ u.user__first_name }}{{ u.user__last_name }}
                             {% else %}
                                 {{ u.user__username }}
                             {% endif %}

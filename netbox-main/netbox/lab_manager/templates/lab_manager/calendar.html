@@ -1,4 +1,4 @@
-{% extends 'base/layout.html' %}
+{% extends 'lab_manager/base.html' %}
 {% load i18n %}
 
 {% block title %}{% trans "任务日历" %}{% endblock %}
@@ -41,9 +41,8 @@
                             {% for item in tasks_by_day_items %}
                                 {% if item.0.day == day %}
                                     {% for t in item.1 %}
-                                    <a href="{{ t.get_absolute_url }}" class="badge text-bg-light text-decoration-none d-block text-start text-truncate mb-1" title="{{ t.title }}" style="max-width:100%;font-size:0.7rem">
-                                        {% if t.priority == 'urgent' %}🔴{% elif t.priority == 'high' %}🟠{% endif %}
-                                        {{ t.title|truncatechars:12 }}
+                                    <a href="{{ t.get_absolute_url }}" class="badge text-decoration-none d-block text-start text-truncate mb-1 tp-cal-task" title="{{ t.title }}" style="max-width:100%;font-size:0.68rem" data-priority="{{ t.priority }}">
+                                        <span class="tp-cal-dot"></span>{{ t.title|truncatechars:10 }}
                                     </a>
                                     {% endfor %}
                                 {% endif %}

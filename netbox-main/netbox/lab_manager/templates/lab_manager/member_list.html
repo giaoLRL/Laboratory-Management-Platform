@@ -1,4 +1,4 @@
-{% extends 'base/layout.html' %}
+{% extends 'lab_manager/base.html' %}
 {% load i18n humanize %}
 
 {% block title %}{% trans "成员列表" %}{% endblock %}
@@ -58,19 +58,19 @@
                 {# 统计小标签 #}
                 <div class="d-flex gap-1 flex-wrap">
                     <span class="badge text-bg-light" title="{% trans '任务' %}">
-                        📋 {{ m.task_total }}
+                        <i class="mdi mdi-clipboard-text-outline"></i> {{ m.task_total }}
                     </span>
                     {% if m.borrowed_current > 0 %}
                     <span class="badge text-bg-warning" title="{% trans '借出中' %}">
-                        📦 {{ m.borrowed_current }}
+                        <i class="mdi mdi-package-variant-closed"></i> {{ m.borrowed_current }}
                     </span>
                     {% endif %}
                     <span class="badge text-bg-info" title="{% trans '打卡' %}">
-                        📍 {{ m.checkin_total }}
+                        <i class="mdi mdi-map-marker-outline"></i> {{ m.checkin_total }}
                     </span>
                     {% if m.project_count > 0 %}
                     <span class="badge text-bg-light" title="{% trans '项目' %}">
-                        🔬 {{ m.project_count }}
+                        <i class="mdi mdi-flask-outline"></i> {{ m.project_count }}
                     </span>
                     {% endif %}
                 </div>

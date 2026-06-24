@@ -1,0 +1,44 @@
+{% extends 'lab_manager/base.html' %}
+{% load helpers %}
+{% load i18n %}
+
+{# Terminal/Pixel Object Delete Base — 替代 generic/object_delete.html #}
+
+{% block title %}
+  {% blocktrans trimmed with object_type=object|meta:"verbose_name" %}
+    Delete {{ object_type }}
+  {% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col col-md-12 col-lg-8">
+      <div class="card">
+        <h5 class="card-header">
+          {% blocktrans trimmed with object_type=object|meta:"verbose_name" %}
+            Confirm deletion of {{ object_type }}
+          {% endblocktrans %}
+        </h5>
+        <div class="card-body">
+          <p class="text-danger fw-semibold mb-3">
+            <i class="mdi mdi-alert"></i>
+            {% blocktrans trimmed %}
+              Are you sure you want to delete this object? This action cannot be undone.
+            {% endblocktrans %}
+          </p>
+          <form action="" method="post">
+            {% csrf_token %}
+            <div class="btn-list">
+              <a href="{{ return_url }}" class="btn btn-outline-secondary">
+                {% trans "Cancel" %}
+              </a>
+              <button type="submit" name="_delete" class="btn btn-danger">
+                <i class="mdi mdi-trash-can-outline"></i> {% trans "Delete" %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
