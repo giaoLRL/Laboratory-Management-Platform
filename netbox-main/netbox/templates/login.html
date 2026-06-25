@@ -4,74 +4,201 @@
 {% load static %}
 {% load i18n %}
 
-{% block layout %}<style>
+{% block layout %}
+<style>
+  :root {
+    --px-green: #00ff41;
+    --px-cyan: #00e5ff;
+    --px-pink: #ff6ec7;
+    --px-purple: #b983ff;
+  }
+  html[data-bs-theme=light] {
+    --px-green: #0d6b63;
+    --px-cyan: #0d7a8a;
+    --px-pink: #d63384;
+    --px-purple: #7c3aed;
+  }
+
+  html, body { margin: 0 !important; padding: 0 !important; background: transparent !important; }
+  .login-page-wrapper {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: transparent !important;
+  }
+  #pixel-canvas {
+    position: fixed !important; top: 0 !important; left: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    z-index: 0 !important; pointer-events: none !important;
+    display: block !important; opacity: 1 !important;
+    visibility: visible !important;
+  }
+  .login-page-wrapper,
+  .page.page-center,
+  .page.page-center .container-tight,
+  .page.page-center .card {
+    position: relative; z-index: 5;
+  }
+  .login-page-wrapper .page.page-center {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; min-height: 100vh;
+    background: transparent !important;
+  }
+  .page.page-center .container-tight { max-width: 440px; width: 100%; }
+
+  /* card */
   .page-center .card {
-    border: 2px solid var(--tp-card-border, #d0d5dd);
+    border: 2px solid #d0d5dd;
     border-radius: 0;
     clip-path: polygon(
-      0px 4px, 3px 0px, calc(100% - 3px) 0px, 100% 4px,
-      100% calc(100% - 4px), calc(100% - 3px) 100%, 3px 100%, 0px calc(100% - 4px)
+      0 6px, 3px 3px, 6px 0, calc(100% - 6px) 0, calc(100% - 3px) 3px,
+      100% 6px, 100% calc(100% - 6px), calc(100% - 3px) calc(100% - 3px),
+      calc(100% - 6px) 100%, 6px 100%, 3px calc(100% - 3px), 0 calc(100% - 6px)
     );
-    box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.1), 0 0 30px rgba(0,255,65,0.05);
+    background: #ffffff;
+    position: relative; overflow: visible;
   }
-  .page-center .card-header { border-radius: 0; border-bottom: 2px solid var(--tp-card-border, #d0d5dd); }
+  html[data-bs-theme=dark] .page-center .card {
+    background: #111820;
+    border-color: #2a3245;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.3), 0 0 40px rgba(0,255,65,0.08), 0 0 80px rgba(0,229,255,0.04);
+  }
+  .page-center .card::before {
+    content: '';
+    position: absolute; inset: -2px; z-index: -1;
+    background: linear-gradient(
+      90deg,
+      transparent 0%, var(--px-green) 15%, var(--px-cyan) 35%,
+      var(--px-pink) 55%, var(--px-purple) 75%, transparent 100%
+    );
+    clip-path: polygon(
+      0 6px, 3px 3px, 6px 0, calc(100% - 6px) 0, calc(100% - 3px) 3px,
+      100% 6px, 100% calc(100% - 6px), calc(100% - 3px) calc(100% - 3px),
+      calc(100% - 6px) 100%, 6px 100%, 3px calc(100% - 3px), 0 calc(100% - 6px)
+    );
+    opacity: 0;
+    animation: border-breath 4s ease-in-out infinite;
+  }
+  @keyframes border-breath { 0%,100%{opacity:0} 50%{opacity:.55} }
+  .page-center .card-header { border-radius: 0; border-bottom: 2px solid #d0d5dd; }
+  html[data-bs-theme=dark] .page-center .card-header { border-bottom-color: #2a3245; }
+
+  /* button */
   .page-center .btn-primary {
     border-radius: 0;
-    clip-path: polygon(0px 2px, 2px 0px, calc(100% - 2px) 0px, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0px calc(100% - 2px));
+    clip-path: polygon(0 5px, 3px 2px, 5px 0, calc(100% - 5px) 0, calc(100% - 3px) 2px, 100% 5px, 100% calc(100% - 5px), calc(100% - 3px) calc(100% - 2px), calc(100% - 5px) 100%, 5px 100%, 3px calc(100% - 2px), 0 calc(100% - 5px));
     font-family: 'JetBrains Mono', Consolas, monospace;
-    letter-spacing: 0.1em;
+    font-size: .85rem; letter-spacing: .1em;
+    transition: all .25s;
+    background: #eef0f4;
+    border: 2px solid #d0d5dd;
+    color: #1e293b;
+    padding: 11px 0; cursor: pointer;
+    position: relative; overflow: hidden;
   }
+  html[data-bs-theme=dark] .page-center .btn-primary {
+    background: #1a2030;
+    border-color: #364156;
+    color: #dde4ed;
+  }
+  .page-center .btn-primary::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(0,255,65,.12), rgba(0,229,255,.08), transparent);
+    transform: translateX(-100%);
+    animation: btn-sweep 3s ease-in-out infinite;
+  }
+  @keyframes btn-sweep { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }
+  .page-center .btn-primary:hover {
+    border-color: var(--px-green);
+    color: var(--px-green);
+    box-shadow: 0 0 20px rgba(0,255,65,.2), 0 0 40px rgba(0,229,255,.1);
+    transform: translateY(-2px);
+  }
+
+  /* input */
   .page-center input.form-control {
     border-radius: 0;
-    border: 2px solid var(--tp-card-border, #d0d5dd);
+    border: 2px solid #d0d5dd;
     font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: .9rem; padding: 10px 14px;
+    background: #ffffff; color: #1e293b;
+    clip-path: polygon(0 4px, 2px 0, calc(100% - 2px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 4px));
+    transition: border-color .2s, box-shadow .2s;
+  }
+  html[data-bs-theme=dark] .page-center input.form-control {
+    background: #0a0d12;
+    border-color: #364156;
+    color: #dde4ed;
   }
   .page-center input.form-control:focus {
-    border-color: var(--tp-nav-accent, #0d6b63);
-    box-shadow: 3px 3px 0px rgba(13,107,99,0.2);
+    border-color: var(--px-green);
+    box-shadow: 3px 3px 0 rgba(0,255,65,.15), 0 0 16px rgba(0,255,65,.1);
+    caret-color: var(--px-green);
+    outline: none;
   }
   .page-center .form-label {
     font-family: 'JetBrains Mono', Consolas, monospace;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-size: .72rem; letter-spacing: .05em; text-transform: uppercase;
+    color: #9ca3af; margin-bottom: 6px;
   }
+  html[data-bs-theme=dark] .page-center .form-label { color: #8899aa; }
+
+  /* h2 + blink */
   .page-center h2 {
-    font-family: 'Courier New', monospace;
-    letter-spacing: 0.15em;
-    font-weight: 900;
-  }
-  .page-center .netbox-edition {
     font-family: 'JetBrains Mono', Consolas, monospace;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
+    font-size: 1rem; letter-spacing: .1em; font-weight: 600;
+    color: #1e293b;
+    display: inline-block;
+  }
+  html[data-bs-theme=dark] .page-center h2 { color: #dde4ed; }
+  .page-center h2::after {
+    content: '_';
+    animation: blink 1s step-end infinite;
+    color: var(--px-green); font-weight: 400;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* logo */
+  .login-logo-area { margin-bottom: 2.5rem; padding: 1rem 0; }
+  .page-center .logo {
+    height: 150px;
+    filter: drop-shadow(0 0 14px rgba(0,255,65,.35));
+    animation: logo-float 3s ease-in-out infinite;
+  }
+  html[data-bs-theme=light] .page-center .logo {
+    filter: drop-shadow(0 0 10px rgba(13,107,99,.25));
+  }
+  @keyframes logo-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  /* responsive */
+  @media (max-width: 767.98px) {
+    .page-center .card::before { display: none; }
+    .page-center .logo { height: 110px; }
+    .login-logo-area { margin-bottom: 1.5rem; padding: .5rem 0; }
+    .page.page-center .container-tight { max-width: 360px; }
   }
 </style>
 
+<canvas id="pixel-canvas"></canvas>
+<div class="login-page-wrapper">
   <div class="page page-center">
     <div class="container container-tight py-4">
 
-      {# 系统 Logo #}
-      <div class="text-center mb-4">
-        <img src="{% static 'lab_manager/logo_dark.svg' %}" alt="{% trans "实验室管理系统 Logo" %}" height="100" class="hide-theme-dark logo">
-        <img src="{% static 'lab_manager/logo_light.svg' %}" alt="{% trans "实验室管理系统 Logo" %}" height="100" class="hide-theme-light logo">
-        <div class="netbox-edition fw-semibold">实验室管理系统</div>
+      <div class="text-center login-logo-area">
+        <img src="{% static 'lab_manager/logo_dark.svg' %}" alt="{% trans "实验室管理系统 Logo" %}" class="hide-theme-dark logo">
+        <img src="{% static 'lab_manager/logo_light.svg' %}" alt="{% trans "实验室管理系统 Logo" %}" class="hide-theme-light logo">
       </div>
 
-      {# Login banner #}
       {% if config.BANNER_LOGIN %}
-        <div class="mb-5 text-center">
-          {{ config.BANNER_LOGIN|safe }}
-        </div>
+        <div class="mb-5 text-center">{{ config.BANNER_LOGIN|safe }}</div>
       {% endif %}
 
-      {# Login form errors #}
       {% if form.non_field_errors %}
         <div class="alert alert-danger" role="alert">
           <h4 class="alert-heading">{% trans "Errors" %}</h4>
-          <p>
-            {{ form.non_field_errors }}
-          </p>
+          <p>{{ form.non_field_errors }}</p>
         </div>
       {% endif %}
 
@@ -80,11 +207,8 @@
           <div class="card-body">
             <h2 class="text-center mb-4">{% trans "Log In" %}</h2>
 
-            {# Login form #}
             <form action="{% url 'login' %}" method="post">
               {% csrf_token %}
-
-              {# Set post-login URL #}
               {% if 'next' in request.GET %}
                 <input type="hidden" name="next" value="{{ request.GET.next }}" />
               {% elif 'next' in request.POST %}
@@ -108,15 +232,12 @@
               </div>
 
               <div class="form-footer">
-                <button type="submit" class="btn btn-primary w-100">
-                  {% trans "Sign In" %}
-                </button>
+                <button type="submit" class="btn btn-primary w-100">{% trans "Sign In" %}</button>
               </div>
             </form>
           </div>
         {% endif %}
 
-        {# SSO login #}
         {% if auth_backends %}
           {% if not login_form_hidden %}
             <div class="hr-text">{% trans "Or" context "Denotes an alternative option" %}</div>
@@ -138,10 +259,262 @@
             </div>
           </div>
         {% endif %}
-
       </div>
 
     </div>
   </div>
+</div>
+
+<script>
+try {
+(function() {
+  var canvas = document.getElementById('pixel-canvas');
+  if (!canvas) { console.error('[PX] canvas not found'); return; }
+  var ctx = canvas.getContext('2d');
+  if (!ctx) { console.error('[PX] no 2d context'); return; }
+
+  console.log('[PX] init ok', canvas.width + 'x' + canvas.height);
+
+  var W, H;
+  var PIXEL = 4;
+  var floatChars = [];
+  var orbitParticles = [];
+  var frame = 0;
+
+  function getTheme() { return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light'; }
+  var theme = getTheme();
+  console.log('[PX] theme=', theme, 'body bg=', getComputedStyle(document.body).background);
+
+  function makeColors(t) {
+    return t === 'dark'
+      ? ['#00ff41','#00e5ff','#ff6ec7','#ffe600','#b983ff','#ff9100','#33eeff','#77ff77']
+      : ['#0d6b63','#0d7a8a','#d63384','#cc7400','#7c3aed','#c27500','#15803d','#0e7490'];
+  }
+  function makeGlows(t) {
+    return t === 'dark'
+      ? ['rgba(0,255,65,.6)','rgba(0,229,255,.6)','rgba(255,110,199,.6)','rgba(255,230,0,.5)','rgba(185,131,255,.5)','rgba(255,145,0,.5)']
+      : ['rgba(13,107,99,.4)','rgba(13,122,138,.4)','rgba(214,51,132,.4)','rgba(204,116,0,.35)','rgba(124,58,237,.35)','rgba(194,117,0,.35)'];
+  }
+  var colors = makeColors(theme);
+  var glows = makeGlows(theme);
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var HEART = [[0,1,0,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]];
+  var STAR  = [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]];
+  var DIAMOND = [[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0]];
+  var CAT = [[0,1,0,0,0,1,0],[1,0,1,0,1,0,1],[1,0,0,0,0,0,1],[0,1,0,1,0,1,0],[0,0,1,1,1,0,0],[0,0,1,0,1,0,0],[0,0,1,1,1,0,0]];
+  var BLOCK = [[1,1,1],[1,1,1],[1,1,1]];
+
+  var patterns = [
+    { data: HEART, size: 5, w: 3 },
+    { data: STAR, size: 5, w: 3 },
+    { data: DIAMOND, size: 5, w: 2 },
+    { data: CAT, size: 7, w: 1 },
+    { data: BLOCK, size: 3, w: 2 }
+  ];
+
+  function pickPattern() {
+    var total = 0;
+    for (var i = 0; i < patterns.length; i++) total += patterns[i].w;
+    var r = Math.random() * total;
+    for (var i = 0; i < patterns.length; i++) { r -= patterns[i].w; if (r <= 0) return patterns[i]; }
+    return patterns[0];
+  }
+
+  function FloatPixel() { this.reset(true); }
+  FloatPixel.prototype.reset = function(init) {
+    this.pattern = pickPattern();
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.glow = glows[Math.floor(Math.random() * glows.length)];
+    var sz = this.pattern.size * PIXEL;
+    this.x = Math.random() * (W + sz * 2) - sz;
+    this.y = init ? Math.random() * H : H + sz;
+    this.vx = (Math.random() - 0.5) * 0.6;
+    this.vy = -(0.3 + Math.random() * 1.2);
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.02;
+    this.opacity = 0.65 + Math.random() * 0.35;
+    this.fadeIn = 0;
+    this.age = 0;
+    this.maxAge = 400 + Math.random() * 400;
+    this.wobbleAmp = 0.3 + Math.random() * 0.7;
+    this.wobbleFreq = 0.02 + Math.random() * 0.03;
+  };
+  FloatPixel.prototype.update = function() {
+    this.age++;
+    this.fadeIn = this.age < 30 ? this.age / 30 : 1;
+    this.x += this.vx + Math.sin(this.age * this.wobbleFreq) * this.wobbleAmp;
+    this.y += this.vy;
+    this.rotation += this.rotSpeed;
+    var sz = this.pattern.size * PIXEL;
+    if (this.y < -sz * 2 || this.x < -sz * 2 || this.x > W + sz * 2 || this.age > this.maxAge) this.reset(false);
+  };
+  FloatPixel.prototype.draw = function(ctx) {
+    var sz = this.pattern.size;
+    var alpha = this.opacity * this.fadeIn * (1 - Math.max(0, (this.age - this.maxAge + 80) / 80));
+    if (alpha <= 0.01) return;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.globalAlpha = alpha;
+    for (var r = 0; r < sz; r++) {
+      for (var c = 0; c < sz; c++) {
+        if (this.pattern.data[r][c]) {
+          var px = (c - sz/2) * PIXEL;
+          var py = (r - sz/2) * PIXEL;
+          if (theme === 'dark') {
+            ctx.fillStyle = this.glow;
+            ctx.fillRect(px - 1, py - 1, PIXEL + 2, PIXEL + 2);
+          }
+          ctx.fillStyle = this.color;
+          ctx.fillRect(px, py, PIXEL, PIXEL);
+        }
+      }
+    }
+    ctx.restore();
+  };
+
+  function OrbitParticle() { this.reset(); }
+  OrbitParticle.prototype.reset = function() {
+    this.cx = W / 2;
+    this.cy = H * 0.3;
+    this.radius = 140 + Math.random() * 220;
+    this.angle = Math.random() * Math.PI * 2;
+    this.speed = 0.003 + Math.random() * 0.012;
+    this.size = PIXEL + Math.floor(Math.random() * 3) * PIXEL;
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.trail = [];
+    this.maxTrail = 12;
+  };
+  OrbitParticle.prototype.update = function() {
+    this.cx = W / 2; this.cy = H * 0.3;
+    this.angle += this.speed;
+    var x = this.cx + Math.cos(this.angle) * this.radius;
+    var y = this.cy + Math.sin(this.angle) * this.radius * 0.5;
+    this.trail.push({ x: x, y: y });
+    if (this.trail.length > this.maxTrail) this.trail.shift();
+  };
+  OrbitParticle.prototype.draw = function(ctx) {
+    for (var i = 0; i < this.trail.length; i++) {
+      var t = this.trail[i];
+      ctx.globalAlpha = (i / this.trail.length) * 0.4;
+      ctx.fillStyle = this.color;
+      ctx.fillRect(Math.floor(t.x / PIXEL) * PIXEL, Math.floor(t.y / PIXEL) * PIXEL, this.size, this.size);
+    }
+    var head = this.trail[this.trail.length - 1];
+    if (head) {
+      ctx.globalAlpha = 1;
+      if (theme === 'dark') {
+        ctx.fillStyle = 'rgba(255,255,255,.5)';
+        ctx.fillRect(Math.floor(head.x / PIXEL) * PIXEL - 1, Math.floor(head.y / PIXEL) * PIXEL - 1, this.size + 2, this.size + 2);
+      }
+      ctx.fillStyle = this.color;
+      ctx.fillRect(Math.floor(head.x / PIXEL) * PIXEL, Math.floor(head.y / PIXEL) * PIXEL, this.size, this.size);
+    }
+    ctx.globalAlpha = 1;
+  };
+
+  var cat = {
+    active: false, cooldown: 0, x: -100, y: 0, speed: 0.8, dir: 1, color: '#ff6ec7', leg: 0,
+    update: function() {
+      if (!this.active) { this.cooldown--; if (this.cooldown <= 0 && Math.random() < 0.002) this.spawn(); return; }
+      this.x += this.speed * this.dir;
+      this.y = H * 0.75;
+      this.leg += 0.15;
+      if ((this.dir === 1 && this.x > W + 80) || (this.dir === -1 && this.x < -80)) { this.active = false; this.cooldown = 300 + Math.random() * 600; }
+    },
+    spawn: function() {
+      this.active = true;
+      this.dir = Math.random() > 0.5 ? 1 : -1;
+      this.x = this.dir === 1 ? -80 : W + 80;
+      this.speed = 0.5 + Math.random() * 1.5;
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+    },
+    draw: function(ctx) {
+      if (!this.active) return;
+      var body = [[0,1,1,1,1,1,1,0],[1,1,0,1,0,1,1,1],[1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,0],[0,0,1,0,0,1,0,0]];
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.translate(0, -Math.abs(Math.sin(this.leg)) * 3);
+      if (this.dir === -1) ctx.scale(-1, 1);
+      for (var r = 0; r < body.length; r++) {
+        for (var c = 0; c < body[0].length; c++) {
+          if (body[r][c]) {
+            var px = (c - body[0].length/2) * PIXEL;
+            var py = (r - body.length/2) * PIXEL;
+            if (r === 1 && (c === 2 || c === 4)) {
+              ctx.fillStyle = '#fff';
+              ctx.fillRect(px + 1, py + 1, PIXEL - 2, PIXEL - 2);
+            } else {
+              ctx.fillStyle = this.color;
+              ctx.fillRect(px, py, PIXEL, PIXEL);
+            }
+          }
+        }
+      }
+      ctx.restore();
+    }
+  };
+
+  function initParticles() {
+    var count = Math.floor((W * H) / 10000);
+    floatChars = [];
+    for (var i = 0; i < Math.min(count, 80); i++) floatChars.push(new FloatPixel());
+    orbitParticles = [];
+    for (var i = 0; i < 25; i++) orbitParticles.push(new OrbitParticle());
+  }
+  initParticles();
+
+  var themeObserver = new MutationObserver(function() {
+    theme = getTheme();
+    colors = makeColors(theme);
+    glows = makeGlows(theme);
+    floatChars = []; orbitParticles = [];
+    initParticles();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+
+	  function drawGrid() {
+	    ctx.fillStyle = theme === 'dark' ? '#0a0f17' : '#f0f3f8';
+	    ctx.fillRect(0, 0, W, H);
+	  }
+
+  function animate() {
+    frame++;
+    drawGrid();
+    if (frame === 1) console.log('[PX] first frame ok, particles:', orbitParticles.length + floatChars.length);
+        for (var i = 0; i < orbitParticles.length; i++) { orbitParticles[i].update(); orbitParticles[i].draw(ctx); }
+    for (var i = 0; i < floatChars.length; i++) { floatChars[i].update(); floatChars[i].draw(ctx); }
+    cat.update(); cat.draw(ctx);
+
+    if (frame % 90 === 0) {
+      var f = new FloatPixel();
+      f.x = Math.random() < 0.5 ? 40 : W - 40;
+      f.y = H - 40 - Math.random() * 120;
+      f.vy = -0.2; f.vx = (Math.random() - 0.5) * 0.3;
+      f.maxAge = 200; f.age = 0;
+      f.pattern = patterns[0];
+      f.color = '#ff6ec7';
+      floatChars.push(f);
+      if (floatChars.length > 70) floatChars.shift();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', function() {
+    floatChars = []; orbitParticles = [];
+    initParticles();
+  });
+
+  animate();
+})();
+} catch(e) { console.error('[PX] FATAL:', e.message, e.stack); }
+</script>
 
 {% endblock layout %}
