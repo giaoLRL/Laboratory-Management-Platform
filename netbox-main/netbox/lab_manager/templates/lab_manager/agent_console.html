@@ -50,6 +50,7 @@
     <button type="button" class="agent-sidebar-expand" id="sidebar-expand" title="展开侧边栏">
         <i class="mdi mdi-menu"></i>
     </button>
+    <div class="agent-sidebar-overlay" onclick="document.querySelector('.agent-sidebar').classList.add('collapsed')"></div>
 
     <section class="agent-panel">
         <div class="agent-panel-header">
@@ -287,6 +288,39 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
         messageList.appendChild(wrapper);
         messageList.scrollTop = messageList.scrollHeight;
     }
+
+    
+    // Mobile: auto-collapse sidebar, expand button toggles
+    (function() {
+        var sidebar = document.getElementById('agent-sidebar');
+        var expandBtn = document.getElementById('sidebar-expand');
+        var toggleBtn = document.getElementById('sidebar-toggle');
+        if (!sidebar || !expandBtn) return;
+        function isMobile() { return window.innerWidth < 768; }
+        function initMobile() {
+            if (isMobile()) {
+                sidebar.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
+        }
+        initMobile();
+        window.addEventListener('resize', initMobile);
+        expandBtn.addEventListener('click', function() {
+            sidebar.classList.remove('collapsed');
+        });
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+        // Select conversation on mobile auto-closes sidebar
+        document.querySelectorAll('.agent-conversation-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                if (isMobile()) setTimeout(function() { sidebar.classList.add('collapsed'); }, 300);
+            });
+        });
+    })();
 
     document.querySelectorAll('.quick-prompt').forEach(function(btn) {
         btn.addEventListener('click', function() {

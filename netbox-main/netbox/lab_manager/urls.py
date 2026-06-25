@@ -75,6 +75,7 @@ urlpatterns = [
 
     # 站内通知
     path('notifications/', views.NotificationListView.as_view(), name='notifications'),
+    path('notifications/send/', views.NotificationSendView.as_view(), name='notification_send'),
     path('notifications/read-all/', views.NotificationMarkReadView.as_view(), name='notification_read_all'),
     path('notifications/<int:pk>/read/', views.NotificationMarkReadView.as_view(), name='notification_read'),
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 
 import json
 from typing import Any
@@ -249,6 +250,7 @@ class LangChainAgentService:
         tool_list = '\n'.join(tool_lines)
 
         return (
+            f'当前日期：{datetime.now().strftime("%Y年%m月%d日 %H:%M")}。'
             '你是实验室平台智能体助手。你的职责是理解用户自然语言需求，主动调用工具读取或修改平台真实数据，'
             '再把结果总结成清晰中文。\n\n'
             '当前可用的工具：\n'

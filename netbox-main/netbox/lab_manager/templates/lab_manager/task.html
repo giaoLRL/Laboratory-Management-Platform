@@ -3,29 +3,29 @@
 
 {% block title %}{{ object.title }}{% endblock %}
 
-{% block controls %}
-{% if can_operate %}
-{% if object.status == 'pending' or object.status == 'in_progress' %}
-<a href="{% url 'plugins:lab_manager:task_upload' pk=object.pk %}" class="btn btn-primary">
-    <i class="mdi mdi-upload"></i> {% trans "上传附件" %}
-</a>
-{% endif %}
-{% endif %}
-{% if can_edit %}
-<a href="{% url 'plugins:lab_manager:task_edit' pk=object.pk %}" class="btn btn-outline-warning">
-    <i class="mdi mdi-pencil"></i> {% trans "编辑" %}
-</a>
-{% endif %}
-{% if is_superuser %}
-{% if object.status != 'completed' %}
-<a href="{% url 'plugins:lab_manager:task_complete' pk=object.pk %}" class="btn btn-success">
-    <i class="mdi mdi-check"></i> {% trans "标记完成" %}
-</a>
-{% endif %}
-{% endif %}
-{% endblock %}
+
 
 {% block content %}
+
+<div class="btn-list mb-3">
+  {% if can_operate %}
+    {% if object.status == 'pending' or object.status == 'in_progress' %}
+      <a href="{% url 'plugins:lab_manager:task_upload' pk=object.pk %}" class="btn btn-primary">
+        <i class="mdi mdi-upload"></i> {% trans "上传附件" %}
+      </a>
+    {% endif %}
+  {% endif %}
+  {% if can_edit %}
+    <a href="{% url 'plugins:lab_manager:task_edit' pk=object.pk %}" class="btn btn-outline-warning">
+      <i class="mdi mdi-pencil"></i> {% trans "编辑" %}
+    </a>
+  {% endif %}
+  {% if is_superuser and object.status != 'completed' %}
+    <a href="{% url 'plugins:lab_manager:task_complete' pk=object.pk %}" class="btn btn-success">
+      <i class="mdi mdi-check-bold"></i> {% trans "标记完成" %}
+    </a>
+  {% endif %}
+</div>
 <div class="row mb-3">
     <div class="col col-md-6">
         <div class="card">

@@ -4,18 +4,26 @@
 
 {% block title %}{% trans "通知" %}{% endblock %}
 
-{% block controls %}
-{% if unread_count %}
-<button type="button" class="btn btn-sm btn-outline-primary" onclick="markAllRead()">
-    <i class="mdi mdi-check-all"></i> {% trans "全部标为已读" %}
-</button>
-{% endif %}
-{% endblock %}
+
 
 {% block content %}
 <div class="row mb-3">
     <div class="col">
         <h1>{% trans "站内通知" %}</h1>
+
+  <div class="btn-list">
+    {% if request.user.is_superuser %}
+      <a href="{% url 'plugins:lab_manager:notification_send' %}" class="btn btn-primary">
+        <i class="mdi mdi-send"></i> {% trans "发布通知" %}
+      </a>
+    {% endif %}
+    {% if unread_count %}
+      <a href="{% url 'plugins:lab_manager:notification_read_all' %}" class="btn btn-outline-primary">
+        <i class="mdi mdi-check-all"></i> {% trans "全部标为已读" %}
+      </a>
+    {% endif %}
+  </div>
+
     </div>
 </div>
 

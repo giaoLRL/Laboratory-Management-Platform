@@ -34,6 +34,7 @@ from .models import (
     Task, TaskAttachment, TaskComment,
 )
 from .models.borrow import BorrowStatusChoices
+from users.models import User
 from .services import AgentToolOrchestrator, BackendAgentService, LangChainAgentService
 from .tables.agent_tool import AgentToolTable
 from .tables.borrow import HardwareBorrowRecordTable
@@ -896,6 +897,60 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
         if notif.link:
             return redirect(notif.link)
         return redirect('plugins:lab_manager:notifications')
+
+class NotificationSendView(LoginRequiredMixin, TemplateView):
+    template_name = 'lab_manager/notification_send.html'
+
+    def has_permission(self, request):
+        return request.user.is_superuser
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.has_permission(request):
+            messages.error(request, _('仅管理员可发送通知'))
+            return redirect('plugins:lab_manager:notifications')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['users'] = User.objects.filter(is_active=True).order_by('username')
+        return ctx
+
+    def post(self, request):
+        title = request.POST.get('title', '').strip()
+        message = request.POST.get('message', '').strip()
+        link = request.POST.get('link', '').strip()
+        ntype = request.POST.get('notification_type', 'system')
+        target = request.POST.get('target', 'all')  # all or specific user
+
+        if not title:
+            messages.error(request, _('请输入通知标题'))
+            return redirect('plugins:lab_manager:notification_send')
+
+        if target == 'all':
+            users = User.objects.filter(is_active=True)
+            count = 0
+            for user in users:
+                Notification.objects.create(
+                    user=user, title=title, message=message,
+                    link=link, notification_type=ntype
+                )
+                count += 1
+            messages.success(request, _(f'已向 {count} 位用户发送通知'))
+        else:
+            user_id = request.POST.get('user_id')
+            if user_id:
+                try:
+                    user = User.objects.get(pk=user_id, is_active=True)
+                    Notification.objects.create(
+                        user=user, title=title, message=message,
+                        link=link, notification_type=ntype
+                    )
+                    messages.success(request, _(f'已向 {user.username} 发送通知'))
+                except User.DoesNotExist:
+                    messages.error(request, _('用户不存在'))
+
+        return redirect('plugins:lab_manager:notifications')
+
 
 
 # ── 任务日历 ──

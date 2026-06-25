@@ -28,6 +28,7 @@
           </p>
           <form action="" method="post">
             {% csrf_token %}
+            {% for field in form.hidden_fields %}{{ field }}{% endfor %}
             <div class="btn-list">
               <a href="{{ return_url }}" class="btn btn-outline-secondary">
                 {% trans "Cancel" %}

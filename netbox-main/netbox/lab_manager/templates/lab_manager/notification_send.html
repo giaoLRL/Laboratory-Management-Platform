@@ -1,0 +1,97 @@
+{% extends 'lab_manager/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "发布通知" %}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h1>{% trans "发布站内通知" %}</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'plugins:lab_manager:notifications' %}" class="btn btn-outline-secondary">
+            <i class="mdi mdi-arrow-left"></i> {% trans "返回通知列表" %}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col col-md-8 offset-md-2">
+        <div class="card">
+            <h5 class="card-header">{% trans "编写通知" %}</h5>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label required" for="id_title">{% trans "通知标题" %}</label>
+                        <input type="text" name="title" id="id_title" class="form-control" maxlength="200" required
+                               placeholder="{% trans '请输入通知标题' %}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_message">{% trans "通知内容" %}</label>
+                        <textarea name="message" id="id_message" class="form-control" rows="6"
+                                  placeholder="{% trans '请输入通知正文内容（可选）' %}"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_link">{% trans "跳转链接（可选）" %}</label>
+                        <input type="text" name="link" id="id_link" class="form-control" maxlength="500"
+                               placeholder="{% trans '如 /plugins/lab-manager/tasks/1/' %}">
+                        <div class="form-text">{% trans "用户点击通知后跳转的目标地址，留空则不跳转" %}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="id_notification_type">{% trans "通知类型" %}</label>
+                            <select name="notification_type" id="id_notification_type" class="form-select">
+                                <option value="system">{% trans "系统通知" %}</option>
+                                <option value="task">{% trans "任务相关" %}</option>
+                                <option value="borrow">{% trans "借出归还" %}</option>
+                                <option value="approval">{% trans "审批相关" %}</option>
+                                <option value="info">{% trans "一般信息" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="id_target">{% trans "发送对象" %}</label>
+                            <select name="target" id="id_target" class="form-select" onchange="toggleUserSelect()">
+                                <option value="all">{% trans "全体用户" %}</option>
+                                <option value="specific">{% trans "指定用户" %}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-none" id="user-select-group">
+                        <label class="form-label" for="id_user_id">{% trans "选择用户" %}</label>
+                        <select name="user_id" id="id_user_id" class="form-select">
+                            <option value="">-- {% trans "请选择用户" %} --</option>
+                            {% for u in users %}
+                            <option value="{{ u.pk }}">{{ u.username }}{% if u.email %} ({{ u.email }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="mdi mdi-send"></i> {% trans "发布通知" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+function toggleUserSelect() {
+    var target = document.getElementById('id_target');
+    var group = document.getElementById('user-select-group');
+    if (target.value === 'specific') {
+        group.classList.remove('d-none');
+    } else {
+        group.classList.add('d-none');
+    }
+}
+</script>
+{% endblock %}

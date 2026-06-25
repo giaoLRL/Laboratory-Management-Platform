@@ -32,14 +32,14 @@
                     {{ form.accuracy }}
                     <div class="mb-3">
                         <button type="button" class="btn btn-outline-primary" id="locate-button">
-                            <i class="mdi mdi-crosshairs-gps"></i> {% trans "获取当前位置" %}
+                            <i class="mdi mdi-crosshairs-gps"></i> {% trans "尝试 GPS 定位" %}
                         </button>
                         <span class="ms-2 text-muted" id="location-status">{% trans "尚未获取定位" %}</span>
                     </div>
-                    <div class="alert alert-warning d-none" id="location-help">
-                        {% trans "定位权限已被浏览器拒绝。请点击地址栏左侧的权限图标，将位置权限改为允许后刷新页面；也可以手动填写经纬度继续打卡。" %}
+                    <div class="alert alert-info" id="location-help">
+                        {% trans "浏览器要求 HTTPS 才能使用 GPS 定位。请在下方手动输入经纬度，或点「尝试 GPS」看浏览器是否支持。获取坐标：打开手机地图 App，长按当前位置即可复制经纬度。" %}
                     </div>
-                    <div class="row d-none" id="manual-location-fields">
+                    <div class="row" id="manual-location-fields">
                         <div class="col-md-6 mb-3">
                             <label class="form-label" for="manual-latitude">{% trans "纬度" %}</label>
                             <input type="number" step="0.0000001" min="-90" max="90" class="form-control" id="manual-latitude" placeholder="31.2304000">
@@ -106,11 +106,6 @@ document.addEventListener('DOMContentLoaded', function () {
         submitButton.disabled = !(latitude.value && longitude.value);
     }
 
-    function showManualLocation() {
-        manualFields.classList.remove('d-none');
-        help.classList.remove('d-none');
-    }
-
     function syncManualLocation() {
         latitude.value = manualLatitude.value;
         longitude.value = manualLongitude.value;
@@ -127,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
     button.addEventListener('click', function () {
         if (!navigator.geolocation) {
             status.textContent = '当前浏览器不支持定位';
-            showManualLocation();
+            // Manual fields already visible by default
             return;
         }
         status.textContent = '正在获取定位...';
@@ -136,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
             longitude.value = position.coords.longitude.toFixed(7);
             accuracy.value = position.coords.accuracy ? position.coords.accuracy.toFixed(2) : '';
             status.textContent = '已获取定位：' + latitude.value + ', ' + longitude.value + '，精度约 ' + (accuracy.value || '-') + ' 米';
-            manualFields.classList.add('d-none');
+            manualFields.classList.add('d-none'); help.classList.add('d-none');
             help.classList.add('d-none');
             enableSubmitIfReady();
         }, function (error) {
@@ -146,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 3: '定位超时'
             };
             status.textContent = messages[error.code] || '定位失败';
-            showManualLocation();
+            // Manual fields already visible by default
         }, {
             enableHighAccuracy: true,
             timeout: 15000,
