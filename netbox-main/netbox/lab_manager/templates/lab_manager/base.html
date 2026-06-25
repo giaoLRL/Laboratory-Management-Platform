@@ -53,65 +53,7 @@
     }
   }
 
-  // ── 2. 强制移除 NetBox SVG logo ──
-  var logos = document.querySelectorAll('.navbar-brand img');
-  for (var k = 0; k < logos.length; k++) {
-    logos[k].remove();
-  }
 
-  // ── 3. 注入像素风「烧杯」实验室图标 ──
-  var brandLink = document.querySelector('.navbar-brand a');
-  if (brandLink) {
-    var svgNS = 'http://www.w3.org/2000/svg';
-    var icon = document.createElementNS(svgNS, 'svg');
-    icon.setAttribute('width', '28');
-    icon.setAttribute('height', '32');
-    icon.setAttribute('viewBox', '0 0 28 32');
-    icon.setAttribute('shape-rendering', 'crispEdges');
-    icon.setAttribute('style', 'flex-shrink:0;margin-right:10px;');
-    icon.style.color = 'var(--tp-nav-accent, #00e5ff)';
-
-    // 烧杯主体 — 简洁像素轮廓
-    var body = document.createElementNS(svgNS, 'path');
-    body.setAttribute('d',
-      'M10,2 h8 v4 h-1 v4 h-1 v4 h-4 v-4 h-1 v-4 h-1 z'  // 上半部收口
-    );
-    body.setAttribute('fill', 'currentColor');
-    body.setAttribute('opacity', '0.25');
-
-    var neck = document.createElementNS(svgNS, 'path');
-    neck.setAttribute('d',
-      'M12,10 h4 v6 h4 v8 h-12 v-8 h4 z'  // 下半部瓶身
-    );
-    neck.setAttribute('fill', 'currentColor');
-
-    // 液面 — 瓶子底部三分之一
-    var liquid = document.createElementNS(svgNS, 'path');
-    liquid.setAttribute('d',
-      'M10,22 h8 v4 h-8 z'
-    );
-    liquid.setAttribute('fill', '#00ff41');
-
-    // 气泡
-    var b1 = document.createElementNS(svgNS, 'rect');
-    b1.setAttribute('x', '6'); b1.setAttribute('y', '0');
-    b1.setAttribute('width', '4'); b1.setAttribute('height', '4');
-    b1.setAttribute('fill', 'currentColor');
-    b1.setAttribute('opacity', '0.7');
-
-    var b2 = document.createElementNS(svgNS, 'rect');
-    b2.setAttribute('x', '20'); b2.setAttribute('y', '1');
-    b2.setAttribute('width', '3'); b2.setAttribute('height', '3');
-    b2.setAttribute('fill', 'currentColor');
-    b2.setAttribute('opacity', '0.5');
-
-    icon.appendChild(body);
-    icon.appendChild(neck);
-    icon.appendChild(liquid);
-    icon.appendChild(b1);
-    icon.appendChild(b2);
-    brandLink.insertBefore(icon, brandLink.firstChild);
-  }
 
   // ── 4. 替换页面残留 "NetBox" 文字 ──
   var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);

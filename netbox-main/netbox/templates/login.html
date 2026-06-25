@@ -4,16 +4,58 @@
 {% load static %}
 {% load i18n %}
 
-{% block layout %}
+{% block layout %}<style>
+  .page-center .card {
+    border: 2px solid var(--tp-card-border, #d0d5dd);
+    border-radius: 0;
+    clip-path: polygon(
+      0px 4px, 3px 0px, calc(100% - 3px) 0px, 100% 4px,
+      100% calc(100% - 4px), calc(100% - 3px) 100%, 3px 100%, 0px calc(100% - 4px)
+    );
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+  }
+  .page-center .card-header { border-radius: 0; border-bottom: 2px solid var(--tp-card-border, #d0d5dd); }
+  .page-center .btn-primary {
+    border-radius: 0;
+    clip-path: polygon(0px 2px, 2px 0px, calc(100% - 2px) 0px, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0px calc(100% - 2px));
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    letter-spacing: 0.1em;
+  }
+  .page-center input.form-control {
+    border-radius: 0;
+    border: 2px solid var(--tp-card-border, #d0d5dd);
+    font-family: 'JetBrains Mono', Consolas, monospace;
+  }
+  .page-center input.form-control:focus {
+    border-color: var(--tp-nav-accent, #0d6b63);
+    box-shadow: 3px 3px 0px rgba(13,107,99,0.2);
+  }
+  .page-center .form-label {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .page-center h2 {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.15em;
+    font-weight: 900;
+  }
+  .page-center .netbox-edition {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+  }
+</style>
 
   <div class="page page-center">
     <div class="container container-tight py-4">
 
       {# 系统 Logo #}
       <div class="text-center mb-4">
-        <img src="{% static 'logo_netbox_dark_teal.svg' %}" alt="{% trans "智能研究实验室管理系统 Logo" %}" height="80" class="hide-theme-dark logo">
-        <img src="{% static 'logo_netbox_bright_teal.svg' %}" alt="{% trans "智能研究实验室管理系统 Logo" %}" height="80" class="hide-theme-light logo">
-        <div class="netbox-edition fw-semibold">智能研究实验室管理系统</div>
+        <img src="{% static 'lab_manager/logo_dark.svg' %}" alt="{% trans "实验室管理系统 Logo" %}" height="100" class="hide-theme-dark logo">
+        <img src="{% static 'lab_manager/logo_light.svg' %}" alt="{% trans "实验室管理系统 Logo" %}" height="100" class="hide-theme-light logo">
+        <div class="netbox-edition fw-semibold">实验室管理系统</div>
       </div>
 
       {# Login banner #}
