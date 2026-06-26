@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   TERMINAL//PIXEL v6.0.1 — 高级像素风双主题系统 (15+ 动画效果, visibility fixes)
+   TERMINAL//PIXEL v6.4.0 — 高级像素风双主题系统 (15+ 动画效果, visibility fixes)
    使用 CSS 自定义属性，跟随 [data-bs-theme] 自动切换
    暗色模式：赛博霓虹风（霓虹绿/青/紫 + CRT + 粒子 + glitch）
    亮色模式：复古 8-bit 游戏风（像素浮雕 + 暖金 + 游戏 HUD）
@@ -2131,17 +2131,17 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   }
 }
 
-/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v6.3.2 ── */
+/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v6.4.0 ── */
 @media (max-width: 991.98px) {
   /* 隐藏原 Bootstrap navbar-toggler（改用浮动按钮） */
   .tp-page .navbar-vertical .navbar-toggler {
     display: none !important;
   }
 
-  /* 侧边栏 — 固定滑出面板 */
+  /* 侧边栏 — 固定滑出面板，更窄更紧凑 */
   .tp-page .navbar-vertical {
     position: fixed !important; top: 0; left: 0; bottom: 0; z-index: 1050;
-    width: 260px; max-width: 78vw;
+    width: 240px; max-width: 72vw;
     transform: translateX(-100%);
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 4px 0 24px rgba(0,0,0,0.45);
@@ -2151,7 +2151,7 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
 
   /* 全局间距压缩 — 清除所有子元素多余 margin */
   .tp-page .navbar-vertical .container-fluid {
-    padding: 6px 10px !important;
+    padding: 4px 8px !important;
   }
   .tp-page .navbar-vertical .container-fluid > * {
     margin-top: 0 !important;
@@ -2159,7 +2159,7 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   }
   .tp-page .navbar-vertical .navbar-nav {
     padding-top: 0 !important;
-    padding-bottom: 4px !important;
+    padding-bottom: 2px !important;
     margin: 0 !important;
   }
 
@@ -2189,22 +2189,22 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     overflow: hidden;
   }
 
-  /* ── 用户菜单栏（主题/通知/用户名）— 单行紧凑 ── */
+  /* ── 用户菜单栏（主题/通知/用户名）— 单行超紧凑 ── */
   .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 2px !important;
-    padding: 3px 0 !important;
+    gap: 1px !important;
+    padding: 2px 0 !important;
     margin: 0 !important;
     border-bottom: 1px solid var(--tp-nav-divider);
   }
   .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .nav-link,
   .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .dropdown > .nav-link,
   .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .dropdown-toggle {
-    padding: 2px 5px !important;
-    font-size: 0.74rem !important;
-    min-height: 32px;
+    padding: 1px 4px !important;
+    font-size: 0.7rem !important;
+    min-height: 28px;
   }
   .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .small.text-secondary {
     display: none;
@@ -2213,20 +2213,20 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     margin-left: 0 !important;
   }
 
-  /* ── 品牌/logo — 极致紧凑 ── */
+  /* ── 品牌/logo — 超紧凑 ── */
   .tp-page .navbar-vertical .navbar-brand {
-    padding: 2px 0 4px 0 !important;
+    padding: 1px 0 3px 0 !important;
     margin: 0 !important;
     border-bottom: 1px solid var(--tp-nav-divider);
   }
   .tp-page .navbar-vertical .navbar-brand a {
-    gap: 6px !important;
+    gap: 4px !important;
   }
   .tp-page .navbar-vertical .navbar-brand img.navbar-brand-image {
-    max-height: 28px; width: auto;
+    max-height: 24px; width: auto;
   }
   .tp-page .navbar-vertical .navbar-brand .netbox-edition {
-    font-size: 0.7rem !important;
+    font-size: 0.65rem !important;
     margin: 0 !important;
     line-height: 1.2;
     letter-spacing: 0.03em;
@@ -2236,8 +2236,8 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   .tp-mobile-nav-btn {
     display: flex !important;
     flex-shrink: 0;
-    width: 36px; height: 36px;
-    margin-right: 8px;
+    width: 34px; height: 34px;
+    margin-right: 6px;
     border: 1.5px solid var(--tp-card-border);
     border-radius: 4px;
     background: transparent;
@@ -2253,14 +2253,14 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   /* 三横线图标（纯 CSS） */
   .tp-mobile-nav-btn::before {
     content: '';
-    width: 18px; height: 14px;
+    width: 16px; height: 12px;
     background: linear-gradient(
       to bottom,
       var(--tp-nav-text) 0,     var(--tp-nav-text) 2px,
-      transparent 2px,          transparent 5px,
-      var(--tp-nav-text) 5px,   var(--tp-nav-text) 7px,
-      transparent 7px,          transparent 10px,
-      var(--tp-nav-text) 10px,  var(--tp-nav-text) 12px
+      transparent 2px,          transparent 4px,
+      var(--tp-nav-text) 4px,   var(--tp-nav-text) 6px,
+      transparent 6px,          transparent 8px,
+      var(--tp-nav-text) 8px,   var(--tp-nav-text) 10px
     );
   }
 
@@ -2275,25 +2275,25 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     opacity: 1; pointer-events: auto;
   }
 
-  /* ── 导航链接 — 紧凑触控 ── */
+  /* ── 导航链接 — 超紧凑触控 ── */
   .tp-page .navbar-vertical .nav-link {
-    padding: 8px 10px !important;
-    font-size: 0.78rem !important;
-    min-height: 36px;
+    padding: 6px 8px !important;
+    font-size: 0.74rem !important;
+    min-height: 32px;
     margin: 0 !important;
     line-height: 1.3 !important;
   }
   .tp-page .navbar-vertical .nav-link i,
   .tp-page .navbar-vertical .nav-link .mdi {
-    font-size: 0.9rem !important;
-    margin-right: 6px !important;
-    width: 16px;
+    font-size: 0.82rem !important;
+    margin-right: 5px !important;
+    width: 14px;
   }
   /* 导航组标题 */
   .tp-page .navbar-vertical .nav-title,
   .tp-page .navbar-vertical .nav-group {
-    font-size: 0.62rem !important;
-    padding: 8px 10px 2px 10px !important;
+    font-size: 0.6rem !important;
+    padding: 4px 8px 1px 8px !important;
     margin: 0 !important;
   }
   /* 导航项 */
@@ -2303,7 +2303,7 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   /* 分隔线 */
   .tp-page .navbar-vertical hr,
   .tp-page .navbar-vertical .dropdown-divider {
-    margin: 2px 8px !important;
+    margin: 1px 6px !important;
   }
 }
 
@@ -2604,7 +2604,7 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   .tp-page .object-detail td { font-size: 0.72rem; }
 
   /* 侧边栏更窄 */
-  .tp-page .navbar-vertical { width: 260px; max-width: 88vw; }
+  .tp-page .navbar-vertical { width: 240px; max-width: 90vw; }
 
   /* 顶部导航搜索更紧凑 */
   .tp-page .navbar.sticky-top .form-control { font-size: 0.76rem; padding: 6px 8px 6px 32px; }

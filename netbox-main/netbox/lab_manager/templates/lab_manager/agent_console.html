@@ -6,7 +6,7 @@
 
 {% block head %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'lab_manager/lab_manager.css' %}?v=4">
+<link rel="stylesheet" href="{% static 'lab_manager/lab_manager.css' %}?v=5">
 {% endblock %}
 
 {% block content %}
@@ -47,13 +47,13 @@
         </div>
     </aside>
 
-    <button type="button" class="agent-sidebar-expand" id="sidebar-expand" title="展开侧边栏">
-        <i class="mdi mdi-menu"></i>
-    </button>
-    <div class="agent-sidebar-overlay" onclick="document.querySelector('.agent-sidebar').classList.add('collapsed')"></div>
+    <div class="agent-sidebar-overlay" id="agent-sidebar-overlay"></div>
 
     <section class="agent-panel">
         <div class="agent-panel-header">
+            <button type="button" class="agent-header-toggle" id="header-sidebar-toggle" title="切换历史对话">
+                <i class="mdi mdi-menu"></i>
+            </button>
             <div>
                 <div class="agent-panel-title">
                     {% if active_conversation %}
@@ -106,7 +106,7 @@
 
         <div class="agent-panel-footer">
             <div class="agent-composer">
-                <textarea id="agent-input" class="form-control" rows="3" placeholder="给智能体发送消息，Shift + Enter 换行，Enter 发送"></textarea>
+                <textarea id="agent-input" class="form-control" rows="2" placeholder="给智能体发送消息，Shift + Enter 换行，Enter 发送"></textarea>
                 <div class="agent-composer-actions">
                     <div class="agent-composer-hint">{% trans "支持连续对话，会自动复用当前会话上下文。" %}</div>
                     <div class="agent-action-buttons">
@@ -204,13 +204,13 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     // ══ Sidebar collapse/expand toggle ══
     var sidebar = document.getElementById('agent-sidebar');
     var toggleBtn = document.getElementById('sidebar-toggle');
-    var expandBtn = document.getElementById('sidebar-expand');
+    var headerToggleBtn = document.getElementById('header-sidebar-toggle');
     function toggleSidebar() {
         sidebar.classList.toggle('collapsed');
         try { localStorage.setItem('lab_sidebar_collapsed', sidebar.classList.contains('collapsed') ? '1' : '0'); } catch(e){}
     }
     if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
-    if (expandBtn) expandBtn.addEventListener('click', toggleSidebar);
+    if (headerToggleBtn) headerToggleBtn.addEventListener('click', toggleSidebar);
     if (localStorage.getItem('lab_sidebar_collapsed') === '1') {
         sidebar.classList.add('collapsed');
     }
@@ -286,18 +286,21 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     }
 
     
-    // Mobile: auto-collapse sidebar on initial load, expand button toggles
+    // Mobile: auto-collapse sidebar on initial load, header toggle controls it
     (function() {
         var sidebar = document.getElementById('agent-sidebar');
-        var expandBtn = document.getElementById('sidebar-expand');
-        var toggleBtn = document.getElementById('sidebar-toggle');
-        if (!sidebar || !expandBtn) return;
+        var headerToggle = document.getElementById('header-sidebar-toggle');
+        var overlay = document.getElementById('agent-sidebar-overlay');
+        if (!sidebar || !headerToggle) return;
         function isMobile() { return window.innerWidth < 768; }
-        // Only auto-collapse on initial load, not on every resize
+        // Auto-collapse on mobile initial load
         if (isMobile()) sidebar.classList.add('collapsed');
-        expandBtn.addEventListener('click', function() {
-            sidebar.classList.remove('collapsed');
-        });
+        // Overlay click closes sidebar on mobile
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                sidebar.classList.add('collapsed');
+            });
+        }
         // Select conversation on mobile auto-closes sidebar
         document.querySelectorAll('.agent-conversation-item').forEach(function(item) {
             item.addEventListener('click', function() {
