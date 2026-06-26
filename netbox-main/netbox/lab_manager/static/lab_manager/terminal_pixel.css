@@ -1,9 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   TERMINAL//PIXEL v5.3 — 亮色 / 暗色 双主题系统 (全面审计修复: Bug/覆盖/兼容/性能/无障碍)
+   TERMINAL//PIXEL v6.0 — 高级像素风双主题系统 (15+ 动画效果)
    使用 CSS 自定义属性，跟随 [data-bs-theme] 自动切换
-   亮色模式：清晰终端风（深色文字 + 浅色背景）
-   暗色模式：霓虹终端风（亮色文字 + 深色背景）
+   暗色模式：赛博霓虹风（霓虹绿/青/紫 + CRT + 粒子 + glitch）
+   亮色模式：复古 8-bit 游戏风（像素浮雕 + 暖金 + 游戏 HUD）
    零 JS 依赖，覆盖 Tabler/Bootstrap 组件
+   性能：GPU 合成层动画 + prefers-reduced-motion 全支持
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -148,6 +149,20 @@ html[data-bs-theme=light] {
   --tp-amber-hover-bg: rgba(196, 132, 0, 0.08);
   --tp-amber-hover-border: #c48400;
   --tp-amber-hover-shadow: rgba(196, 132, 0, 0.12);
+
+  /* v6.0 动画颜色 */
+  --tp-neon-glow: 0 0 6px, 0 0 12px;
+  --tp-particle-color: rgba(13, 107, 99, 0.12);
+  --tp-scanline-color: rgba(90, 78, 66, 0.03);
+  --tp-vignette: none;
+  --tp-spark-color: #0d6b63;
+  --tp-glitch-shift: 1px;
+  --tp-border-run-color: #0d6b63;
+
+  /* 霓虹紫 (亮色模式降低饱和度) */
+  --tp-neon-purple: #6b21a8;
+  --tp-neon-purple-soft: rgba(107, 33, 168, 0.1);
+  --tp-neon-purple-glow: 0 1px 4px rgba(107, 33, 168, 0.15);
 
   /* 统一终端前缀 */
   --tp-prefix-prompt: '> ';
@@ -345,6 +360,22 @@ html[data-bs-theme=dark] {
   --tp-amber-hover-border: #ffaa33;
   --tp-amber-hover-shadow: rgba(255, 170, 51, 0.15);
 
+  /* v6.0 动画颜色 — 赛博霓虹 */
+  --tp-neon-glow: 0 0 8px, 0 0 20px, 0 0 40px;
+  --tp-particle-color: rgba(0, 255, 65, 0.08);
+  --tp-scanline-color: rgba(0, 255, 65, 0.025);
+  --tp-vignette: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%);
+  --tp-spark-color: #00ff41;
+  --tp-glitch-shift: 2px;
+  --tp-border-run-color: #00ff41;
+
+  /* 霓虹紫 */
+  --tp-neon-purple: #cc44ff;
+  --tp-neon-purple-soft: rgba(204, 68, 255, 0.12);
+  --tp-neon-purple-glow:
+    0 0 6px rgba(204, 68, 255, 0.25),
+    0 0 16px rgba(204, 68, 255, 0.12);
+
   /* 统一终端前缀 */
   --tp-prefix-prompt: '> ';
   --tp-prefix-comment: '// ';
@@ -425,15 +456,100 @@ html[data-bs-theme=dark] {
   color: var(--tp-nav-active-text) !important;
 }
 
-/* 装饰层 — CRT 扫描线（mix-blend-mode 动态反应内容亮度） */
+/* ═══════════════════════════════════════════════════════════════════════
+   v6.0 装饰层 — 动态 CRT 扫描线 + 像素粒子场 + 暗角
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* CRT 扫描线 — 向下流动（暗色更明显） */
 .tp-scanlines {
   position: fixed; top:0;left:0;right:0;bottom:0;
   pointer-events: none; z-index: 1050;
   mix-blend-mode: overlay;
   display: block !important;
-  background: repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(90,78,66,0.04) 5px, rgba(90,78,66,0.04) 6px);
-  opacity: 0.2;
+  background: repeating-linear-gradient(0deg,
+    transparent, transparent 4px,
+    var(--tp-scanline-color) 4px,
+    var(--tp-scanline-color) 5px);
+  opacity: 0.25;
+  animation: tp-scanlines-scroll 8s linear infinite;
 }
+@keyframes tp-scanlines-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 10px; }
+}
+
+/* 像素粒子场 — 漂浮的像素方块 */
+.tp-particles {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 0; opacity: 0.5;
+}
+.tp-particles::before,
+.tp-particles::after {
+  content: '';
+  position: absolute;
+  width: 3px; height: 3px;
+  background: var(--tp-particle-color);
+  animation: tp-particles-float linear infinite;
+}
+.tp-particles::before {
+  box-shadow:
+    80px 30px 0 0 var(--tp-particle-color),
+    250px 120px 0 0 var(--tp-particle-color),
+    420px 60px 0 0 var(--tp-particle-color),
+    600px 200px 0 0 var(--tp-particle-color),
+    750px 90px 0 0 var(--tp-particle-color),
+    920px 160px 0 0 var(--tp-particle-color),
+    110px 280px 0 0 var(--tp-particle-color),
+    350px 350px 0 0 var(--tp-particle-color),
+    550px 300px 0 0 var(--tp-particle-color),
+    700px 400px 0 0 var(--tp-particle-color),
+    880px 320px 0 0 var(--tp-particle-color),
+    150px 450px 0 0 var(--tp-particle-color),
+    480px 500px 0 0 var(--tp-particle-color),
+    800px 480px 0 0 var(--tp-particle-color),
+    200px 600px 0 0 var(--tp-particle-color),
+    500px 650px 0 0 var(--tp-particle-color),
+    900px 580px 0 0 var(--tp-particle-color);
+  animation-duration: 25s;
+  opacity: 0.6;
+}
+.tp-particles::after {
+  box-shadow:
+    180px 50px 0 0 var(--tp-particle-color),
+    380px 150px 0 0 var(--tp-particle-color),
+    550px 40px 0 0 var(--tp-particle-color),
+    720px 180px 0 0 var(--tp-particle-color),
+    870px 100px 0 0 var(--tp-particle-color),
+    50px 220px 0 0 var(--tp-particle-color),
+    300px 380px 0 0 var(--tp-particle-color),
+    650px 350px 0 0 var(--tp-particle-color),
+    820px 420px 0 0 var(--tp-particle-color),
+    130px 520px 0 0 var(--tp-particle-color),
+    400px 580px 0 0 var(--tp-particle-color),
+    750px 550px 0 0 var(--tp-particle-color),
+    950px 620px 0 0 var(--tp-particle-color);
+  animation-duration: 20s;
+  animation-delay: -8s;
+  opacity: 0.4;
+  width: 2px; height: 2px;
+}
+@keyframes tp-particles-float {
+  0% { transform: translateY(105vh) translateX(0); }
+  25% { transform: translateY(70vh) translateX(15px); }
+  50% { transform: translateY(35vh) translateX(-10px); }
+  75% { transform: translateY(10vh) translateX(10px); }
+  100% { transform: translateY(-50px) translateX(0); }
+}
+
+/* 暗角 (暗色模式赛博朋克氛围) */
+.tp-vignette {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 0;
+  background: var(--tp-vignette);
+  opacity: 0.5;
+}
+
+/* 像素网格背景（保留静态版本，降低不透明度为新粒子层让路） */
 .tp-grid-bg {
   position: fixed; top:0;left:0;right:0;bottom:0;
   pointer-events: none; z-index: -1;
@@ -986,6 +1102,14 @@ html[data-bs-theme=light] .tp-page h1 {
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
 }
+/* h1 — 霓虹呼吸脉冲 */
+.tp-page h1 {
+  animation: tp-neon-pulse 3.5s ease-in-out infinite;
+}
+@keyframes tp-neon-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); }
+}
 /* h1 不再加 $ 终端提示符 */
 .tp-page h2 {
   font-family: 'JetBrains Mono','Fira Code',Consolas,monospace;
@@ -1463,7 +1587,175 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   15. 主题切换过渡动画
+   15. v6.0 像素动效关键帧库
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Glitch 故障抖动 (hover 触发) ── */
+@keyframes tp-glitch {
+  0%, 100% { transform: translate(0); }
+  15% { transform: translate(calc(-1 * var(--tp-glitch-shift)), 1px); }
+  30% { transform: translate(var(--tp-glitch-shift), -1px); }
+  45% { transform: translate(calc(-0.5 * var(--tp-glitch-shift)), -1px); }
+  60% { transform: translate(calc(0.5 * var(--tp-glitch-shift)), 1px); }
+  75% { transform: translate(calc(-0.5 * var(--tp-glitch-shift)), 0); }
+}
+
+/* ── 按钮像素火花 ── */
+@keyframes tp-spark {
+  0% {
+    box-shadow:
+      4px -6px 0 0 var(--tp-spark-color),
+      -5px -3px 0 0 var(--tp-spark-color),
+      6px 4px 0 0 var(--tp-spark-color);
+    opacity: 0.6;
+  }
+  100% {
+    box-shadow:
+      14px -18px 0 -2px var(--tp-spark-color),
+      -16px -10px 0 -2px var(--tp-spark-color),
+      18px 12px 0 -2px var(--tp-spark-color);
+    opacity: 0;
+  }
+}
+
+/* ── 边框跑马灯（卡片 hover 四角像素逐段亮起）── */
+@keyframes tp-border-run-top {
+  0% { left: 0; width: 0; opacity: 0; }
+  40% { opacity: 0.6; }
+  100% { left: 0; width: 100%; opacity: 0.15; }
+}
+@keyframes tp-border-run-right {
+  0% { top: 0; height: 0; opacity: 0; }
+  40% { opacity: 0.6; }
+  100% { top: 0; height: 100%; opacity: 0.15; }
+}
+@keyframes tp-border-run-bottom {
+  0% { right: 0; width: 0; opacity: 0; }
+  40% { opacity: 0.6; }
+  100% { right: 0; width: 100%; opacity: 0.15; }
+}
+@keyframes tp-border-run-left {
+  0% { bottom: 0; height: 0; opacity: 0; }
+  40% { opacity: 0.6; }
+  100% { bottom: 0; height: 100%; opacity: 0.15; }
+}
+
+/* 卡片 hover 触发边框跑马灯 — 使用伪元素 */
+.tp-page .card {
+  --border-run-duration: 0.8s;
+}
+.tp-page .card:hover::before {
+  content: '';
+  position: absolute; top: 0; left: 0; height: 2px;
+  background: var(--tp-border-run-color);
+  animation: tp-border-run-top var(--border-run-duration) ease-out forwards;
+  z-index: 2; pointer-events: none;
+}
+/* 卡片 glitch 微抖动（不影响已有样式叠加） */
+.tp-page .card.card-hover-glitch:hover {
+  animation: tp-glitch 0.3s steps(3) both;
+}
+
+/* ── 按钮火花容器 ── */
+.tp-page .btn {
+  position: relative; overflow: visible;
+}
+.tp-page .btn::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 0; height: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.tp-page .btn:hover::after {
+  animation: tp-spark 0.45s ease-out forwards;
+}
+.tp-page .btn:active::after {
+  animation: tp-spark 0.3s ease-out forwards;
+}
+
+/* ── 统计卡片入场动画 ── */
+@keyframes tp-stat-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tp-stat-animate-in {
+  animation: tp-stat-enter 0.5s ease-out both;
+}
+/* 分段延迟，逐卡片入场 */
+.tp-stat-animate-in:nth-child(1) { animation-delay: 0.05s; }
+.tp-stat-animate-in:nth-child(2) { animation-delay: 0.10s; }
+.tp-stat-animate-in:nth-child(3) { animation-delay: 0.15s; }
+.tp-stat-animate-in:nth-child(4) { animation-delay: 0.20s; }
+.tp-stat-animate-in:nth-child(5) { animation-delay: 0.25s; }
+.tp-stat-animate-in:nth-child(6) { animation-delay: 0.30s; }
+
+/* ── 像素旋转加载器（替换默认 spinner）── */
+@keyframes tp-pixel-spin {
+  0%   { box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0; }
+  12.5%{ box-shadow: 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0; }
+  25%  { box-shadow: 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0; }
+  37.5%{ box-shadow: 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0; }
+  50%  { box-shadow: 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0; }
+  62.5%{ box-shadow: -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0; }
+  75%  { box-shadow: -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0; }
+  87.5%{ box-shadow: -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0; }
+  100% { box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0; }
+}
+.tp-pixel-spinner {
+  display: inline-block; width: 4px; height: 4px;
+  border-radius: 0;
+  box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0;
+  animation: tp-pixel-spin 0.8s steps(1) infinite;
+  color: var(--tp-nav-active-text);
+}
+
+/* ── 通知未读脉冲点 ── */
+@keyframes tp-dot-ping {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 85, 85, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(255, 85, 85, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 85, 85, 0); }
+}
+.tp-unread-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 2px;
+  background: var(--tp-btn-danger-text);
+  animation: tp-dot-ping 2s ease-out infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+
+/* ── 进度条像素流动 ── */
+@keyframes tp-progress-flow {
+  0% { background-position: 0 0; }
+  100% { background-position: 16px 0; }
+}
+.tp-page .progress-bar {
+  background-size: 16px 100% !important;
+  animation: tp-progress-flow 0.6s linear infinite;
+}
+
+/* ── 侧边栏导航项滑入 ── */
+@keyframes tp-nav-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.tp-page .navbar-vertical .navbar-nav .nav-item {
+  animation: tp-nav-slide-in 0.35s ease-out both;
+}
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(1)  { animation-delay: 0.03s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(2)  { animation-delay: 0.06s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(3)  { animation-delay: 0.09s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(4)  { animation-delay: 0.12s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(5)  { animation-delay: 0.15s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(6)  { animation-delay: 0.18s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(7)  { animation-delay: 0.21s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(8)  { animation-delay: 0.24s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(9)  { animation-delay: 0.27s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(10) { animation-delay: 0.30s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(n+11){ animation-delay: 0.33s; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   16. 主题切换过渡动画
    ═══════════════════════════════════════════════════════════════════════ */
 .tp-page,
 .tp-page .card,
@@ -1523,23 +1815,28 @@ html[data-bs-theme=light] .tp-grid-bg {
   animation: tp-degauss 0.6s ease-out forwards;
 }
 
-/* prefers-reduced-motion 支持 */
+/* prefers-reduced-motion 支持 — v6.0 全覆盖 */
 @media (prefers-reduced-motion: reduce) {
   .tp-page, .tp-page * {
     transition-duration: 0.001ms !important;
     animation-duration: 0.001ms !important;
   }
-  .tp-scanlines { display: none !important; }
+  .tp-scanlines { animation: none !important; opacity: 0.08 !important; }
+  .tp-particles::before,
+  .tp-particles::after { animation: none !important; opacity: 0.1 !important; }
+  .tp-page .navbar-vertical .navbar-nav .nav-item { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .tp-page .progress-bar { animation: none !important; }
   .tp-page .card::before,
   .tp-page .card::after,
   .tp-body .modal-content::before,
-  .tp-body .modal-content::after {
-    animation: none !important;
-  }
+  .tp-body .modal-content::after { animation: none !important; }
+  .tp-page .btn::after { display: none !important; }
+  .tp-pixel-spinner { animation: none !important; opacity: 0.5; }
+  .tp-unread-dot { animation: none !important; }
 }
 
 /* ==========================================
-   16. 响应式
+   17. 响应式
    ========================================== */
 
 /* ---- Tablet: 768-992px ---- */
@@ -1652,6 +1949,10 @@ html[data-bs-theme=light] .tp-grid-bg {
 
   /* Grid backgrounds */
   .tp-grid-bg { opacity: 0.5; }
+  /* v6.0: tablet减少粒子 */
+  .tp-particles::before,
+  .tp-particles::after { opacity: 0.2 !important; }
+  .tp-vignette { opacity: 0.35 !important; }
 }
 
 /* ---- Phone: < 576px ---- */
@@ -1671,7 +1972,11 @@ html[data-bs-theme=light] .tp-grid-bg {
   .tp-page .nav-tabs .nav-link { font-size: 0.68rem !important; padding: 6px 10px; }
 
   /* 手机端扫描线降不透明度 */
-  .tp-scanlines { opacity: 0.15 !important; }
+  .tp-scanlines { opacity: 0.12 !important; animation: none !important; }
+  /* 手机端隐藏粒子（性能） */
+  .tp-particles { display: none !important; }
+  /* 暗角降低强度 */
+  .tp-vignette { opacity: 0.25 !important; }
 }
 
 
@@ -1702,7 +2007,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   17. 打印样式
+   18. 打印样式
    ═══════════════════════════════════════════════════════════════════════ */
 @media print {
   .tp-scanlines,

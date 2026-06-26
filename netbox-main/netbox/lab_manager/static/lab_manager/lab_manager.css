@@ -1,6 +1,7 @@
-/* Lab Manager - Agent Console - TERMINAL//PIXEL v3
+/* Lab Manager - Agent Console - TERMINAL//PIXEL v6.0
    所有颜色使用 var(--tp-*) 引用 terminal_pixel.css 的 CSS 变量
-   自动跟随 [data-bs-theme] 切换亮色/暗色模式 */
+   自动跟随 [data-bs-theme] 切换亮色/暗色模式
+   v6.0: 像素火花按钮 + 消息滑入动画 + 侧边栏辉光 */
 
 /* === Shell === */
 .agent-shell {
@@ -533,7 +534,7 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     .agent-action-buttons .btn{font-size:0.7rem;padding:5px 10px}
 
     /* Quick prompts */
-    .agent-quick-prompts{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+    .agent-quick-prompts{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px}
     .agent-quick-prompts .btn{flex-shrink:0;font-size:0.7rem;white-space:nowrap}
 
     /* Debug panel */
@@ -558,7 +559,7 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     }
 
     /* Full-width tables */
-    .agent-shell .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .agent-shell .table-responsive{overflow-x:auto}
 
 /* === Mobile agent header fix === */
 @media(max-width:767.98px){
@@ -609,8 +610,6 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     .agent-conversation-item{padding:8px 10px}
 }
 
-}
-
 /* ---- Phone overflow & height fixes ---- */
 @media(max-width:767.98px){
     /* Constrain shell to viewport */
@@ -635,7 +634,6 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     /* Message list scrolls */
     .agent-message-list{
         flex:1;overflow-y:auto;overflow-x:hidden;
-        -webkit-overflow-scrolling:touch;
         padding:10px 8px;
         min-height:0;
     }
@@ -677,4 +675,94 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
 
     /* Sidebar expand button z-index */
     .agent-sidebar-expand{z-index:1050}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v6.0 Pixel Enhancements
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Agent pixel spinner (8-bit pixel ring) */
+.agent-spinner {
+  width: 4px; height: 4px;
+  border: none; border-radius: 0;
+  box-shadow:
+    0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0,
+    0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0;
+  animation: tp-pixel-spin 0.8s steps(1) infinite;
+  color: var(--tp-agent-accent-green-bright);
+}
+@keyframes tp-pixel-spin {
+  0%   { box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0; }
+  12.5%{ box-shadow: 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0; }
+  25%  { box-shadow: 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0; }
+  37.5%{ box-shadow: 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0; }
+  50%  { box-shadow: 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0; }
+  62.5%{ box-shadow: -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0; }
+  75%  { box-shadow: -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0; }
+  87.5%{ box-shadow: -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0; }
+  100% { box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0; }
+}
+
+/* 消息气泡滑入动画 */
+@keyframes tp-msg-slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.agent-message-row {
+  animation: tp-msg-slide-in 0.3s ease-out both;
+}
+
+/* 侧边栏 active 项霓虹呼吸 */
+.agent-conversation-item.active {
+  animation: tp-sidebar-glow 3s ease-in-out infinite;
+}
+@keyframes tp-sidebar-glow {
+  0%, 100% { box-shadow: inset 2px 0 0 var(--tp-agent-accent-green-bright); }
+  50% { box-shadow: inset 2px 0 0 var(--tp-agent-accent-green-bright), 0 0 12px rgba(0,255,65,0.15); }
+}
+html[data-bs-theme=light] .agent-conversation-item.active {
+  animation: tp-sidebar-glow-light 3s ease-in-out infinite;
+}
+@keyframes tp-sidebar-glow-light {
+  0%, 100% { box-shadow: inset 2px 0 0 var(--tp-agent-accent-green-bright); }
+  50% { box-shadow: inset 2px 0 0 var(--tp-agent-accent-green-bright), 0 0 8px rgba(13,107,99,0.1); }
+}
+
+/* 发送按钮火花 */
+.agent-send-btn {
+  position: relative; overflow: visible;
+}
+.agent-send-btn::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 0; height: 0;
+  pointer-events: none; z-index: 1;
+}
+.agent-send-btn:hover:not(:disabled)::after {
+  animation: tp-spark 0.45s ease-out forwards;
+}
+@keyframes tp-spark {
+  0% {
+    box-shadow:
+      4px -6px 0 0 var(--tp-agent-accent-green-bright),
+      -5px -3px 0 0 var(--tp-agent-accent-green-bright),
+      6px 4px 0 0 var(--tp-agent-accent-green-bright);
+    opacity: 0.6;
+  }
+  100% {
+    box-shadow:
+      14px -18px 0 -2px var(--tp-agent-accent-green-bright),
+      -16px -10px 0 -2px var(--tp-agent-accent-green-bright),
+      18px 12px 0 -2px var(--tp-agent-accent-green-bright);
+    opacity: 0;
+  }
+}
+
+/* prefers-reduced-motion for agent console */
+@media (prefers-reduced-motion: reduce) {
+  .agent-spinner { animation: none !important; opacity: 0.5; }
+  .agent-message-row { animation: none !important; }
+  .agent-conversation-item.active { animation: none !important; }
+  .agent-send-btn::after { display: none !important; }
+}
 }
