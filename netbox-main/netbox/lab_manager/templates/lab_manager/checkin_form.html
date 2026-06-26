@@ -36,9 +36,6 @@
                         </button>
                         <span class="ms-2 text-muted" id="location-status">{% trans "尚未获取定位" %}</span>
                     </div>
-                    <div class="alert alert-info" id="location-help">
-                        {% trans "浏览器要求 HTTPS 才能使用 GPS 定位。请在下方手动输入经纬度，或点「尝试 GPS」看浏览器是否支持。获取坐标：打开手机地图 App，长按当前位置即可复制经纬度。" %}
-                    </div>
                     <div class="row" id="manual-location-fields">
                         <div class="col-md-6 mb-3">
                             <label class="form-label" for="manual-latitude">{% trans "纬度" %}</label>
@@ -97,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const latitude = document.getElementById('id_latitude');
     const longitude = document.getElementById('id_longitude');
     const accuracy = document.getElementById('id_accuracy');
-    const help = document.getElementById('location-help');
     const manualFields = document.getElementById('manual-location-fields');
     const manualLatitude = document.getElementById('manual-latitude');
     const manualLongitude = document.getElementById('manual-longitude');
@@ -132,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
             longitude.value = position.coords.longitude.toFixed(7);
             accuracy.value = position.coords.accuracy ? position.coords.accuracy.toFixed(2) : '';
             status.textContent = '已获取定位：' + latitude.value + ', ' + longitude.value + '，精度约 ' + (accuracy.value || '-') + ' 米';
-            manualFields.classList.add('d-none'); help.classList.add('d-none');
+            manualFields.classList.add('d-none');
             button.disabled = false;
             enableSubmitIfReady();
         }, function (error) {

@@ -2131,7 +2131,7 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   }
 }
 
-/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v6.3.1 ── */
+/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v6.3.2 ── */
 @media (max-width: 991.98px) {
   /* 隐藏原 Bootstrap navbar-toggler（改用浮动按钮） */
   .tp-page .navbar-vertical .navbar-toggler {
@@ -2147,12 +2147,23 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     box-shadow: 4px 0 28px rgba(0,0,0,0.45);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* 强制 sidebar-menu 始终可见 */
   }
+
+  /* ── 侧边栏内部容器布局修复（关键！）── */
+  /* 让 container-fluid 垂直排列，消除 Bootstrap flex 间隙 */
+  .tp-page .navbar-vertical .container-fluid {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 8px 12px !important;
+  }
+
+  /* 强制 sidebar-menu 始终可见，禁用 Bootstrap collapse 动画干扰 */
   .tp-page .navbar-vertical .navbar-collapse {
     display: block !important;
     visibility: visible !important;
     height: auto !important;
+    opacity: 1 !important;
+    transition: none !important;     /* ★ 禁用 BS collapse 动画，防止布局抖动 */
   }
 
   /* ★ 由浮动按钮 JS 控制：html.mobile-nav-open → 显示面板 */
@@ -2165,13 +2176,55 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     overflow: hidden;
   }
 
-  /* ── 浮动汉堡按钮 ★ 关键：始终可见，位于侧边栏外部 ── */
+  /* ── 移动端用户菜单栏（主题切换 + 通知 + 用户名）紧凑排列 ── */
+  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 6px 0 !important;
+    margin: 0 !important;
+    border-top: 1px solid var(--tp-nav-divider);
+    border-bottom: 1px solid var(--tp-nav-divider);
+  }
+  /* 用户菜单内的下拉按钮紧凑 */
+  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .nav-link,
+  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .dropdown-toggle {
+    padding: 6px 8px !important;
+    min-height: 36px;
+    font-size: 0.8rem !important;
+  }
+  /* 用户名文字隐藏次要信息，只显示用户名 */
+  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .small.text-secondary {
+    display: none;
+  }
+  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .d-xl-block {
+    padding-left: 4px !important;
+  }
+
+  /* ── 品牌/logo 移动端紧凑 ── */
+  .tp-page .navbar-vertical .navbar-brand {
+    padding: 8px 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--tp-nav-divider);
+  }
+  .tp-page .navbar-vertical .navbar-brand .netbox-edition {
+    font-size: 0.82rem !important;
+    margin: 4px 0 !important;
+  }
+  .tp-page .navbar-vertical .navbar-brand img.navbar-brand-image {
+    max-height: 40px;
+  }
+
+  /* ── 浮动汉堡按钮 ── */
   .tp-mobile-nav-btn {
     display: flex !important;
     position: fixed;
-    top: 10px; left: 10px;
-    z-index: 1060;
-    width: 46px; height: 46px;
+    top: 54px;   /* ★ 避开顶部导航栏，防止遮挡搜索/主题切换 */
+    left: 6px;
+    z-index: 1035;  /* ★ 低于 top-nav 的 z-index: 1030（实际 top nav 是 1030），确保在导航下方 */
+    width: 42px; height: 42px;
     border: 2px solid var(--tp-card-border);
     border-radius: 3px;
     background: var(--tp-card-header-bg);
@@ -2196,21 +2249,21 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   /* 三横线图标（纯 CSS，不依赖 icon font） */
   .tp-mobile-nav-btn::before {
     content: '';
-    width: 22px; height: 18px;
+    width: 20px; height: 16px;
     background: linear-gradient(
       to bottom,
       var(--tp-nav-text) 0, var(--tp-nav-text) 2px,
-      transparent 2px, transparent 7px,
-      var(--tp-nav-text) 7px, var(--tp-nav-text) 9px,
-      transparent 9px, transparent 14px,
-      var(--tp-nav-text) 14px, var(--tp-nav-text) 16px
+      transparent 2px, transparent 6px,
+      var(--tp-nav-text) 6px, var(--tp-nav-text) 8px,
+      transparent 8px, transparent 12px,
+      var(--tp-nav-text) 12px, var(--tp-nav-text) 14px
     );
     transition: background 0.15s;
   }
   /* 侧边栏打开时汉堡按钮右移 */
   html.mobile-nav-open .tp-mobile-nav-btn {
-    left: calc(280px + 10px);
-    left: calc(min(85vw, 280px) + 10px);
+    left: calc(280px + 6px);
+    left: calc(min(85vw, 280px) + 6px);
   }
 
   /* ── 暗色遮罩层 ── */
@@ -2224,16 +2277,11 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     opacity: 1; pointer-events: auto;
   }
 
-  /* 移动端侧边栏内边距优化 */
+  /* 移动端导航链接优化 */
   .tp-page .navbar-vertical .navbar-nav { padding-bottom: 16px; }
   .tp-page .navbar-vertical .nav-link {
     padding: 12px 16px !important;
     font-size: 0.82rem !important;
-  }
-
-  /* 侧边栏内的品牌/logo 移动端优化 */
-  .tp-page .navbar-vertical .navbar-brand {
-    padding-top: 12px;
   }
 }
 
