@@ -625,7 +625,9 @@ html[data-bs-theme=dark] {
    ═══════════════════════════════════════════════════════════════════════ */
 .tp-page .navbar-vertical,
 html body .tp-page .navbar-vertical {
-  background: var(--tp-nav-bg) !important;
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(128,128,128,0.02) 2px, rgba(128,128,128,0.02) 4px),
+    var(--tp-nav-bg) !important;
   border-right: 2px solid var(--tp-nav-border) !important;
 }
 /* 导航链接 */
@@ -1445,7 +1447,8 @@ html[data-bs-theme=light] .tp-grid-bg {
   opacity: 0.55;
 }
 
-/* ── 14.18 侧边导航 — 整体像素/终端感增强 ── */
+/* ── 14.18 侧边导航 — 像素美化增强 v6.1 ── */
+
 /* 导航项之间加像素分隔线 */
 .tp-page .navbar-vertical .navbar-nav .nav-item {
   border-bottom: 1px dotted var(--tp-nav-divider);
@@ -1453,17 +1456,62 @@ html[data-bs-theme=light] .tp-grid-bg {
 .tp-page .navbar-vertical .navbar-nav .nav-item:last-child {
   border-bottom: none;
 }
-/* 导航链接字符间距加宽，营造终端命令感 */
+
+/* 导航链接：加厚左边框指示器 */
+.tp-page .navbar-vertical .nav-link,
+html body .tp-page .navbar-vertical .nav-link,
+html body .tp-page .navbar-vertical a.nav-link {
+  border-left: 3px solid transparent !important;
+  margin: 1px 0 !important;
+}
 .tp-page .navbar-vertical .nav-link-title {
   letter-spacing: 0.04em !important;
   text-transform: uppercase;
   font-size: 0.78rem !important;
 }
-/* 导航图标用 accent 色 + 像素风尺寸 */
+
+/* Hover: 左边框渐显为 accent 色 */
+html body .tp-page .navbar-vertical .nav-link:hover,
+html body .tp-page .navbar-vertical a.nav-link:hover {
+  border-left-color: var(--tp-nav-accent) !important;
+}
+
+/* Active: 像素厚边框 + 暗色模式下内发光 */
+html body .tp-page .navbar-vertical .nav-link.active,
+html body .tp-page .navbar-vertical a.nav-link.active {
+  border-left-color: var(--tp-nav-active-border) !important;
+  box-shadow: inset 3px 0 8px rgba(0,0,0,0.04);
+}
+html[data-bs-theme=dark] .tp-page .navbar-vertical .nav-link.active,
+html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
+  box-shadow: inset 3px 0 14px rgba(0,255,65,0.1);
+}
+
+/* 图标：颜色过渡 + hover 微动 */
 .tp-page .navbar-vertical .nav-link i,
 .tp-page .navbar-vertical .nav-link .mdi {
   font-size: 1rem !important;
   width: 18px; text-align: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.tp-page .navbar-vertical .nav-link:hover i,
+.tp-page .navbar-vertical .nav-link:hover .mdi {
+  color: var(--tp-nav-accent) !important;
+  transform: translateX(2px);
+}
+.tp-page .navbar-vertical .nav-link.active i,
+.tp-page .navbar-vertical .nav-link.active .mdi {
+  color: var(--tp-nav-active-text) !important;
+}
+
+/* 分组标题：像素强调底线 */
+.tp-page .navbar-vertical .nav-title::after,
+.tp-page .navbar-vertical .nav-group::after {
+  content: '';
+  display: block;
+  width: 24px; height: 2px;
+  background: var(--tp-nav-accent);
+  margin-top: 6px;
 }
 
 /* ── 14.19 列表页：Results/Filters 标签栏 ── */
