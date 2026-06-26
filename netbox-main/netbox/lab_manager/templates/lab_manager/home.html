@@ -19,7 +19,7 @@
         <div class="card text-bg-primary tp-stat-animate-in">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ hardware_total }}</h3>
-                <small>{% trans "硬件总数" %}</small>
+                <small><span class="tp-pixel-star"></span> {% trans "硬件总数" %}</small>
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
         <div class="card text-bg-success tp-stat-animate-in">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ hardware_in_use }}</h3>
-                <small>{% trans "使用中" %}</small>
+                <small><span class="tp-pixel-bolt"></span> {% trans "使用中" %}</small>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
         <div class="card text-bg-warning tp-stat-animate-in">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ hardware_idle }}</h3>
-                <small>{% trans "闲置" %}</small>
+                <small><span class="tp-pixel-arrow"></span> {% trans "闲置" %}</small>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
         <div class="card text-bg-info tp-stat-animate-in">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ task_total }}</h3>
-                <small>{% trans "任务总数" %}</small>
+                <small><span class="tp-pixel-check"></span> {% trans "任务总数" %}</small>
             </div>
         </div>
     </div>
@@ -51,7 +51,7 @@
         <div class="card text-bg-dark tp-stat-animate-in">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ task_in_progress }}</h3>
-                <small>{% trans "进行中" %}</small>
+                <small><span class="tp-pixel-bolt"></span> {% trans "进行中" %}</small>
             </div>
         </div>
     </div>
@@ -59,7 +59,7 @@
         <div class="card text-bg-secondary tp-stat-animate-in">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0">{{ checkin_today }}</h3>
-                <small>{% trans "今日打卡" %}</small>
+                <small><span class="tp-pixel-heart"></span> {% trans "今日打卡" %}</small>
             </div>
         </div>
     </div>
@@ -71,7 +71,7 @@
         <div class="card border-danger">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0 text-danger">{{ pending_approval_count }}</h3>
-                <small class="text-muted">{% trans "待审批硬件" %}</small>
+                <small class="text-muted"><span class="tp-pixel-warn"></span> {% trans "待审批硬件" %}</small>
             </div>
         </div>
     </div>
@@ -79,7 +79,7 @@
         <div class="card border-warning">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0 text-warning">{{ overdue_tasks }}</h3>
-                <small class="text-muted">{% trans "逾期任务" %}</small>
+                <small class="text-muted"><span class="tp-pixel-cross"></span> {% trans "逾期任务" %}</small>
             </div>
         </div>
     </div>
@@ -87,7 +87,7 @@
         <div class="card border-info">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0 text-info">{{ borrowed_count }}</h3>
-                <small class="text-muted">{% trans "当前借出" %}</small>
+                <small class="text-muted"><span class="tp-pixel-arrow"></span> {% trans "当前借出" %}</small>
             </div>
         </div>
     </div>
@@ -95,7 +95,7 @@
         <div class="card border-success">
             <div class="card-body text-center py-3">
                 <h3 class="mb-0 text-success">{{ task_completed }}</h3>
-                <small class="text-muted">{% trans "已完成任务" %}</small>
+                <small class="text-muted"><span class="tp-pixel-check"></span> {% trans "已完成任务" %}</small>
             </div>
         </div>
     </div>

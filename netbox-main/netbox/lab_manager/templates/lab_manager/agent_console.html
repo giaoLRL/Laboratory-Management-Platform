@@ -72,7 +72,7 @@
                     {% endif %}
                 </div>
             </div>
-            <div id="agent-status" class="agent-status-badge" role="status" aria-live="polite" aria-atomic="true">{% trans "等待发送请求..." %}</div>
+            <div id="agent-status" class="agent-status-badge" role="status" aria-live="polite" aria-atomic="true"><span class="tp-pixel-bolt"></span> {% trans "就绪" %}</div>
         </div>
 
         <div id="message-list" class="agent-message-list">
@@ -220,7 +220,7 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     var conversationPk = '{{ active_conversation_id|default:""|escapejs }}';
 
     function setStatus(text, isError) {
-        statusBox.textContent = text;
+        statusBox.innerHTML = '<span class="tp-pixel-bolt"></span> ' + text;
         statusBox.className = isError ? 'agent-status-badge is-error' : 'agent-status-badge';
     }
 
