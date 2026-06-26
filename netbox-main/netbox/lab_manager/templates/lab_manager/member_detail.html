@@ -1,9 +1,10 @@
 {% extends 'lab_manager/base.html' %}
-{% load i18n humanize %}
+{% load i18n humanize static %}
 
 {% block title %}{% trans "成员详情" %} — {{ member.username }}{% endblock %}
 
 {% block content %}
+<div class="tp-member-detail">
 <style>
 /* 活动日历样式 */
 .activity-calendar { table-layout: fixed; }
@@ -43,7 +44,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-primary">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ task_total }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ task_total }}">0</h3>
                 <small>{% trans "任务总数" %}</small>
             </div>
         </div>
@@ -51,7 +52,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-info">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ task_in_progress }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ task_in_progress }}">0</h3>
                 <small>{% trans "进行中" %}</small>
             </div>
         </div>
@@ -59,7 +60,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-success">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ task_completed }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ task_completed }}">0</h3>
                 <small>{% trans "已完成" %}</small>
             </div>
         </div>
@@ -67,7 +68,7 @@
     <div class="col-6 col-md-3">
         <div class="card {% if completion_rate >= 80 %}text-bg-success{% elif completion_rate >= 50 %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ completion_rate }}%</h3>
+                <h3 class="mb-0"><span class="tp-count-up" data-target="{{ completion_rate }}">0</span>%</h3>
                 <small>{% trans "完成率" %}</small>
             </div>
         </div>
@@ -81,19 +82,19 @@
             <h5 class="card-header">{% trans "任务完成进度" %}</h5>
             <div class="card-body">
                 {% if task_total > 0 %}
-                <div class="progress mb-3" style="height:28px">
-                    <div class="progress-bar bg-success d-flex align-items-center justify-content-center fw-bold"
-                         style="width:{% widthratio task_completed task_total 100 %}%"
+                <div class="progress mb-3 mx-auto" style="height:28px;max-width:100%">
+                    <div class="progress-bar bg-success d-flex align-items-center justify-content-center fw-bold tp-progress-fill"
+                         data-width="{% widthratio task_completed task_total 100 %}"
                          title="{% trans '已完成' %}: {{ task_completed }}">
                         {% if task_completed > 0 %}{{ task_completed }}{% endif %}
                     </div>
-                    <div class="progress-bar bg-primary d-flex align-items-center justify-content-center fw-bold"
-                         style="width:{% widthratio task_in_progress task_total 100 %}%"
+                    <div class="progress-bar bg-primary d-flex align-items-center justify-content-center fw-bold tp-progress-fill"
+                         data-width="{% widthratio task_in_progress task_total 100 %}"
                          title="{% trans '进行中' %}: {{ task_in_progress }}">
                         {% if task_in_progress > 0 %}{{ task_in_progress }}{% endif %}
                     </div>
-                    <div class="progress-bar bg-secondary d-flex align-items-center justify-content-center fw-bold"
-                         style="width:{% widthratio task_pending task_total 100 %}%"
+                    <div class="progress-bar bg-secondary d-flex align-items-center justify-content-center fw-bold tp-progress-fill"
+                         data-width="{% widthratio task_pending task_total 100 %}"
                          title="{% trans '待开始' %}: {{ task_pending }}">
                         {% if task_pending > 0 %}{{ task_pending }}{% endif %}
                     </div>
@@ -356,4 +357,6 @@
     </div>
 </div>
 
+</div>{# /.tp-member-detail #}
+<script src="{% static 'lab_manager/animations.js' %}"></script>
 {% endblock %}

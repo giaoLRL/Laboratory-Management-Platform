@@ -1,9 +1,10 @@
 {% extends 'lab_manager/base.html' %}
-{% load i18n humanize %}
+{% load i18n humanize static %}
 
 {% block title %}{% trans "成员列表" %}{% endblock %}
 
 {% block content %}
+<div class="tp-member-list">
 <div class="row mb-3 align-items-center">
     <div class="col">
         <h2 class="mb-0">{% trans "成员列表" %}</h2>
@@ -36,15 +37,18 @@
                 <div class="mb-2">
                     <div class="d-flex justify-content-between small mb-1">
                         <span class="text-muted">{% trans "任务完成率" %}</span>
-                        <strong>{{ m.completion_rate }}%</strong>
+                        <strong><span class="tp-count-up" data-target="{{ m.completion_rate }}">0</span>%</strong>
                     </div>
-                    <div class="progress" style="height:8px">
+                    <div class="progress mx-auto" style="height:8px;width:100%">
                         {% if m.task_total > 0 %}
-                        <div class="progress-bar bg-success" style="width:{{ m.completion_rate }}%"
+                        <div class="progress-bar bg-success tp-progress-fill"
+                             data-width="{{ m.completion_rate }}"
                              title="{% trans '已完成' %}: {{ m.task_completed }}"></div>
-                        <div class="progress-bar bg-primary" style="width:{% widthratio m.task_in_progress m.task_total 100 %}"
+                        <div class="progress-bar bg-primary tp-progress-fill"
+                             data-width="{% widthratio m.task_in_progress m.task_total 100 %}"
                              title="{% trans '进行中' %}: {{ m.task_in_progress }}"></div>
-                        <div class="progress-bar bg-secondary" style="width:{% widthratio m.task_pending m.task_total 100 %}"
+                        <div class="progress-bar bg-secondary tp-progress-fill"
+                             data-width="{% widthratio m.task_pending m.task_total 100 %}"
                              title="{% trans '待开始' %}: {{ m.task_pending }}"></div>
                         {% else %}
                         <div class="progress-bar bg-light w-100"></div>
@@ -101,4 +105,6 @@
     </div>
     {% endfor %}
 </div>
+</div>{# /.tp-member-list #}
+<script src="{% static 'lab_manager/animations.js' %}"></script>
 {% endblock %}

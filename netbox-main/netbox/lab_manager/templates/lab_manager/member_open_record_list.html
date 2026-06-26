@@ -1,9 +1,10 @@
 {% extends 'lab_manager/base.html' %}
-{% load i18n humanize %}
+{% load i18n humanize static %}
 
 {% block title %}{% trans "成员打卡记录" %}{% endblock %}
 
 {% block content %}
+<div class="tp-member-open-records">
 <div class="row mb-3">
     <div class="col">
         <h1>{% trans "成员打卡记录" %}</h1>
@@ -16,7 +17,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-success h-100">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ today_total }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ today_total }}">0</h3>
                 <small>{% trans "今日记录" %}</small>
             </div>
         </div>
@@ -24,7 +25,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-info h-100">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ today_users }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ today_users }}">0</h3>
                 <small>{% trans "今日活跃人数" %}</small>
             </div>
         </div>
@@ -32,7 +33,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-primary h-100">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ week_total }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ week_total }}">0</h3>
                 <small>{% trans "本周记录" %}</small>
             </div>
         </div>
@@ -40,7 +41,7 @@
     <div class="col-6 col-md-3">
         <div class="card text-bg-secondary h-100">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0">{{ week_users }}</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ week_users }}">0</h3>
                 <small>{% trans "本周活跃人数" %}</small>
             </div>
         </div>
@@ -84,11 +85,13 @@
         <div class="card h-100">
             <h5 class="card-header">{% trans "最近7天趋势" %}</h5>
             <div class="card-body">
-                <div class="d-flex align-items-end gap-1" style="height:120px">
+                <div class="d-flex align-items-end justify-content-center gap-1" style="height:120px">
                     {% for d in daily_trend %}
-                    <div class="flex-fill text-center" style="min-width:30px">
-                        <div class="mx-auto rounded-top"
-                             style="width:70%;height:{{ d.count }}px;max-height:100px;min-height:2px;
+                    <div class="text-center" style="flex:1;min-width:30px;max-width:60px">
+                        <div class="tp-rise-bar mx-auto rounded-top"
+                             data-height="{{ d.count }}"
+                             data-max-height="100"
+                             style="width:70%;min-height:2px;
                                     background:{% if d.is_today %}#198754{% else %}#0d6efd{% endif %};
                                     opacity:0.75"
                              title="{{ d.label }}: {{ d.count }} {% trans '条' %}, {{ d.users }} {% trans '人' %}">
@@ -203,4 +206,6 @@
         </table>
     </div>
 </div>
+</div>{# /.tp-member-open-records #}
+<script src="{% static 'lab_manager/animations.js' %}"></script>
 {% endblock %}

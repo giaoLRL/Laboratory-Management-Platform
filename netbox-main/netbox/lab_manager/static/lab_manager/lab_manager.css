@@ -388,6 +388,46 @@ html[data-bs-theme=light] .calendar-day-browse { background: rgba(13,122,138,0.2
 .hover-shadow:hover { box-shadow: 0 0 16px rgba(0, 255, 65, 0.08); }
 html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 107, 99, 0.1); }
 
+/* === Dashboard & Data Page Animations === */
+
+/* 进度条居中修复 */
+.tp-home-dashboard .progress,
+.tp-member-list .progress,
+.tp-member-detail .progress,
+.tp-member-open-records .progress {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 统计卡片数字 —— 等宽数字使计数动画更平滑 */
+.tp-count-up {
+    font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', Fira Code, Consolas, monospace;
+}
+
+/* 柱状图升起动画初始状态 */
+.tp-rise-bar {
+    height: 0;
+    transition: height 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 进度条填充动画初始状态 */
+.tp-progress-fill {
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 柱状图容器居中 */
+.tp-member-open-records .d-flex.align-items-end {
+    justify-content: center;
+}
+
+/* 统计卡片滑入初始状态（由 JS 接管） */
+.tp-stat-animate-in {
+    opacity: 0;
+    transform: translateY(16px);
+}
+
 /* === Pixel-Style Detail Enhancements (Agent Console) === */
 /* 像素边角裁剪 */
 .agent-shell,
