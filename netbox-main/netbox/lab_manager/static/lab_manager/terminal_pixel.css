@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   TERMINAL//PIXEL v6.0 — 高级像素风双主题系统 (15+ 动画效果)
+   TERMINAL//PIXEL v6.0.1 — 高级像素风双主题系统 (15+ 动画效果, visibility fixes)
    使用 CSS 自定义属性，跟随 [data-bs-theme] 自动切换
    暗色模式：赛博霓虹风（霓虹绿/青/紫 + CRT + 粒子 + glitch）
    亮色模式：复古 8-bit 游戏风（像素浮雕 + 暖金 + 游戏 HUD）
@@ -152,9 +152,9 @@ html[data-bs-theme=light] {
 
   /* v6.0 动画颜色 */
   --tp-neon-glow: 0 0 6px, 0 0 12px;
-  --tp-particle-color: rgba(13, 107, 99, 0.12);
-  --tp-scanline-color: rgba(90, 78, 66, 0.03);
-  --tp-vignette: none;
+  --tp-particle-color: rgba(13, 107, 99, 0.5);
+  --tp-scanline-color: transparent;
+  --tp-vignette: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.18) 100%);
   --tp-spark-color: #0d6b63;
   --tp-glitch-shift: 1px;
   --tp-border-run-color: #0d6b63;
@@ -362,8 +362,8 @@ html[data-bs-theme=dark] {
 
   /* v6.0 动画颜色 — 赛博霓虹 */
   --tp-neon-glow: 0 0 8px, 0 0 20px, 0 0 40px;
-  --tp-particle-color: rgba(0, 255, 65, 0.08);
-  --tp-scanline-color: rgba(0, 255, 65, 0.025);
+  --tp-particle-color: rgba(0, 255, 65, 0.45);
+  --tp-scanline-color: rgba(0, 255, 65, 0.08);
   --tp-vignette: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%);
   --tp-spark-color: #00ff41;
   --tp-glitch-shift: 2px;
@@ -460,85 +460,141 @@ html[data-bs-theme=dark] {
    v6.0 装饰层 — 动态 CRT 扫描线 + 像素粒子场 + 暗角
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* CRT 扫描线 — 向下流动（暗色更明显） */
+/* CRT 扫描线 — 无缝循环流动 */
 .tp-scanlines {
   position: fixed; top:0;left:0;right:0;bottom:0;
   pointer-events: none; z-index: 1050;
-  mix-blend-mode: overlay;
   display: block !important;
-  background: repeating-linear-gradient(0deg,
-    transparent, transparent 4px,
-    var(--tp-scanline-color) 4px,
+  background-image: repeating-linear-gradient(0deg,
+    transparent, transparent 3px,
+    var(--tp-scanline-color) 3px,
     var(--tp-scanline-color) 5px);
-  opacity: 0.25;
-  animation: tp-scanlines-scroll 8s linear infinite;
+  background-size: 100% 5px;
+  opacity: 0.75;
+  animation: tp-scanlines-scroll 1.5s linear infinite;
 }
 @keyframes tp-scanlines-scroll {
   0% { background-position: 0 0; }
-  100% { background-position: 0 10px; }
+  100% { background-position: 0 5px; }
 }
 
-/* 像素粒子场 — 漂浮的像素方块 */
+/* 像素粒子场 — 漂浮的像素方块（v6.0.2 增强：80+ 粒子，双层独立动画） */
 .tp-particles {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none; z-index: 0; opacity: 0.5;
+  pointer-events: none; z-index: 0; opacity: 0.85;
 }
 .tp-particles::before,
 .tp-particles::after {
   content: '';
   position: absolute;
-  width: 3px; height: 3px;
+  width: 4px; height: 4px;
   background: var(--tp-particle-color);
   animation: tp-particles-float linear infinite;
 }
 .tp-particles::before {
   box-shadow:
-    80px 30px 0 0 var(--tp-particle-color),
-    250px 120px 0 0 var(--tp-particle-color),
-    420px 60px 0 0 var(--tp-particle-color),
-    600px 200px 0 0 var(--tp-particle-color),
-    750px 90px 0 0 var(--tp-particle-color),
-    920px 160px 0 0 var(--tp-particle-color),
-    110px 280px 0 0 var(--tp-particle-color),
-    350px 350px 0 0 var(--tp-particle-color),
-    550px 300px 0 0 var(--tp-particle-color),
-    700px 400px 0 0 var(--tp-particle-color),
-    880px 320px 0 0 var(--tp-particle-color),
-    150px 450px 0 0 var(--tp-particle-color),
-    480px 500px 0 0 var(--tp-particle-color),
-    800px 480px 0 0 var(--tp-particle-color),
-    200px 600px 0 0 var(--tp-particle-color),
-    500px 650px 0 0 var(--tp-particle-color),
-    900px 580px 0 0 var(--tp-particle-color);
-  animation-duration: 25s;
-  opacity: 0.6;
+    60px 25px 0 0 var(--tp-particle-color),
+    140px 70px 0 0 var(--tp-particle-color),
+    220px 30px 0 0 var(--tp-particle-color),
+    310px 110px 0 0 var(--tp-particle-color),
+    400px 50px 0 0 var(--tp-particle-color),
+    480px 130px 0 0 var(--tp-particle-color),
+    560px 40px 0 0 var(--tp-particle-color),
+    650px 100px 0 0 var(--tp-particle-color),
+    730px 20px 0 0 var(--tp-particle-color),
+    820px 140px 0 0 var(--tp-particle-color),
+    900px 60px 0 0 var(--tp-particle-color),
+    980px 120px 0 0 var(--tp-particle-color),
+    80px 170px 0 0 var(--tp-particle-color),
+    180px 220px 0 0 var(--tp-particle-color),
+    280px 180px 0 0 var(--tp-particle-color),
+    380px 260px 0 0 var(--tp-particle-color),
+    500px 200px 0 0 var(--tp-particle-color),
+    600px 280px 0 0 var(--tp-particle-color),
+    700px 190px 0 0 var(--tp-particle-color),
+    800px 270px 0 0 var(--tp-particle-color),
+    910px 210px 0 0 var(--tp-particle-color),
+    120px 310px 0 0 var(--tp-particle-color),
+    240px 360px 0 0 var(--tp-particle-color),
+    360px 300px 0 0 var(--tp-particle-color),
+    460px 370px 0 0 var(--tp-particle-color),
+    570px 320px 0 0 var(--tp-particle-color),
+    680px 380px 0 0 var(--tp-particle-color),
+    790px 310px 0 0 var(--tp-particle-color),
+    890px 390px 0 0 var(--tp-particle-color),
+    150px 440px 0 0 var(--tp-particle-color),
+    320px 460px 0 0 var(--tp-particle-color),
+    490px 420px 0 0 var(--tp-particle-color),
+    630px 470px 0 0 var(--tp-particle-color),
+    760px 430px 0 0 var(--tp-particle-color),
+    880px 480px 0 0 var(--tp-particle-color),
+    200px 540px 0 0 var(--tp-particle-color),
+    380px 560px 0 0 var(--tp-particle-color),
+    540px 520px 0 0 var(--tp-particle-color),
+    710px 570px 0 0 var(--tp-particle-color),
+    850px 540px 0 0 var(--tp-particle-color),
+    100px 630px 0 0 var(--tp-particle-color),
+    290px 650px 0 0 var(--tp-particle-color),
+    470px 620px 0 0 var(--tp-particle-color),
+    640px 660px 0 0 var(--tp-particle-color),
+    810px 630px 0 0 var(--tp-particle-color),
+    950px 650px 0 0 var(--tp-particle-color);
+  animation-duration: 28s;
+  opacity: 0.8;
 }
 .tp-particles::after {
   box-shadow:
-    180px 50px 0 0 var(--tp-particle-color),
-    380px 150px 0 0 var(--tp-particle-color),
-    550px 40px 0 0 var(--tp-particle-color),
-    720px 180px 0 0 var(--tp-particle-color),
-    870px 100px 0 0 var(--tp-particle-color),
-    50px 220px 0 0 var(--tp-particle-color),
-    300px 380px 0 0 var(--tp-particle-color),
-    650px 350px 0 0 var(--tp-particle-color),
-    820px 420px 0 0 var(--tp-particle-color),
-    130px 520px 0 0 var(--tp-particle-color),
-    400px 580px 0 0 var(--tp-particle-color),
-    750px 550px 0 0 var(--tp-particle-color),
-    950px 620px 0 0 var(--tp-particle-color);
-  animation-duration: 20s;
-  animation-delay: -8s;
-  opacity: 0.4;
-  width: 2px; height: 2px;
+    100px 40px 0 0 var(--tp-particle-color),
+    200px 100px 0 0 var(--tp-particle-color),
+    330px 55px 0 0 var(--tp-particle-color),
+    450px 125px 0 0 var(--tp-particle-color),
+    550px 35px 0 0 var(--tp-particle-color),
+    670px 115px 0 0 var(--tp-particle-color),
+    770px 45px 0 0 var(--tp-particle-color),
+    880px 105px 0 0 var(--tp-particle-color),
+    40px 150px 0 0 var(--tp-particle-color),
+    160px 200px 0 0 var(--tp-particle-color),
+    300px 160px 0 0 var(--tp-particle-color),
+    420px 230px 0 0 var(--tp-particle-color),
+    530px 170px 0 0 var(--tp-particle-color),
+    650px 240px 0 0 var(--tp-particle-color),
+    750px 180px 0 0 var(--tp-particle-color),
+    870px 250px 0 0 var(--tp-particle-color),
+    90px 290px 0 0 var(--tp-particle-color),
+    230px 340px 0 0 var(--tp-particle-color),
+    370px 280px 0 0 var(--tp-particle-color),
+    500px 350px 0 0 var(--tp-particle-color),
+    620px 290px 0 0 var(--tp-particle-color),
+    740px 360px 0 0 var(--tp-particle-color),
+    860px 300px 0 0 var(--tp-particle-color),
+    60px 420px 0 0 var(--tp-particle-color),
+    210px 480px 0 0 var(--tp-particle-color),
+    350px 430px 0 0 var(--tp-particle-color),
+    480px 490px 0 0 var(--tp-particle-color),
+    600px 440px 0 0 var(--tp-particle-color),
+    730px 500px 0 0 var(--tp-particle-color),
+    850px 450px 0 0 var(--tp-particle-color),
+    130px 560px 0 0 var(--tp-particle-color),
+    290px 580px 0 0 var(--tp-particle-color),
+    440px 550px 0 0 var(--tp-particle-color),
+    580px 590px 0 0 var(--tp-particle-color),
+    720px 560px 0 0 var(--tp-particle-color),
+    850px 600px 0 0 var(--tp-particle-color),
+    180px 670px 0 0 var(--tp-particle-color),
+    350px 690px 0 0 var(--tp-particle-color),
+    520px 660px 0 0 var(--tp-particle-color),
+    680px 700px 0 0 var(--tp-particle-color);
+  animation-duration: 22s;
+  animation-delay: -6s;
+  opacity: 0.6;
+  width: 3px; height: 3px;
 }
 @keyframes tp-particles-float {
-  0% { transform: translateY(105vh) translateX(0); }
-  25% { transform: translateY(70vh) translateX(15px); }
-  50% { transform: translateY(35vh) translateX(-10px); }
-  75% { transform: translateY(10vh) translateX(10px); }
-  100% { transform: translateY(-50px) translateX(0); }
+  0% { transform: translateY(108vh) translateX(0); }
+  25% { transform: translateY(72vh) translateX(20px); }
+  50% { transform: translateY(36vh) translateX(-15px); }
+  75% { transform: translateY(8vh) translateX(12px); }
+  100% { transform: translateY(-80px) translateX(0); }
 }
 
 /* 暗角 (暗色模式赛博朋克氛围) */
@@ -546,13 +602,13 @@ html[data-bs-theme=dark] {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none; z-index: 0;
   background: var(--tp-vignette);
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 /* 像素网格背景（保留静态版本，降低不透明度为新粒子层让路） */
 .tp-grid-bg {
   position: fixed; top:0;left:0;right:0;bottom:0;
-  pointer-events: none; z-index: -1;
+  pointer-events: none; z-index: 1;
   background-image: radial-gradient(circle, rgba(128,128,128,0.025) 1px, transparent 1px);
   background-size: 28px 28px;
 }
@@ -1627,44 +1683,37 @@ html[data-bs-theme=light] .tp-grid-bg {
       inset 0 2px 0 0 transparent,
       inset 2px 0 0 0 transparent;
   }
-  15% {
+  20% {
     box-shadow:
       inset 0 -2px 0 0 var(--tp-border-run-color),
       inset -2px 0 0 0 transparent,
       inset 0 2px 0 0 transparent,
       inset 2px 0 0 0 transparent;
   }
-  35% {
+  40% {
     box-shadow:
       inset 0 -2px 0 0 var(--tp-border-run-color),
       inset -2px 0 0 0 var(--tp-border-run-color),
       inset 0 2px 0 0 transparent,
       inset 2px 0 0 0 transparent;
   }
-  55% {
+  60% {
     box-shadow:
       inset 0 -2px 0 0 var(--tp-border-run-color),
       inset -2px 0 0 0 var(--tp-border-run-color),
       inset 0 2px 0 0 var(--tp-border-run-color),
       inset 2px 0 0 0 transparent;
   }
-  75% {
+  80%, 100% {
     box-shadow:
       inset 0 -2px 0 0 var(--tp-border-run-color),
       inset -2px 0 0 0 var(--tp-border-run-color),
       inset 0 2px 0 0 var(--tp-border-run-color),
       inset 2px 0 0 0 var(--tp-border-run-color);
   }
-  100% {
-    box-shadow:
-      inset 0 -2px 0 0 transparent,
-      inset -2px 0 0 0 transparent,
-      inset 0 2px 0 0 transparent,
-      inset 2px 0 0 0 transparent;
-  }
 }
 .tp-page .card:hover {
-  animation: tp-border-sweep 1s ease-out, tp-glitch 0.2s steps(3);
+  animation: tp-border-sweep 0.8s ease-out forwards, tp-glitch 0.25s steps(3);
 }
 
 /* ── 按钮火花容器 ── */
@@ -1691,15 +1740,15 @@ html[data-bs-theme=light] .tp-grid-bg {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .tp-stat-animate-in {
-  animation: tp-stat-enter 0.5s ease-out both;
+  animation: tp-stat-enter 0.5s ease-out backwards;
 }
-/* 分段延迟，逐卡片入场 */
-.tp-stat-animate-in:nth-child(1) { animation-delay: 0.05s; }
-.tp-stat-animate-in:nth-child(2) { animation-delay: 0.10s; }
-.tp-stat-animate-in:nth-child(3) { animation-delay: 0.15s; }
-.tp-stat-animate-in:nth-child(4) { animation-delay: 0.20s; }
-.tp-stat-animate-in:nth-child(5) { animation-delay: 0.25s; }
-.tp-stat-animate-in:nth-child(6) { animation-delay: 0.30s; }
+/* 分段延迟，逐卡片入场（target column wrappers since each card is only-child of its col） */
+.col-md-2:nth-child(1) .tp-stat-animate-in { animation-delay: 0.05s; }
+.col-md-2:nth-child(2) .tp-stat-animate-in { animation-delay: 0.10s; }
+.col-md-2:nth-child(3) .tp-stat-animate-in { animation-delay: 0.15s; }
+.col-md-2:nth-child(4) .tp-stat-animate-in { animation-delay: 0.20s; }
+.col-md-2:nth-child(5) .tp-stat-animate-in { animation-delay: 0.25s; }
+.col-md-2:nth-child(6) .tp-stat-animate-in { animation-delay: 0.30s; }
 
 /* ── 像素旋转加载器（替换默认 spinner）── */
 @keyframes tp-pixel-spin {
@@ -1826,15 +1875,14 @@ html[data-bs-theme=light] .tp-grid-bg {
   animation: tp-degauss 0.6s ease-out forwards;
 }
 
-/* prefers-reduced-motion 支持 — v6.0 全覆盖 */
+/* prefers-reduced-motion 支持 — v6.0.2 保留可见度，仅停用动画 */
 @media (prefers-reduced-motion: reduce) {
   .tp-page, .tp-page * {
     transition-duration: 0.001ms !important;
     animation-duration: 0.001ms !important;
   }
-  .tp-scanlines { animation: none !important; opacity: 0.08 !important; }
   .tp-particles::before,
-  .tp-particles::after { animation: none !important; opacity: 0.1 !important; }
+  .tp-particles::after { animation: none !important; }
   .tp-page .navbar-vertical .navbar-nav .nav-item { animation: none !important; opacity: 1 !important; transform: none !important; }
   .tp-page .progress-bar { animation: none !important; }
   .tp-page .card::before,
@@ -1982,8 +2030,8 @@ html[data-bs-theme=light] .tp-grid-bg {
   /* Tabs horizontal scroll on phone */
   .tp-page .nav-tabs .nav-link { font-size: 0.68rem !important; padding: 6px 10px; }
 
-  /* 手机端扫描线降不透明度 */
-  .tp-scanlines { opacity: 0.12 !important; animation: none !important; }
+  /* 手机端扫描线降低不透明度 */
+  .tp-scanlines { opacity: 0.18 !important; }
   /* 手机端隐藏粒子（性能） */
   .tp-particles { display: none !important; }
   /* 暗角降低强度 */
@@ -2026,9 +2074,18 @@ html[data-bs-theme=light] .tp-grid-bg {
   vertical-align: middle; margin: 0 4px;
   position: relative;
 }
+/* v6.0.2: 从中心缩放，避免偏移到文字上 */
+.tp-pixel-heart, .tp-pixel-star, .tp-pixel-arrow,
+.tp-pixel-check, .tp-pixel-cross, .tp-pixel-bolt, .tp-pixel-warn {
+  transform: scale(2.5);
+  transform-origin: center center;
+  margin: 0 7px;
+  position: relative;
+  vertical-align: middle;
+}
 /* 像素心形 (4×4) */
 .tp-pixel-heart {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     4px 0 0 var(--tp-nav-active-text), 10px 0 0 var(--tp-nav-active-text),
     2px 2px 0 var(--tp-nav-active-text), 12px 2px 0 var(--tp-nav-active-text),
@@ -2039,7 +2096,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 /* 像素星形 (5×5) */
 .tp-pixel-star {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     6px 0 0 var(--tp-amber-text),
     4px 2px 0 var(--tp-amber-text), 6px 2px 0 var(--tp-amber-text), 8px 2px 0 var(--tp-amber-text),
@@ -2050,7 +2107,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 /* 像素箭头 (5×3) */
 .tp-pixel-arrow {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     0px 0 0 var(--tp-nav-active-text),
     0px 2px 0 var(--tp-nav-active-text), 2px 2px 0 var(--tp-nav-active-text),
@@ -2058,7 +2115,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 /* 像素勾选 (4×4) */
 .tp-pixel-check {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     6px 0 0 var(--tp-btn-success-text),
     4px 2px 0 var(--tp-btn-success-text),
@@ -2067,7 +2124,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 /* 像素叉号 (3×3) */
 .tp-pixel-cross {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     0px 0 0 var(--tp-btn-danger-text), 4px 0 0 var(--tp-btn-danger-text),
     2px 2px 0 var(--tp-btn-danger-text),
@@ -2075,7 +2132,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 /* 像素闪电 (3×5) */
 .tp-pixel-bolt {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     4px 0 0 var(--tp-amber-text),
     2px 2px 0 var(--tp-amber-text), 4px 2px 0 var(--tp-amber-text),
@@ -2085,7 +2142,7 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 /* 像素警告三角 (5×5) */
 .tp-pixel-warn {
-  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  display: inline-block; width: 2px; height: 2px;
   box-shadow:
     6px 0 0 var(--tp-amber-text),
     4px 2px 0 var(--tp-amber-text), 8px 2px 0 var(--tp-amber-text),

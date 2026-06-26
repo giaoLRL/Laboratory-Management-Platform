@@ -6,7 +6,7 @@
 
 {% block head %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'lab_manager/lab_manager.css' %}">
+<link rel="stylesheet" href="{% static 'lab_manager/lab_manager.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
@@ -300,11 +300,6 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
         expandBtn.addEventListener('click', function() {
             sidebar.classList.remove('collapsed');
         });
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-            });
-        }
         // Select conversation on mobile auto-closes sidebar
         document.querySelectorAll('.agent-conversation-item').forEach(function(item) {
             item.addEventListener('click', function() {

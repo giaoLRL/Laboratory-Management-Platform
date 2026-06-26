@@ -4,6 +4,13 @@ menu = PluginMenu(
     label='实验室',
     icon_class='mdi mdi-flask',
     groups=(
+        ('概览', (
+            PluginMenuItem(
+                link='plugins:lab_manager:home',
+                link_text='首页仪表板',
+                buttons=(),
+            ),
+        )),
         ('硬件管理', (
             PluginMenuItem(
                 link='plugins:lab_manager:hardware_list',
