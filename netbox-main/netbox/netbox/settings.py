@@ -570,7 +570,7 @@ AUTH_USER_MODEL = 'users.User'
 
 # Authentication URLs
 LOGIN_URL = f'/{BASE_PATH}login/'
-LOGIN_REDIRECT_URL = f'/{BASE_PATH}'
+LOGIN_REDIRECT_URL = getattr(configuration, 'LOGIN_REDIRECT_URL', f'/{BASE_PATH}')
 
 # Use timezone-aware datetime objects
 USE_TZ = True
