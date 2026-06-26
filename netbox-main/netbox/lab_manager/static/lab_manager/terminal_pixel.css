@@ -2067,7 +2067,8 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   .tp-page .nav-link,
   .tp-page .navbar-toggler,
   .tp-page .agent-conversation-item,
-  .tp-page .pagination .page-link {
+  .tp-page .pagination .page-link,
+  .tp-mobile-nav-btn {
     min-height: 44px;
     display: inline-flex; align-items: center;
   }
@@ -2130,54 +2131,109 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   }
 }
 
-/* ── 17.1 侧边栏导航 — 移动端滑出式覆盖层 ── */
+/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v6.3.1 ── */
 @media (max-width: 991.98px) {
-  /* 覆盖 Bootstrap 默认 collapse，改为滑出面板 */
+  /* 隐藏原 Bootstrap navbar-toggler（改用浮动按钮） */
+  .tp-page .navbar-vertical .navbar-toggler {
+    display: none !important;
+  }
+
+  /* 侧边栏 — 固定滑出面板 */
   .tp-page .navbar-vertical {
     position: fixed !important; top: 0; left: 0; bottom: 0; z-index: 1050;
     width: 280px; max-width: 85vw;
     transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 28px rgba(0,0,0,0.45);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* 强制 sidebar-menu 始终可见 */
   }
-  .tp-page .navbar-vertical.show,
-  .tp-page .navbar-vertical:has(.navbar-collapse.show) {
+  .tp-page .navbar-vertical .navbar-collapse {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+  }
+
+  /* ★ 由浮动按钮 JS 控制：html.mobile-nav-open → 显示面板 */
+  html.mobile-nav-open .tp-page .navbar-vertical {
     transform: translateX(0);
   }
 
-  /* 侧边栏打开时禁止 body 滚动 */
-  body.sidebar-open { overflow: hidden; }
+  /* 打开时锁定 body 滚动 */
+  html.mobile-nav-open body {
+    overflow: hidden;
+  }
 
-  /* 暗色遮罩层 — 由 JS 动态插入 */
+  /* ── 浮动汉堡按钮 ★ 关键：始终可见，位于侧边栏外部 ── */
+  .tp-mobile-nav-btn {
+    display: flex !important;
+    position: fixed;
+    top: 10px; left: 10px;
+    z-index: 1060;
+    width: 46px; height: 46px;
+    border: 2px solid var(--tp-card-border);
+    border-radius: 3px;
+    background: var(--tp-card-header-bg);
+    color: var(--tp-nav-text);
+    cursor: pointer;
+    align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transition: background 0.15s, border-color 0.15s, left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 像素风裁剪 */
+    clip-path: polygon(
+      0 3px, 2px 1px, 3px 0, calc(100% - 3px) 0, calc(100% - 2px) 1px,
+      100% 3px, 100% calc(100% - 3px), calc(100% - 2px) calc(100% - 1px),
+      calc(100% - 3px) 100%, 3px 100%, 2px calc(100% - 1px), 0 calc(100% - 3px)
+    );
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .tp-mobile-nav-btn:active {
+    background: var(--tp-nav-hover-bg);
+    border-color: var(--tp-nav-accent);
+  }
+  /* 三横线图标（纯 CSS，不依赖 icon font） */
+  .tp-mobile-nav-btn::before {
+    content: '';
+    width: 22px; height: 18px;
+    background: linear-gradient(
+      to bottom,
+      var(--tp-nav-text) 0, var(--tp-nav-text) 2px,
+      transparent 2px, transparent 7px,
+      var(--tp-nav-text) 7px, var(--tp-nav-text) 9px,
+      transparent 9px, transparent 14px,
+      var(--tp-nav-text) 14px, var(--tp-nav-text) 16px
+    );
+    transition: background 0.15s;
+  }
+  /* 侧边栏打开时汉堡按钮右移 */
+  html.mobile-nav-open .tp-mobile-nav-btn {
+    left: calc(280px + 10px);
+    left: calc(min(85vw, 280px) + 10px);
+  }
+
+  /* ── 暗色遮罩层 ── */
   .tp-sidebar-backdrop {
     position: fixed; inset: 0; z-index: 1045;
     background: rgba(0,0,0,0.55);
     opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.28s ease;
   }
-  .tp-sidebar-backdrop.show {
+  html.mobile-nav-open .tp-sidebar-backdrop {
     opacity: 1; pointer-events: auto;
-  }
-
-  /* 汉堡菜单按钮 — 确保可见 */
-  .tp-page .navbar-vertical .navbar-toggler {
-    border: 1px solid var(--tp-card-border);
-    background: var(--tp-card-header-bg);
-    color: var(--tp-nav-text);
-    padding: 8px 10px;
-    z-index: 1051;
-  }
-  .tp-page .navbar-vertical .navbar-toggler:focus {
-    box-shadow: 0 0 0 3px var(--tp-input-focus-shadow);
   }
 
   /* 移动端侧边栏内边距优化 */
   .tp-page .navbar-vertical .navbar-nav { padding-bottom: 16px; }
   .tp-page .navbar-vertical .nav-link {
-    padding: 12px 16px !important;  /* 更大触控区域 */
+    padding: 12px 16px !important;
     font-size: 0.82rem !important;
+  }
+
+  /* 侧边栏内的品牌/logo 移动端优化 */
+  .tp-page .navbar-vertical .navbar-brand {
+    padding-top: 12px;
   }
 }
 

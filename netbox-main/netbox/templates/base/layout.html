@@ -17,7 +17,7 @@ Blocks:
 {% block head %}
 {# ── 像素主题全局注入 ── #}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=27">
+<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=28">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M10 4h12v4h-2v4h-2v4h-4v-4h-2v-4h-2z' fill='%2300e5ff'/><rect x='14' y='16' width='4' height='8' fill='%2300ff41'/><rect x='8' y='0' width='4' height='4' fill='%2300e5ff' opacity='.7'/><rect x='22' y='2' width='4' height='4' fill='%2300e5ff' opacity='.5'/></svg>">
 <style>
   html{background:#0b0e14!important}
@@ -33,6 +33,11 @@ Blocks:
   <div class="tp-vignette"></div>
   <div class="tp-scanlines"></div>
   <div class="tp-grid-bg"></div>
+
+  {# ── 移动端浮动导航按钮 v6.3.1 ── #}
+  <button class="tp-mobile-nav-btn d-lg-none" id="tp-mobile-nav-btn" aria-label="打开导航菜单"></button>
+  <div class="tp-sidebar-backdrop d-lg-none" id="tp-sidebar-backdrop"></div>
+
   <div class="tp-page">
 
   <div class="page">
@@ -241,73 +246,56 @@ Blocks:
   })();
   </script>
 
-  {# ── 移动端侧边栏增强 v6.3 ── #}
+  {# ── 移动端侧边栏 — 浮动汉堡按钮 + 抽屉面板 v6.3.1 ── #}
   <script>
   (function(){
-    var sidebar = document.querySelector('.navbar-vertical');
-    var toggler = sidebar ? sidebar.querySelector('.navbar-toggler') : null;
-    var collapse = sidebar ? sidebar.querySelector('.navbar-collapse') : null;
-    if (!sidebar || !toggler || !collapse) return;
+    var btn = document.getElementById('tp-mobile-nav-btn');
+    var backdrop = document.getElementById('tp-sidebar-backdrop');
+    var html = document.documentElement;
+    if (!btn || !backdrop) return;
 
-    var isMobile = function() { return window.innerWidth < 992; };
+    function isMobile() { return window.innerWidth < 992; }
 
-    // 创建遮罩层
-    var backdrop = document.createElement('div');
-    backdrop.className = 'tp-sidebar-backdrop';
-    document.body.appendChild(backdrop);
-
-    // 关闭侧边栏
-    function closeSidebar() {
-      collapse.classList.remove('show');
-      sidebar.classList.remove('show');
-      backdrop.classList.remove('show');
-      document.body.classList.remove('sidebar-open');
+    function openNav() {
+      if (!isMobile()) return;
+      html.classList.add('mobile-nav-open');
     }
 
-    // 打开侧边栏
-    function openSidebar() {
-      collapse.classList.add('show');
-      sidebar.classList.add('show');
-      backdrop.classList.add('show');
-      document.body.classList.add('sidebar-open');
+    function closeNav() {
+      html.classList.remove('mobile-nav-open');
     }
+
+    function toggleNav() {
+      if (html.classList.contains('mobile-nav-open')) closeNav();
+      else openNav();
+    }
+
+    // 汉堡按钮点击
+    btn.addEventListener('click', toggleNav);
 
     // 点击遮罩关闭
-    backdrop.addEventListener('click', closeSidebar);
+    backdrop.addEventListener('click', closeNav);
 
-    // 汉堡按钮切换
-    toggler.addEventListener('click', function(e) {
-      if (!isMobile()) return;
-      if (collapse.classList.contains('show')) {
-        closeSidebar();
-      } else {
-        openSidebar();
-      }
-    });
+    // 侧边栏内链接点击 → 自动关闭
+    var sidebar = document.querySelector('.navbar-vertical');
+    if (sidebar) {
+      sidebar.addEventListener('click', function(e) {
+        if (!isMobile()) return;
+        var link = e.target.closest('.nav-link');
+        if (link && link.getAttribute('href') && !link.getAttribute('data-bs-toggle')) {
+          setTimeout(closeNav, 150);
+        }
+      });
+    }
 
-    // 侧边栏内链接点击后自动关闭（移动端）
-    sidebar.addEventListener('click', function(e) {
-      if (!isMobile()) return;
-      var link = e.target.closest('.nav-link');
-      if (link && link.getAttribute('href') && !link.getAttribute('data-bs-toggle')) {
-        setTimeout(closeSidebar, 200);
-      }
-    });
-
-    // 窗口大小变化时，如果在桌面端则清理移动端状态
+    // 窗口变大到桌面端 → 清理状态
     window.addEventListener('resize', function() {
-      if (!isMobile()) {
-        closeSidebar();
-        collapse.classList.remove('show');
-        sidebar.classList.remove('show');
-      }
+      if (!isMobile()) closeNav();
     });
 
-    // 按 Escape 键关闭
+    // Escape 关闭
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && isMobile() && collapse.classList.contains('show')) {
-        closeSidebar();
-      }
+      if (e.key === 'Escape' && html.classList.contains('mobile-nav-open')) closeNav();
     });
   })();
   </script>
