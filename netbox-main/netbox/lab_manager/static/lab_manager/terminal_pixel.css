@@ -1618,42 +1618,53 @@ html[data-bs-theme=light] .tp-grid-bg {
   }
 }
 
-/* ── 边框跑马灯（卡片 hover 四角像素逐段亮起）── */
-@keyframes tp-border-run-top {
-  0% { left: 0; width: 0; opacity: 0; }
-  40% { opacity: 0.6; }
-  100% { left: 0; width: 100%; opacity: 0.15; }
+/* ── 边框跑马灯（卡片 hover 四边逐段亮起，使用 box-shadow 不冲突伪元素）── */
+@keyframes tp-border-sweep {
+  0% {
+    box-shadow:
+      inset 0 -2px 0 0 transparent,
+      inset -2px 0 0 0 transparent,
+      inset 0 2px 0 0 transparent,
+      inset 2px 0 0 0 transparent;
+  }
+  15% {
+    box-shadow:
+      inset 0 -2px 0 0 var(--tp-border-run-color),
+      inset -2px 0 0 0 transparent,
+      inset 0 2px 0 0 transparent,
+      inset 2px 0 0 0 transparent;
+  }
+  35% {
+    box-shadow:
+      inset 0 -2px 0 0 var(--tp-border-run-color),
+      inset -2px 0 0 0 var(--tp-border-run-color),
+      inset 0 2px 0 0 transparent,
+      inset 2px 0 0 0 transparent;
+  }
+  55% {
+    box-shadow:
+      inset 0 -2px 0 0 var(--tp-border-run-color),
+      inset -2px 0 0 0 var(--tp-border-run-color),
+      inset 0 2px 0 0 var(--tp-border-run-color),
+      inset 2px 0 0 0 transparent;
+  }
+  75% {
+    box-shadow:
+      inset 0 -2px 0 0 var(--tp-border-run-color),
+      inset -2px 0 0 0 var(--tp-border-run-color),
+      inset 0 2px 0 0 var(--tp-border-run-color),
+      inset 2px 0 0 0 var(--tp-border-run-color);
+  }
+  100% {
+    box-shadow:
+      inset 0 -2px 0 0 transparent,
+      inset -2px 0 0 0 transparent,
+      inset 0 2px 0 0 transparent,
+      inset 2px 0 0 0 transparent;
+  }
 }
-@keyframes tp-border-run-right {
-  0% { top: 0; height: 0; opacity: 0; }
-  40% { opacity: 0.6; }
-  100% { top: 0; height: 100%; opacity: 0.15; }
-}
-@keyframes tp-border-run-bottom {
-  0% { right: 0; width: 0; opacity: 0; }
-  40% { opacity: 0.6; }
-  100% { right: 0; width: 100%; opacity: 0.15; }
-}
-@keyframes tp-border-run-left {
-  0% { bottom: 0; height: 0; opacity: 0; }
-  40% { opacity: 0.6; }
-  100% { bottom: 0; height: 100%; opacity: 0.15; }
-}
-
-/* 卡片 hover 触发边框跑马灯 — 使用伪元素 */
-.tp-page .card {
-  --border-run-duration: 0.8s;
-}
-.tp-page .card:hover::before {
-  content: '';
-  position: absolute; top: 0; left: 0; height: 2px;
-  background: var(--tp-border-run-color);
-  animation: tp-border-run-top var(--border-run-duration) ease-out forwards;
-  z-index: 2; pointer-events: none;
-}
-/* 卡片 glitch 微抖动（不影响已有样式叠加） */
-.tp-page .card.card-hover-glitch:hover {
-  animation: tp-glitch 0.3s steps(3) both;
+.tp-page .card:hover {
+  animation: tp-border-sweep 1s ease-out, tp-glitch 0.2s steps(3);
 }
 
 /* ── 按钮火花容器 ── */
@@ -2007,16 +2018,103 @@ html[data-bs-theme=light] .tp-grid-bg {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   18. 打印样式
+   18. 像素 CSS 图标 (V1) — box-shadow 像素艺术，零外部资源
+   ═══════════════════════════════════════════════════════════════════════ */
+/* 基础像素图标容器 */
+.tp-pixel-icon {
+  display: inline-block; width: 2px; height: 2px;
+  vertical-align: middle; margin: 0 4px;
+  position: relative;
+}
+/* 像素心形 (4×4) */
+.tp-pixel-heart {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    4px 0 0 var(--tp-nav-active-text), 10px 0 0 var(--tp-nav-active-text),
+    2px 2px 0 var(--tp-nav-active-text), 12px 2px 0 var(--tp-nav-active-text),
+    0px 4px 0 var(--tp-nav-active-text), 14px 4px 0 var(--tp-nav-active-text),
+    2px 6px 0 var(--tp-nav-active-text), 12px 6px 0 var(--tp-nav-active-text),
+    4px 8px 0 var(--tp-nav-active-text), 10px 8px 0 var(--tp-nav-active-text),
+    6px 10px 0 var(--tp-nav-active-text), 8px 10px 0 var(--tp-nav-active-text);
+}
+/* 像素星形 (5×5) */
+.tp-pixel-star {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    6px 0 0 var(--tp-amber-text),
+    4px 2px 0 var(--tp-amber-text), 6px 2px 0 var(--tp-amber-text), 8px 2px 0 var(--tp-amber-text),
+    0px 4px 0 var(--tp-amber-text), 2px 4px 0 var(--tp-amber-text), 4px 4px 0 var(--tp-amber-text), 6px 4px 0 var(--tp-amber-text), 8px 4px 0 var(--tp-amber-text), 10px 4px 0 var(--tp-amber-text), 12px 4px 0 var(--tp-amber-text),
+    2px 6px 0 var(--tp-amber-text), 6px 6px 0 var(--tp-amber-text), 10px 6px 0 var(--tp-amber-text),
+    4px 8px 0 var(--tp-amber-text), 8px 8px 0 var(--tp-amber-text),
+    6px 10px 0 var(--tp-amber-text);
+}
+/* 像素箭头 (5×3) */
+.tp-pixel-arrow {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    0px 0 0 var(--tp-nav-active-text),
+    0px 2px 0 var(--tp-nav-active-text), 2px 2px 0 var(--tp-nav-active-text),
+    0px 4px 0 var(--tp-nav-active-text), 2px 4px 0 var(--tp-nav-active-text), 4px 4px 0 var(--tp-nav-active-text);
+}
+/* 像素勾选 (4×4) */
+.tp-pixel-check {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    6px 0 0 var(--tp-btn-success-text),
+    4px 2px 0 var(--tp-btn-success-text),
+    2px 4px 0 var(--tp-btn-success-text),
+    2px 6px 0 var(--tp-btn-success-text), 4px 6px 0 var(--tp-btn-success-text), 6px 6px 0 var(--tp-btn-success-text);
+}
+/* 像素叉号 (3×3) */
+.tp-pixel-cross {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    0px 0 0 var(--tp-btn-danger-text), 4px 0 0 var(--tp-btn-danger-text),
+    2px 2px 0 var(--tp-btn-danger-text),
+    0px 4px 0 var(--tp-btn-danger-text), 4px 4px 0 var(--tp-btn-danger-text);
+}
+/* 像素闪电 (3×5) */
+.tp-pixel-bolt {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    4px 0 0 var(--tp-amber-text),
+    2px 2px 0 var(--tp-amber-text), 4px 2px 0 var(--tp-amber-text),
+    4px 4px 0 var(--tp-amber-text),
+    4px 6px 0 var(--tp-amber-text),
+    2px 8px 0 var(--tp-amber-text);
+}
+/* 像素警告三角 (5×5) */
+.tp-pixel-warn {
+  display: inline-block; width: 2px; height: 2px; vertical-align: middle; margin: 0 4px;
+  box-shadow:
+    6px 0 0 var(--tp-amber-text),
+    4px 2px 0 var(--tp-amber-text), 8px 2px 0 var(--tp-amber-text),
+    2px 4px 0 var(--tp-amber-text), 10px 4px 0 var(--tp-amber-text),
+    0px 6px 0 var(--tp-amber-text), 12px 6px 0 var(--tp-amber-text),
+    2px 8px 0 var(--tp-amber-text), 6px 8px 0 var(--tp-amber-text), 10px 8px 0 var(--tp-amber-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   19. 打印样式
    ═══════════════════════════════════════════════════════════════════════ */
 @media print {
   .tp-scanlines,
   .tp-grid-bg,
+  .tp-particles,
+  .tp-vignette,
   .tp-degaussing,
   .tp-page .card::before,
   .tp-page .card::after,
   .tp-body .modal-content::before,
-  .tp-body .modal-content::after {
+  .tp-body .modal-content::after,
+  .tp-pixel-icon,
+  .tp-pixel-heart,
+  .tp-pixel-star,
+  .tp-pixel-arrow,
+  .tp-pixel-check,
+  .tp-pixel-cross,
+  .tp-pixel-bolt,
+  .tp-pixel-warn {
     display: none !important;
   }
   .tp-page,
@@ -2029,10 +2127,14 @@ html[data-bs-theme=light] .tp-grid-bg {
     clip-path: none !important;
     border: 1px solid #ccc !important;
     box-shadow: none !important;
+    animation: none !important;
   }
   .tp-page .navbar-vertical { display: none !important; }
   .tp-page h1, .tp-page h3 {
     text-shadow: none !important;
     -webkit-text-fill-color: initial !important;
+    animation: none !important;
   }
+  .tp-page .btn::after { display: none !important; }
+  .tp-page .progress-bar { animation: none !important; }
 }

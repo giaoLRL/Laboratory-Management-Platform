@@ -363,16 +363,6 @@ html[data-bs-theme=light] .agent-message-bubble.assistant th {
 }
 .md-video-filename::before { content:'[VID]'; font-size:0.82em; color: var(--tp-agent-accent-green-bright); font-weight:600; }
 
-/* === Spinner === */
-.agent-spinner {
-    display: inline-block; width: 16px; height: 16px;
-    border: 2px solid rgba(0,255,65,0.2);
-    border-top-color: var(--tp-agent-accent-green-bright); border-radius: 50%;
-    animation: agent-spin 0.6s linear infinite;
-    vertical-align: middle; margin-right: 6px;
-}
-@keyframes agent-spin { to { transform: rotate(360deg); } }
-
 /* === Activity Calendar === */
 .activity-calendar { table-layout: fixed; }
 .activity-calendar .calendar-day {
@@ -681,8 +671,9 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
    v6.0 Pixel Enhancements
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Agent pixel spinner (8-bit pixel ring) */
+/* Agent pixel spinner (8-bit pixel ring — uses tp-pixel-spin from terminal_pixel.css) */
 .agent-spinner {
+  display: inline-block; vertical-align: middle; margin-right: 6px;
   width: 4px; height: 4px;
   border: none; border-radius: 0;
   box-shadow:
@@ -690,17 +681,6 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0;
   animation: tp-pixel-spin 0.8s steps(1) infinite;
   color: var(--tp-agent-accent-green-bright);
-}
-@keyframes tp-pixel-spin {
-  0%   { box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0; }
-  12.5%{ box-shadow: 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0; }
-  25%  { box-shadow: 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0; }
-  37.5%{ box-shadow: 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0; }
-  50%  { box-shadow: 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0; }
-  62.5%{ box-shadow: -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0; }
-  75%  { box-shadow: -8px 0 0 0, -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0; }
-  87.5%{ box-shadow: -6px -5px 0 0, 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0; }
-  100% { box-shadow: 0 -8px 0 0, 6px -5px 0 0, 8px 0 0 0, 6px 5px 0 0, 0 8px 0 0, -6px 5px 0 0, -8px 0 0 0, -6px -5px 0 0; }
 }
 
 /* 消息气泡滑入动画 */
@@ -741,22 +721,6 @@ html[data-bs-theme=light] .agent-conversation-item.active {
 .agent-send-btn:hover:not(:disabled)::after {
   animation: tp-spark 0.45s ease-out forwards;
 }
-@keyframes tp-spark {
-  0% {
-    box-shadow:
-      4px -6px 0 0 var(--tp-agent-accent-green-bright),
-      -5px -3px 0 0 var(--tp-agent-accent-green-bright),
-      6px 4px 0 0 var(--tp-agent-accent-green-bright);
-    opacity: 0.6;
-  }
-  100% {
-    box-shadow:
-      14px -18px 0 -2px var(--tp-agent-accent-green-bright),
-      -16px -10px 0 -2px var(--tp-agent-accent-green-bright),
-      18px 12px 0 -2px var(--tp-agent-accent-green-bright);
-    opacity: 0;
-  }
-}
 
 /* prefers-reduced-motion for agent console */
 @media (prefers-reduced-motion: reduce) {
@@ -764,5 +728,4 @@ html[data-bs-theme=light] .agent-conversation-item.active {
   .agent-message-row { animation: none !important; }
   .agent-conversation-item.active { animation: none !important; }
   .agent-send-btn::after { display: none !important; }
-}
 }
