@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Manual fields already visible by default
             return;
         }
+        button.disabled = true;
         status.textContent = '正在获取定位...';
         navigator.geolocation.getCurrentPosition(function (position) {
             latitude.value = position.coords.latitude.toFixed(7);
@@ -132,9 +133,10 @@ document.addEventListener('DOMContentLoaded', function () {
             accuracy.value = position.coords.accuracy ? position.coords.accuracy.toFixed(2) : '';
             status.textContent = '已获取定位：' + latitude.value + ', ' + longitude.value + '，精度约 ' + (accuracy.value || '-') + ' 米';
             manualFields.classList.add('d-none'); help.classList.add('d-none');
-            help.classList.add('d-none');
+            button.disabled = false;
             enableSubmitIfReady();
         }, function (error) {
+            button.disabled = false;
             const messages = {
                 1: '定位权限被拒绝',
                 2: '无法获取当前位置',

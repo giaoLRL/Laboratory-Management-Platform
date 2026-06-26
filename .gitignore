@@ -68,3 +68,4 @@ cbm_index.log
 # ── 自动生成的 OpenAPI schema (12MB) ──
 netbox-main/contrib/openapi.json
 cookies.txt
+deploy_v53.py

@@ -173,12 +173,12 @@
             </thead>
             <tbody>
                 {% for record in records %}
-                <tr class="cursor-pointer" onclick="window.location='{{ record.get_absolute_url }}'">
+                <tr class="cursor-pointer" tabindex="0" onclick="window.location='{{ record.get_absolute_url }}'" onkeydown="if(event.key==='Enter')window.location='{{ record.get_absolute_url }}'" role="button">
                     <td><a href="{{ record.get_absolute_url }}">{{ record.created|date:"m-d H:i" }}</a></td>
                     <td>{{ record.user }}</td>
                     <td>
                         {% if record.photo %}
-                        <img src="{{ record.photo.url }}" class="rounded" style="width:40px;height:40px;object-fit:cover;" alt="">
+                        <img src="{{ record.photo.url }}" class="rounded" style="width:40px;height:40px;object-fit:cover;" alt="{% trans '签到照片' %}">
                         {% else %}
                         <span class="text-muted">-</span>
                         {% endif %}

@@ -218,7 +218,7 @@
                     </thead>
                     <tbody>
                         {% for t in recent_tasks %}
-                        <tr class="cursor-pointer" onclick="window.location='{{ t.get_absolute_url }}'" role="button">
+                        <tr class="cursor-pointer" tabindex="0" onclick="window.location='{{ t.get_absolute_url }}'" onkeydown="if(event.key==='Enter')window.location='{{ t.get_absolute_url }}'" role="button">
                             <td>
                                 <a href="{{ t.get_absolute_url }}" class="text-decoration-none">{{ t.title }}</a>
                                 {% if t.project %}<br><small class="text-muted">{{ t.project.name }}</small>{% endif %}
@@ -252,7 +252,7 @@
                     <thead><tr><th>{% trans "硬件" %}</th><th>{% trans "状态" %}</th><th>{% trans "日期" %}</th></tr></thead>
                     <tbody>
                         {% for br in borrow_records %}
-                        <tr class="cursor-pointer" onclick="window.location='{{ br.get_absolute_url }}'" role="button">
+                        <tr class="cursor-pointer" tabindex="0" onclick="window.location='{{ br.get_absolute_url }}'" onkeydown="if(event.key==='Enter')window.location='{{ br.get_absolute_url }}'" role="button">
                             <td><a href="{{ br.get_absolute_url }}">{{ br.hardware.name }}</a></td>
                             <td>
                                 {% if br.status == 'borrowed' %}

@@ -16,7 +16,7 @@
 <div class="row">
     {% for m in members %}
     <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
-        <div class="card h-100 shadow-sm cursor-pointer hover-shadow" onclick="window.location='{% url 'plugins:lab_manager:member_detail' m.user.pk %}'" role="button">
+        <div class="card h-100 shadow-sm cursor-pointer hover-shadow" tabindex="0" onclick="window.location='{% url 'plugins:lab_manager:member_detail' m.user.pk %}'" onkeydown="if(event.key==='Enter')window.location='{% url 'plugins:lab_manager:member_detail' m.user.pk %}'" role="button">
             <div class="card-body">
                 {# 头像 + 基本信息 #}
                 <div class="d-flex align-items-center mb-3">

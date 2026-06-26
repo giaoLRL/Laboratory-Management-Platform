@@ -17,11 +17,11 @@ Blocks:
 {% block head %}
 {# ── 像素主题全局注入 ── #}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=9">
+<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=13">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M10 4h12v4h-2v4h-2v4h-4v-4h-2v-4h-2z' fill='%2300e5ff'/><rect x='14' y='16' width='4' height='8' fill='%2300ff41'/><rect x='8' y='0' width='4' height='4' fill='%2300e5ff' opacity='.7'/><rect x='22' y='2' width='4' height='4' fill='%2300e5ff' opacity='.5'/></svg>">
 <style>
   html{background:#0b0e14!important}
-  html[data-bs-theme=light]{background:#f4f6f9!important}
+  html[data-bs-theme=light]{background:#f2efe8!important}
 </style>
 {% endblock %}
 
@@ -189,8 +189,8 @@ Blocks:
   {# ── 品牌定制 & 清理 ── #}
   <script>
   (function(){
-    // 移除未使用的 NetBox 内置导航组
-    var HIDDEN = ['操作','自定义','置备'];
+    // 移除未使用的 NetBox 内置导航组（含中英文回退）
+    var HIDDEN = ['操作','自定义','置备','Operations','Customization','Provisioning'];
     var items = document.querySelectorAll('.navbar-vertical .nav-item');
     for (var i = 0; i < items.length; i++) {
       var titleEl = items[i].querySelector('.nav-link-title');
@@ -217,6 +217,24 @@ Blocks:
     }
     if (document.title.indexOf('NetBox') !== -1) {
       document.title = document.title.replace(/NetBox/g, '研究实验室');
+    }
+  })();
+  </script>
+
+  {# ── CRT 消磁效果：主题切换时闪光动画 ── #}
+  <script>
+  (function(){
+    var btns = document.querySelectorAll('.color-mode-toggle');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function() {
+        var theme = document.documentElement.getAttribute('data-bs-theme');
+        var next = theme === 'dark' ? 'light' : 'dark';
+        var el = document.createElement('div');
+        el.className = 'tp-degaussing';
+        el.style.background = next === 'dark' ? '#0b0e14' : '#f2efe8';
+        document.body.appendChild(el);
+        setTimeout(function() { el.remove(); }, 700);
+      });
     }
   })();
   </script>

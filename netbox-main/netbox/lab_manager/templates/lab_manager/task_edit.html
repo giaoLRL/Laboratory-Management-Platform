@@ -30,7 +30,7 @@
                             <td>{{ att.remark|default:'—' }}</td>
                             <td>{{ att.uploaded_by.username }}</td>
                             <td>
-                                <a href="{% url 'plugins:lab_manager:task_attachment_delete' pk=att.pk %}" class="btn btn-sm btn-outline-danger">
+                                <a href="{% url 'plugins:lab_manager:task_attachment_delete' pk=att.pk %}" class="btn btn-sm btn-outline-danger" aria-label="{% trans '删除附件' %}">
                                     <i class="mdi mdi-delete"></i>
                                 </a>
                             </td>

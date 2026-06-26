@@ -79,7 +79,7 @@
             <h5 class="card-header">{% trans "实物照片" %}</h5>
             <div class="card-body text-center">
                 {% if object.image %}
-                <img src="{{ object.image.url }}" alt="{{ object.name }}" class="img-fluid" style="max-height: 400px;">
+                <img src="{{ object.image.url }}" alt="{{ object.name }}" class="img-fluid" style="max-height: 400px;" loading="lazy">
                 {% else %}
                 <p class="text-muted py-5">{% trans "暂无实物照片" %}</p>
                 {% endif %}
@@ -91,7 +91,7 @@
             <h5 class="card-header">{% trans "发票照片" %}</h5>
             <div class="card-body text-center">
                 {% if object.invoice_image %}
-                <img src="{{ object.invoice_image.url }}" alt="发票 — {{ object.name }}" class="img-fluid" style="max-height: 400px;">
+                <img src="{{ object.invoice_image.url }}" alt="发票 — {{ object.name }}" class="img-fluid" style="max-height: 400px;" loading="lazy">
                 {% else %}
                 <p class="text-muted py-5">{% trans "暂无发票照片" %}</p>
                 {% endif %}

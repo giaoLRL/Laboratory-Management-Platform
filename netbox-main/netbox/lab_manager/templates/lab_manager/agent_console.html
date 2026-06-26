@@ -72,7 +72,7 @@
                     {% endif %}
                 </div>
             </div>
-            <div id="agent-status" class="agent-status-badge">{% trans "等待发送请求..." %}</div>
+            <div id="agent-status" class="agent-status-badge" role="status" aria-live="polite" aria-atomic="true">{% trans "等待发送请求..." %}</div>
         </div>
 
         <div id="message-list" class="agent-message-list">
@@ -153,7 +153,7 @@ function renderMarkdown(text) {
     t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
     // Links, images
-    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">');
     // Tables
     t = t.replace(/^\|(.+)\|$/gm, function(row){
@@ -181,7 +181,7 @@ function renderMarkdown(text) {
             var m2=e.toLowerCase();
             if(m2==='mov')m2='quicktime';
             if(m2==='mkv')m2='x-matroska';
-            return '<div class="md-video-player"><video controls preload="metadata" class="md-video"><source src="'+u+'" type="video/'+m2+'">不支持该视频格式</video><div class="md-video-filename">'+decodeURIComponent(u.split('/').pop())+'</div></div>';
+            return '<div class="md-video-player"><video controls preload="metadata" class="md-video"><source src="'+encodeURI(u)+'" type="video/'+m2+'">不支持该视频格式</video><div class="md-video-filename">'+decodeURIComponent(u.split('/').pop())+'</div></div>';
         });
     return t;
 }
@@ -196,7 +196,6 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
 // ═══════════════════════════════════════════
 (function() {
     var input = document.getElementById('agent-input');
-    var workflowAlias = document.getElementById('workflow-alias');
     var sendButton = document.getElementById('send-agent-message');
     var clearButton = document.getElementById('clear-agent-result');
     var statusBox = document.getElementById('agent-status');
@@ -218,7 +217,6 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
         sidebar.classList.add('collapsed');
     }
 
-    var conversationId = '{{ active_coze_conversation_id|default:""|escapejs }}';
     var conversationPk = '{{ active_conversation_id|default:""|escapejs }}';
 
     function setStatus(text, isError) {
@@ -290,22 +288,15 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     }
 
     
-    // Mobile: auto-collapse sidebar, expand button toggles
+    // Mobile: auto-collapse sidebar on initial load, expand button toggles
     (function() {
         var sidebar = document.getElementById('agent-sidebar');
         var expandBtn = document.getElementById('sidebar-expand');
         var toggleBtn = document.getElementById('sidebar-toggle');
         if (!sidebar || !expandBtn) return;
         function isMobile() { return window.innerWidth < 768; }
-        function initMobile() {
-            if (isMobile()) {
-                sidebar.classList.add('collapsed');
-            } else {
-                sidebar.classList.remove('collapsed');
-            }
-        }
-        initMobile();
-        window.addEventListener('resize', initMobile);
+        // Only auto-collapse on initial load, not on every resize
+        if (isMobile()) sidebar.classList.add('collapsed');
         expandBtn.addEventListener('click', function() {
             sidebar.classList.remove('collapsed');
         });
@@ -321,13 +312,6 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
             });
         });
     })();
-
-    document.querySelectorAll('.quick-prompt').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            input.value = btn.dataset.prompt || '';
-            input.focus();
-        });
-    });
 
     clearButton.addEventListener('click', function() {
         input.value = '';
@@ -358,8 +342,6 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
                 },
                 body: JSON.stringify({
                     message: message,
-                    workflow_alias: workflowAlias ? workflowAlias.value.trim() : '',
-                    conversation_id: conversationId,
                     conversation_pk: conversationPk
                 })
             });
@@ -371,7 +353,6 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
                 return;
             }
             if (result.conversation_pk) conversationPk = String(result.conversation_pk);
-            if (result.conversation_id) conversationId = result.conversation_id;
 
             if (result.mode === 'workflow') {
                 var displayText = result.answer_text;
@@ -420,8 +401,13 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
             e.stopPropagation();
             var pk = btn.dataset.pk;
             if (pk && confirm('确定要删除这条会话记录吗？')) {
-                // TODO: send delete request to server
-                console.log('Delete conversation:', pk);
+                fetch('/plugins/lab-manager/agent-conversation/' + pk + '/delete/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': window.CSRF_TOKEN || '' }
+                }).then(function(resp) {
+                    if (resp.ok) window.location.reload();
+                    else alert('删除失败，请重试');
+                }).catch(function() { alert('网络错误，请重试'); });
             }
         });
     });

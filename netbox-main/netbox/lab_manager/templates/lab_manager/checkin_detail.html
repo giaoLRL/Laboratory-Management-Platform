@@ -21,7 +21,7 @@
             <h5 class="card-header">{% trans "照片" %}</h5>
             <div class="card-body">
                 {% if record.photo %}
-                <img src="{{ record.photo.url }}" class="img-fluid rounded" alt="{% trans '打卡照片' %}">
+                <img src="{{ record.photo.url }}" class="img-fluid rounded" alt="{% trans '打卡照片' %}" loading="lazy">
                 {% else %}
                 <p class="text-muted mb-0">{% trans "无照片" %}</p>
                 {% endif %}

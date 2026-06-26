@@ -61,10 +61,4 @@
 {% endblock %}
 
 {% block javascript %}
-<script>
-function markAllRead() {
-    // 使用 GET 导航标记全部已读，无需 CSRF token
-    window.location.href = "{% url 'plugins:lab_manager:notification_read_all' %}";
-}
-</script>
 {% endblock %}

@@ -78,8 +78,14 @@ function showFiles() {
                      f.type.startsWith('video/') ? 'mdi-video' : 'mdi-file-document-outline';
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = '<span><i class="mdi ' + icon + ' me-2"></i>' + f.name + '</span>' +
-                       '<span class="badge text-bg-light">' + sizeStr + '</span>';
+        var iconSpan = document.createElement('span');
+        iconSpan.innerHTML = '<i class="mdi ' + icon + ' me-2"></i>';
+        iconSpan.appendChild(document.createTextNode(f.name));
+        var badgeSpan = document.createElement('span');
+        badgeSpan.className = 'badge text-bg-light';
+        badgeSpan.textContent = sizeStr;
+        li.appendChild(iconSpan);
+        li.appendChild(badgeSpan);
         list.appendChild(li);
     }
 }
