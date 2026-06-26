@@ -621,6 +621,98 @@ html[data-bs-theme=dark] {
 .tp-page #page-content { background: var(--tp-page-bg) !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   1.5 视口锁死 — 智能体助手 / 首页仪表盘 一屏展示 (仅桌面端 ≥992px)
+   ═══════════════════════════════════════════════════════════════════════ */
+@media(min-width:992px){
+  /* Agent Console: page-wrapper 锁死为 viewport - navbar */
+  .tp-page:has(.agent-shell) .page-wrapper {
+    max-height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+  .tp-page:has(.agent-shell) .page-body {
+    height: calc(100vh - 56px - 36px);
+    overflow: hidden;
+  }
+  .tp-page:has(.agent-shell) .container-fluid.tab-content {
+    height: 100%;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+  /* Agent Console shell fills the locked container */
+  .agent-shell {
+    height: 100% !important;
+    max-height: none !important;
+  }
+  /* ── Home Dashboard: lock to viewport + flex layout, zero page scroll ── */
+  .tp-page:has(.tp-home-dashboard) .page-wrapper {
+    max-height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+  .tp-page:has(.tp-home-dashboard) .page-body {
+    height: calc(100vh - 56px - 36px);
+    overflow: hidden;
+  }
+  .tp-page:has(.tp-home-dashboard) .container-fluid.tab-content {
+    height: 100%;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+  .tp-home-dashboard {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+  }
+  /* Stat card rows — compact, don't grow */
+  .tp-home-dashboard .tp-stat-row {
+    flex: 0 0 auto;
+    margin-bottom: 0 !important;
+  }
+  /* Info panel rows — fill remaining space with internal scroll */
+  .tp-home-dashboard .tp-info-row {
+    flex: 1 1 0;
+    min-height: 100px;
+    overflow: hidden;
+    margin-bottom: 0 !important;
+  }
+  .tp-home-dashboard .tp-info-row > .col-md-6 {
+    height: 100%;
+  }
+  .tp-home-dashboard .tp-info-row .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .tp-home-dashboard .tp-info-row .card-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  /* Button row — fixed at bottom */
+  .tp-home-dashboard .tp-action-row {
+    flex: 0 0 auto;
+    margin-bottom: 0 !important;
+  }
+  /* ── Ultra-compact card styling ── */
+  .tp-home-dashboard .card-body { padding: 8px 10px !important; }
+  .tp-home-dashboard .card-header { padding: 5px 10px !important; font-size: 0.78rem !important; }
+  .tp-home-dashboard .card-header h5 { font-size: 0.85rem !important; margin: 0 !important; }
+  .tp-home-dashboard h3 { font-size: 1.2rem !important; margin-bottom: 0 !important; line-height: 1.2 !important; }
+  .tp-home-dashboard small { font-size: 0.68rem !important; }
+  .tp-home-dashboard .table { font-size: 0.72rem; margin-bottom: 0 !important; }
+  .tp-home-dashboard .table th,
+  .tp-home-dashboard .table td { padding: 3px 6px !important; }
+  /* Compact buttons */
+  .tp-home-dashboard .tp-action-row .btn { padding: 8px 10px !important; font-size: 0.8rem !important; margin-bottom: 0 !important; }
+  /* Scrollbar for info panels */
+  .tp-home-dashboard .tp-info-row .card-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tp-btn-border) transparent;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    2. 侧边栏
    ═══════════════════════════════════════════════════════════════════════ */
 .tp-page .navbar-vertical,

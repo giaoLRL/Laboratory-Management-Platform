@@ -6,7 +6,7 @@
 /* === Shell === */
 .agent-shell {
     display: flex; flex-direction: row; gap: 0;
-    height: calc(100vh - 108px); min-height: 680px; max-height: calc(100vh - 108px);
+    height: calc(100vh - 104px); max-height: calc(100vh - 104px); min-height: 0;
     background: var(--tp-agent-shell-bg);
     border: 1px solid var(--tp-card-border); border-radius: 2px;
     overflow: hidden;

@@ -120,12 +120,6 @@
                 </div>
             </div>
 
-            <details class="agent-debug-panel">
-                <summary>{% trans "调试信息 / 原始响应" %}</summary>
-                <div class="agent-debug-content">
-                    <pre id="agent-raw-payload"></pre>
-                </div>
-            </details>
         </div>
     </section>
 </div>
@@ -152,9 +146,13 @@ function renderMarkdown(text) {
     t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
     t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // Links, images
+    // Markdown image syntax — MUST be before links (otherwise link regex eats ![alt](url))
+    t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:4px;margin:6px 0;" loading="lazy">');
+    // Links
     t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">');
+    // Auto-detect bare image URLs — negative lookbehind (?<![="']) skips URLs already inside HTML attributes
+    t = t.replace(/(?<![="'])(\/media\/[^\s<>"']+\.(jpg|jpeg|png|gif|webp|bmp|svg|ico))/gi,
+        function(m,u){ return '<img src="'+encodeURI(u)+'" alt="图片附件" style="max-width:100%;border-radius:4px;margin:6px 0;" loading="lazy">'; });
     // Tables
     t = t.replace(/^\|(.+)\|$/gm, function(row){
         var cells=row.split('|').filter(function(c){return c.trim();});
@@ -225,7 +223,7 @@ document.querySelectorAll('.agent-message-bubble.assistant').forEach(function(b)
     }
 
     function setRawPayload(payload) {
-        rawBox.textContent = payload ? JSON.stringify(payload, null, 2) : '';
+        if (rawBox) rawBox.textContent = payload ? JSON.stringify(payload, null, 2) : '';
     }
 
     function removeEmptyPlaceholder() {

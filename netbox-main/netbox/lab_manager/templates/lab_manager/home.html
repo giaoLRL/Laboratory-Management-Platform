@@ -6,15 +6,13 @@
 {% block title %}{% trans "实验室首页" %}{% endblock %}
 
 {% block content %}
-<div class="row mb-3">
-
-</div>
+<div class="tp-home-dashboard">
 
 {% if is_admin %}
 {# ═══════════════════════ 管理员仪表板 ═══════════════════════ #}
 
 {# 统计卡片行1 #}
-<div class="row mb-3">
+<div class="row tp-stat-row">
     <div class="col-md-2">
         <div class="card text-bg-primary tp-stat-animate-in">
             <div class="card-body text-center py-3">
@@ -25,7 +23,7 @@
     </div>
     <div class="col-md-2">
         <div class="card text-bg-success tp-stat-animate-in">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0">{{ hardware_in_use }}</h3>
                 <small>{% trans "使用中" %}</small>
             </div>
@@ -33,7 +31,7 @@
     </div>
     <div class="col-md-2">
         <div class="card text-bg-warning tp-stat-animate-in">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0">{{ hardware_idle }}</h3>
                 <small>{% trans "闲置" %}</small>
             </div>
@@ -41,7 +39,7 @@
     </div>
     <div class="col-md-2">
         <div class="card text-bg-info tp-stat-animate-in">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0">{{ task_total }}</h3>
                 <small>{% trans "任务总数" %}</small>
             </div>
@@ -49,7 +47,7 @@
     </div>
     <div class="col-md-2">
         <div class="card text-bg-dark tp-stat-animate-in">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0">{{ task_in_progress }}</h3>
                 <small>{% trans "进行中" %}</small>
             </div>
@@ -57,7 +55,7 @@
     </div>
     <div class="col-md-2">
         <div class="card text-bg-secondary tp-stat-animate-in">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0">{{ checkin_today }}</h3>
                 <small>{% trans "今日打卡" %}</small>
             </div>
@@ -66,10 +64,10 @@
 </div>
 
 {# 统计卡片行2 #}
-<div class="row mb-4">
+<div class="row tp-stat-row">
     <div class="col-md-2">
         <div class="card border-danger">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0 text-danger">{{ pending_approval_count }}</h3>
                 <small class="text-muted">{% trans "待审批硬件" %}</small>
             </div>
@@ -77,7 +75,7 @@
     </div>
     <div class="col-md-2">
         <div class="card border-warning">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0 text-warning">{{ overdue_tasks }}</h3>
                 <small class="text-muted">{% trans "逾期任务" %}</small>
             </div>
@@ -85,7 +83,7 @@
     </div>
     <div class="col-md-2">
         <div class="card border-info">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0 text-info">{{ borrowed_count }}</h3>
                 <small class="text-muted">{% trans "当前借出" %}</small>
             </div>
@@ -93,7 +91,7 @@
     </div>
     <div class="col-md-2">
         <div class="card border-success">
-            <div class="card-body text-center py-3">
+            <div class="card-body text-center py-2">
                 <h3 class="mb-0 text-success">{{ task_completed }}</h3>
                 <small class="text-muted">{% trans "已完成任务" %}</small>
             </div>
@@ -102,7 +100,7 @@
 </div>
 
 {# 待审批硬件 + 逾期借出 #}
-<div class="row mb-3">
+<div class="row tp-info-row">
     <div class="col-md-6">
         <div class="card h-100">
             <h5 class="card-header d-flex justify-content-between">
@@ -162,7 +160,7 @@
 </div>
 
 {# 低库存告警 + 最近活动 #}
-<div class="row mb-3">
+<div class="row tp-info-row">
     <div class="col-md-6">
         <div class="card h-100">
             <h5 class="card-header d-flex justify-content-between">
@@ -217,7 +215,7 @@
 </div>
 
 {# 快捷操作 #}
-<div class="row">
+<div class="row tp-action-row">
     <div class="col-md-2">
         <a href="{% url 'plugins:lab_manager:hardware_add' %}" class="btn btn-primary w-100 py-3 mb-2">
             <i class="mdi mdi-plus-thick"></i> {% trans "录入新硬件" %}
@@ -358,4 +356,5 @@
     </div>
 </div>
 {% endif %}
+</div>{# /.tp-home-dashboard #}
 {% endblock %}

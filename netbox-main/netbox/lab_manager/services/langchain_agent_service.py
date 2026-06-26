@@ -164,6 +164,15 @@ class LangChainAgentService:
                 'default_args': {}, 'requires_superuser': False, 'parameters_schema': {},
             },
             {
+                'name': 'find_task_images', 'display_name': '图片检索',
+                'description': 'Find image attachments (photos, screenshots) from tasks using natural-language conditions. '
+                               'Args: query (str). '
+                               'After calling this tool, you MUST render each image using Markdown syntax: ![description](file_url) '
+                               'so the user can see the images directly in chat.',
+                'tool_type': 'image_search', 'execution_key': 'image_search',
+                'default_args': {}, 'requires_superuser': False, 'parameters_schema': {},
+            },
+            {
                 'name': 'analyze_hardware_gap', 'display_name': '硬件缺口分析',
                 'description': 'Analyze missing hardware for a lab project based on current inventory. '
                                'Args: project_description (str)',

@@ -121,6 +121,18 @@ class AgentToolOrchestrator:
                 )
             ]
 
+        if self._asks_for_image(message):
+            enriched_message = message
+            if referenced_user and not self._message_mentions_known_user(message):
+                enriched_message = f'{message} {referenced_user.get("username") or referenced_user.get("full_name")}'
+            return [
+                AgentToolCall(
+                    tool='task.image_search',
+                    args={'message': enriched_message, 'referenced_user': referenced_user or {}},
+                    reason='用户要查任务图片/照片附件，使用专用图片检索工具',
+                )
+            ]
+
         if self._asks_for_video(message):
             enriched_message = message
             if referenced_user and not self._message_mentions_known_user(message):
@@ -245,6 +257,7 @@ class AgentToolOrchestrator:
         tool_key_map = {
             'platform.query': 'platform_query',
             'task.video_search': 'video_search',
+            'task.image_search': 'image_search',
             'hardware.gap_analysis': 'hardware_gap',
             'task.create': 'task_create',
         }
@@ -285,6 +298,8 @@ class AgentToolOrchestrator:
             return self.backend._format_hardware_gap_answer(result)
         if tool == 'task.video_search':
             return self.backend._format_task_video_answer(result)
+        if tool == 'task.image_search':
+            return self.backend._format_task_image_answer(result)
         if tool == 'task.create':
             return self.backend._format_task_create_answer(result)
         if tool == 'platform.query':
@@ -422,6 +437,10 @@ class AgentToolOrchestrator:
     @staticmethod
     def _asks_for_video(message: str) -> bool:
         return any(word in message for word in ('视频', '录像', '录屏')) and any(word in message for word in ('任务', '附件', '完成', '导出', '下载', '给我', '找'))
+
+    @staticmethod
+    def _asks_for_image(message: str) -> bool:
+        return any(word in message for word in ('图片', '照片', '截图', '图像', '相片')) and any(word in message for word in ('任务', '附件', '完成', '导出', '下载', '给我', '找', '看'))
 
     @staticmethod
     def _message_mentions_known_user(message: str) -> bool:

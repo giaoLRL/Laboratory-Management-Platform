@@ -85,6 +85,15 @@ def _exec_hardware_gap(user, args: dict) -> str:
     return json.dumps(result, ensure_ascii=False, default=str)
 
 
+def _exec_image_search(user, args: dict) -> str:
+    """搜索任务图片附件"""
+    from .backend_agent_service import BackendAgentService
+    backend = BackendAgentService()
+    query = str(args.get('query', args.get('message', '')))
+    result = backend._search_task_images(user, query)
+    return json.dumps(result, ensure_ascii=False, default=str)
+
+
 def _exec_find_members(user, args: dict) -> str:
     """搜索平台成员"""
     keyword = str(args.get('keyword', '')).strip()
@@ -108,6 +117,7 @@ TOOL_REGISTRY: dict[str, Callable] = {
     'describe_data': _exec_describe_data,
     'task_create': _exec_task_create,
     'video_search': _exec_video_search,
+    'image_search': _exec_image_search,
     'hardware_gap': _exec_hardware_gap,
     'find_members': _exec_find_members,
 }

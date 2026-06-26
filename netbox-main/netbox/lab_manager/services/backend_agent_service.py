@@ -16,6 +16,7 @@ from .platform_data_service import PlatformDataError, PlatformDataService
 
 
 VIDEO_EXTENSIONS = {'.mp4', '.webm', '.avi', '.mov', '.mkv', '.m4v'}
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.tiff', '.ico'}
 STOP_WORDS = {
     '现在', '目前', '实验室', '帮我', '一下', '看看', '查询', '检索', '读取', '统计', '列出', '告诉我',
     '有哪些', '有什么', '多少', '情况', '资源', '硬件', '库存', '设备', '任务', '最近', '完成',
@@ -616,6 +617,99 @@ class BackendAgentService:
             'export_items': export_items,
         }
 
+    def _search_task_images(self, user, message: str) -> dict[str, Any]:
+        """搜索任务图片附件，返回可直接 Markdown 渲染的图片列表。"""
+        queryset = self._visible_task_queryset(user)
+        requested_status = TaskStatusChoices.COMPLETED if self._contains_any(message, ('已完成', '完成的', '完成任务')) else None
+        if requested_status:
+            queryset = queryset.filter(status=requested_status)
+
+        date_from, date_to, date_label = self._parse_date_range_from_message(message)
+        if date_from:
+            queryset = queryset.filter(completed_at__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(completed_at__date__lte=date_to)
+
+        matched_users = self._find_members_in_message(message)
+        if matched_users:
+            queryset = queryset.filter(assigned_to__in=matched_users)
+
+        keyword_fragments = [] if matched_users else [
+            keyword for keyword in self._extract_keywords(message)
+            if keyword not in {'给我', '找出', '查找', '查询', '任务图片', '图片附件', '图片', '附件', '照片', '截图'}
+        ]
+        if keyword_fragments:
+            keyword_fragments = self._remove_member_keywords(keyword_fragments, matched_users)
+        keyword_query = Q()
+        for keyword in keyword_fragments:
+            keyword_query |= (
+                Q(title__icontains=keyword) |
+                Q(description__icontains=keyword) |
+                Q(completion_note__icontains=keyword)
+            )
+        if keyword_query:
+            queryset = queryset.filter(keyword_query)
+
+        tasks = list(queryset.order_by('-completed_at', '-created')[:20])
+        attachments = TaskAttachment.objects.filter(task__in=tasks).select_related('task', 'uploaded_by').order_by('-created')
+
+        results = []
+        export_items = []
+        total_images = 0
+        images_by_task_id: dict[int, list[dict[str, Any]]] = {}
+        for attachment in attachments:
+            file_name = attachment.file.name or ''
+            if Path(file_name).suffix.lower() not in IMAGE_EXTENSIONS:
+                continue
+            image_item = {
+                'attachment_id': attachment.pk,
+                'file_name': Path(file_name).name,
+                'file_url': attachment.file.url if attachment.file else '',
+                'remark': attachment.remark,
+                'uploaded_by': attachment.uploaded_by.username,
+                'created': attachment.created.isoformat() if attachment.created else None,
+            }
+            images_by_task_id.setdefault(attachment.task_id, []).append(image_item)
+            export_items.append({
+                **image_item,
+                'task_id': attachment.task_id,
+                'task_title': attachment.task.title,
+                'assigned_to': attachment.task.assigned_to.username,
+                'assigned_to_name': attachment.task.assigned_to.get_full_name(),
+                'completed_at': attachment.task.completed_at.isoformat() if attachment.task.completed_at else None,
+            })
+            total_images += 1
+
+        for task in tasks:
+            task_images = images_by_task_id.get(task.pk) or []
+            if not task_images:
+                continue
+            results.append({
+                'task_id': task.pk,
+                'task_title': task.title,
+                'assigned_to': task.assigned_to.username,
+                'completed_at': task.completed_at.isoformat() if task.completed_at else None,
+                'images': task_images,
+            })
+
+        # 生成可直接在 Markdown 中渲染的图片列表
+        markdown_images = []
+        for item in export_items[:12]:  # 最多展示 12 张
+            label = item['remark'] or item['file_name']
+            markdown_images.append(f"![{label}]({item['file_url']})")
+
+        return {
+            'date_from': date_from.isoformat() if date_from else None,
+            'date_to': date_to.isoformat() if date_to else None,
+            'date_label': date_label,
+            'members': [self._serialize_user(user) for user in matched_users],
+            'task_count': len(results),
+            'image_count': total_images,
+            'tasks': results,
+            'export_items': export_items,
+            'markdown_images': markdown_images,
+        }
+
     def _build_import_guide(self, user) -> dict[str, Any]:
         latest_batch = HardwareImportBatch.objects.filter(created_by=user).order_by('-created').first()
         return {
@@ -759,6 +853,27 @@ class BackendAgentService:
                 lines.append(f"  - 🎬 `{video['file_name']}` [点击查看]({video['file_url'] or '#'})")
             lines.append("")
         lines.append('结构化结果已同步返回 `export_items`，外部工作流可以直接拿它生成导出表或下载清单。')
+        return '\n'.join(lines)
+
+    @staticmethod
+    def _format_task_image_answer(data: dict[str, Any]) -> str:
+        if data['image_count'] == 0:
+            return '[智能体] 找了一圈，没有找到匹配的任务图片附件。你可以试着放宽时间范围或换一个关键词。'
+
+        scope_parts = []
+        if data.get('members'):
+            scope_parts.append('成员：' + '、'.join(member['display'] for member in data['members']))
+        if data.get('date_label'):
+            scope_parts.append('时间：' + data['date_label'])
+        scope_text = f"（{'；'.join(scope_parts)}）" if scope_parts else ''
+        lines = [f"[智能体] 已为你整理好{scope_text}的任务图片附件：共 **{data['task_count']}** 个任务、**{data['image_count']}** 张图片。", ""]
+        for task in data['tasks'][:5]:
+            lines.append(f"📁 **任务：{task['task_title']}** (负责人: {task['assigned_to']})")
+            for img in task['images']:
+                label = img['remark'] or img['file_name']
+                lines.append(f"  - 🖼️ ![{label}]({img['file_url'] or '#'})")
+            lines.append("")
+        lines.append('结构化结果已同步返回 `export_items`，外部工作流可以直接拿它生成导出表或清单。')
         return '\n'.join(lines)
 
     @staticmethod

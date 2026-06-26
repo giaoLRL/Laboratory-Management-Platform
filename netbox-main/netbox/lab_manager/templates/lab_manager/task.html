@@ -47,16 +47,20 @@
         </div>
     </div>
     <div class="col col-md-6">
-        <div class="card">
+        <div class="card h-100">
             <h5 class="card-header">{% trans "任务描述" %}</h5>
-            <div class="card-body">
-                {{ object.description|linebreaks }}
+            <div class="card-body" style="max-height: 360px; overflow-y: auto;">
+                {% if object.description %}
+                    {{ object.description|linebreaks }}
+                {% else %}
+                    <p class="text-muted">{% trans "暂无描述" %}</p>
+                {% endif %}
             </div>
         </div>
         {% if object.completion_note %}
         <div class="card mt-3">
             <h5 class="card-header">{% trans "完成说明" %}</h5>
-            <div class="card-body">
+            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
                 {{ object.completion_note|linebreaks }}
             </div>
         </div>
