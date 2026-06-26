@@ -492,6 +492,10 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
 
 /* === Responsive === */
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Responsive — v6.3 全移动端适配
+   ═══════════════════════════════════════════════════════════════════════ */
+
 /* Tablet: 768-992px */
 @media(max-width:991.98px){
     .agent-shell{flex-direction:column;height:auto;min-height:0;border-radius:2px;margin:-12px}
@@ -506,14 +510,19 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     .agent-sidebar:not(.collapsed) ~ .agent-sidebar-expand{opacity:0;pointer-events:none}
 }
 
-/* Phone: < 768px — consolidated v6.0.3 (3 merged blocks, deduplicated, dead CSS removed) */
+/* Phone: < 768px — v6.3 enhanced */
 @media(max-width:767.98px){
     /* ── Shell: full-width, viewport-constrained ── */
     .agent-shell{
         margin:0;border-radius:0;border-left:0;border-right:0;border-bottom:0;
-        height:100dvh;min-height:100dvh;max-height:100dvh;
+        height:100vh; height:100dvh;
+        min-height:100vh; min-height:100dvh;
+        max-height:100vh; max-height:100dvh;
         display:flex;flex-direction:column;
         overflow:hidden !important;
+        /* Safe area for notched iPhones */
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* ── Sidebar: overlay (slide from left) ── */
@@ -521,21 +530,28 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
         position:fixed;top:0;left:0;bottom:0;z-index:1050;
         width:280px;max-width:85vw;
         transform:translateX(-100%);
-        transition:transform 0.3s ease;
+        transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
         box-shadow:4px 0 24px rgba(0,0,0,0.5);
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        -webkit-overflow-scrolling: touch;
     }
     .agent-sidebar:not(.collapsed){transform:translateX(0)}
     .agent-sidebar.collapsed{transform:translateX(-100%)}
     .agent-conversation-list{max-height:none;flex:1}
     .agent-conversation-title{font-size:0.78rem}
-    .agent-conversation-item{padding:8px 10px}
+    .agent-conversation-item{padding:10px 12px; min-height:44px} /* touch-friendly */
 
     .agent-sidebar-expand{
         opacity:1;pointer-events:auto;z-index:1060;
         position:fixed;top:10px;left:10px;
-        padding:8px 12px;font-size:1rem;
+        top: calc(10px + env(safe-area-inset-top, 0px));
+        left: calc(10px + env(safe-area-inset-left, 0px));
+        padding:10px 14px;font-size:1rem;
         background:var(--tp-agent-composer-bg);
         border-radius:2px;
+        min-height:44px; min-width:44px;
+        display:flex; align-items:center;
     }
     .agent-sidebar:not(.collapsed) ~ .agent-sidebar-expand{opacity:0;pointer-events:none}
 
@@ -543,6 +559,7 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
         display:none;
         position:fixed;inset:0;z-index:1045;
         background:rgba(0,0,0,0.5);
+        transition: opacity 0.3s ease;
     }
     .agent-sidebar:not(.collapsed) ~ .agent-sidebar-overlay{display:block}
 
@@ -553,48 +570,63 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     }
     .agent-panel-header{
         flex-shrink:0;flex-wrap:wrap;
-        padding:8px 12px;flex-direction:column;gap:4px;align-items:flex-start;
+        padding:10px 12px;flex-direction:column;gap:4px;align-items:flex-start;
     }
     .agent-panel-header > div:first-child{width:100%}
     .agent-panel-title{font-size:0.9rem;line-height:1.3}
     .agent-panel-subtitle{font-size:0.7rem}
 
-    /* ── Messages: consistent widths ── */
+    /* ── Messages: consistent widths + iOS momentum scroll ── */
     .agent-message-list{
         flex:1;overflow-y:auto;overflow-x:hidden;
         padding:10px 8px;min-height:0;
+        -webkit-overflow-scrolling: touch;
     }
     .agent-message-body{max-width:calc(100% - 44px)}
     .agent-message-bubble{
-        font-size:0.8rem;line-height:1.5;padding:8px 12px;
+        font-size:0.8rem;line-height:1.5;padding:10px 12px;
         word-break:break-word;overflow-wrap:break-word;
         max-width:90%;
     }
     .agent-message-bubble pre{
         font-size:0.7rem;padding:8px;overflow-x:auto;
         white-space:pre-wrap;word-break:break-all;max-width:100%;
+        -webkit-overflow-scrolling: touch;
     }
     .agent-message-bubble code{word-break:break-all}
     .agent-avatar{width:32px;height:32px;font-size:0.7rem;flex-shrink:0}
     .agent-message-meta{font-size:0.65rem}
 
-    /* ── Composer ── */
-    .agent-panel-footer{flex-shrink:0;padding:0}
-    .agent-composer{flex-shrink:0}
-    .agent-composer textarea{font-size:0.82rem;padding:10px;min-height:38px;max-height:100px}
-    .agent-send-btn{font-size:0.75rem;padding:8px 14px;white-space:nowrap}
-    .agent-action-buttons{flex-wrap:wrap;gap:4px}
-    .agent-action-buttons .btn{font-size:0.65rem;padding:5px 8px}
+    /* ── Composer: fixed at bottom, touch-friendly ── */
+    .agent-panel-footer{
+        flex-shrink:0;padding:0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .agent-composer{flex-shrink:0; border-radius:2px 2px 0 0;}
+    .agent-composer textarea{
+        font-size:0.84rem;padding:10px;min-height:40px;max-height:100px;
+        /* Prevent iOS zoom on focus — 16px minimum */
+    }
+    /* iOS: increase font-size to 16px on focus to prevent auto-zoom */
+    @supports (-webkit-touch-callout: none) {
+      .agent-composer textarea:focus { font-size: 16px !important; }
+    }
+    .agent-send-btn{
+        font-size:0.78rem;padding:10px 16px;white-space:nowrap;
+        min-height:44px; min-width:60px;
+    }
+    .agent-action-buttons{flex-wrap:wrap;gap:6px}
+    .agent-action-buttons .btn{font-size:0.7rem;padding:8px 10px; min-height:44px}
 
     /* ── Status badge ── */
-    .agent-status-badge{font-size:0.65rem;padding:4px 10px;width:auto;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .agent-status-badge{font-size:0.65rem;padding:5px 10px;width:auto;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
     /* ── Debug panel ── */
     .agent-debug-panel{max-height:120px;overflow-y:auto;flex-shrink:0;font-size:0.62rem;margin-top:4px}
     .agent-debug-panel pre{font-size:0.6rem;max-height:120px}
 
     /* ── Empty state ── */
-    .agent-empty-card{padding:20px 12px}
+    .agent-empty-card{padding:24px 16px; max-width:95vw}
     .agent-empty-card h2{font-size:1rem}
     .agent-empty-card p{font-size:0.8rem}
 
@@ -605,8 +637,14 @@ html[data-bs-theme=light] .hover-shadow:hover { box-shadow: 0 0 12px rgba(13, 10
     }
 
     /* ── Tables ── */
-    .agent-shell .table-responsive{overflow-x:auto}
+    .agent-shell .table-responsive{overflow-x:auto; -webkit-overflow-scrolling: touch;}
+
+    /* ── Disable heavy animations on mobile ── */
+    .agent-message-row{animation: none !important;}
+    .agent-conversation-item.active{animation: none !important;}
+    .agent-send-btn::after{display: none !important;}
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════════
    v6.0 Pixel Enhancements

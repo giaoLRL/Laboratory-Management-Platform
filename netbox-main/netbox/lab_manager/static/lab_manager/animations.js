@@ -12,9 +12,12 @@
   'use strict';
 
   // ── 配置 ──
-  const DURATION = 800;        // 动画时长 ms
-  const FRAME_RATE = 16;      // ~60fps
-  const BAR_DELAY = 30;       // 柱状图交错延迟 ms
+  // 移动端使用更短动画时长以减少 GPU 负担
+  var isMobile = window.innerWidth < 768;
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var DURATION = prefersReduced ? 0 : (isMobile ? 400 : 800);
+  var FRAME_RATE = 16;      // ~60fps
+  var BAR_DELAY = prefersReduced ? 0 : (isMobile ? 15 : 30);  // 移动端交错延迟减半
 
   // ── 缓动函数 (easeOutCubic) ──
   function easeOutCubic(t) {
