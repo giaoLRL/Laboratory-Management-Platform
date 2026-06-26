@@ -2149,11 +2149,8 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* ── 侧边栏内部容器布局修复（关键！）── */
-  /* 让 container-fluid 垂直排列，消除 Bootstrap flex 间隙 */
+  /* 保留 container-fluid 默认 Bootstrap 布局，仅微调内边距 */
   .tp-page .navbar-vertical .container-fluid {
-    flex-direction: column !important;
-    align-items: stretch !important;
     padding: 8px 12px !important;
   }
 
@@ -2176,31 +2173,24 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     overflow: hidden;
   }
 
-  /* ── 移动端用户菜单栏（主题切换 + 通知 + 用户名）紧凑排列 ── */
-  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 6px !important;
-    padding: 6px 0 !important;
+  /* ── 移动端用户菜单栏（主题切换 + 通知 + 用户名）紧凑 ── */
+  .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row {
+    gap: 4px !important;
+    padding: 4px 0 !important;
     margin: 0 !important;
-    border-top: 1px solid var(--tp-nav-divider);
-    border-bottom: 1px solid var(--tp-nav-divider);
   }
-  /* 用户菜单内的下拉按钮紧凑 */
-  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .nav-link,
-  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .dropdown-toggle {
-    padding: 6px 8px !important;
-    min-height: 36px;
-    font-size: 0.8rem !important;
+  .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .nav-link,
+  .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .dropdown > .nav-link {
+    padding: 4px 6px !important;
+    font-size: 0.78rem !important;
   }
-  /* 用户名文字隐藏次要信息，只显示用户名 */
-  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .small.text-secondary {
+  /* 隐藏用户名下的 Admin/User 副标题 */
+  .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .small.text-secondary {
     display: none;
   }
-  .tp-page .navbar-vertical .navbar-nav.flex-row.d-lg-none .d-xl-block {
-    padding-left: 4px !important;
+  /* 移除 light_toggle 的 ms-2 左边距 */
+  .tp-page .navbar-vertical .d-lg-none.navbar-nav.flex-row .d-flex.ms-2 {
+    margin-left: 0 !important;
   }
 
   /* ── 品牌/logo 移动端紧凑 ── */
@@ -2217,28 +2207,17 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     max-height: 40px;
   }
 
-  /* ── 浮动汉堡按钮 ── */
+  /* ── 汉堡按钮 — 集成在顶部导航栏内，flex 自动排列，永不遮挡 ── */
   .tp-mobile-nav-btn {
     display: flex !important;
-    position: fixed;
-    top: 54px;   /* ★ 避开顶部导航栏，防止遮挡搜索/主题切换 */
-    left: 6px;
-    z-index: 1035;  /* ★ 低于 top-nav 的 z-index: 1030（实际 top nav 是 1030），确保在导航下方 */
-    width: 42px; height: 42px;
-    border: 2px solid var(--tp-card-border);
-    border-radius: 3px;
-    background: var(--tp-card-header-bg);
-    color: var(--tp-nav-text);
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    margin-right: 8px;
+    border: 1.5px solid var(--tp-card-border);
+    border-radius: 4px;
+    background: transparent;
     cursor: pointer;
     align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    transition: background 0.15s, border-color 0.15s, left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    /* 像素风裁剪 */
-    clip-path: polygon(
-      0 3px, 2px 1px, 3px 0, calc(100% - 3px) 0, calc(100% - 2px) 1px,
-      100% 3px, 100% calc(100% - 3px), calc(100% - 2px) calc(100% - 1px),
-      calc(100% - 3px) 100%, 3px 100%, 2px calc(100% - 1px), 0 calc(100% - 3px)
-    );
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
@@ -2246,24 +2225,18 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     background: var(--tp-nav-hover-bg);
     border-color: var(--tp-nav-accent);
   }
-  /* 三横线图标（纯 CSS，不依赖 icon font） */
+  /* 三横线图标（纯 CSS） */
   .tp-mobile-nav-btn::before {
     content: '';
-    width: 20px; height: 16px;
+    width: 18px; height: 14px;
     background: linear-gradient(
       to bottom,
-      var(--tp-nav-text) 0, var(--tp-nav-text) 2px,
-      transparent 2px, transparent 6px,
-      var(--tp-nav-text) 6px, var(--tp-nav-text) 8px,
-      transparent 8px, transparent 12px,
-      var(--tp-nav-text) 12px, var(--tp-nav-text) 14px
+      var(--tp-nav-text) 0,     var(--tp-nav-text) 2px,
+      transparent 2px,          transparent 5px,
+      var(--tp-nav-text) 5px,   var(--tp-nav-text) 7px,
+      transparent 7px,          transparent 10px,
+      var(--tp-nav-text) 10px,  var(--tp-nav-text) 12px
     );
-    transition: background 0.15s;
-  }
-  /* 侧边栏打开时汉堡按钮右移 */
-  html.mobile-nav-open .tp-mobile-nav-btn {
-    left: calc(280px + 6px);
-    left: calc(min(85vw, 280px) + 6px);
   }
 
   /* ── 暗色遮罩层 ── */
@@ -2312,9 +2285,10 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   .tp-page .navbar.sticky-top .form-control {
     font-size: 0.82rem; padding: 8px 12px 8px 36px;
   }
-  /* 右侧用户菜单紧凑排列 */
+  /* 右侧用户菜单紧凑排列，保持在最右 */
   .tp-page .navbar.sticky-top .navbar-nav {
     flex-direction: row; gap: 4px; flex-shrink: 0;
+    order: 2;
   }
   .tp-page .navbar.sticky-top .nav-link {
     padding: 6px 8px; font-size: 0.75rem !important;
