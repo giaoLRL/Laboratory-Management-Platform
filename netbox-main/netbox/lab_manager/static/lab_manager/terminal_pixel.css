@@ -2154,13 +2154,19 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     padding: 8px 12px !important;
   }
 
-  /* 强制 sidebar-menu 始终可见，禁用 Bootstrap collapse 动画干扰 */
-  .tp-page .navbar-vertical .navbar-collapse {
+  /* ★ 彻底禁用 Bootstrap collapse 对 sidebar-menu 的一切干扰 */
+  .tp-page .navbar-vertical .navbar-collapse,
+  .tp-page .navbar-vertical .navbar-collapse.collapse,
+  .tp-page .navbar-vertical .navbar-collapse.collapse:not(.show),
+  .tp-page .navbar-vertical .navbar-collapse.collapsing {
     display: block !important;
     visibility: visible !important;
     height: auto !important;
+    max-height: none !important;
     opacity: 1 !important;
-    transition: none !important;     /* ★ 禁用 BS collapse 动画，防止布局抖动 */
+    overflow: visible !important;
+    transition: none !important;
+    animation: none !important;
   }
 
   /* ★ 由浮动按钮 JS 控制：html.mobile-nav-open → 显示面板 */

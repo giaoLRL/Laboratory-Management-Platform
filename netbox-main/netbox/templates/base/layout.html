@@ -17,7 +17,7 @@ Blocks:
 {% block head %}
 {# ── 像素主题全局注入 ── #}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=30">
+<link rel="stylesheet" href="{% static 'lab_manager/terminal_pixel.css' %}?v=31">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M10 4h12v4h-2v4h-2v4h-4v-4h-2v-4h-2z' fill='%2300e5ff'/><rect x='14' y='16' width='4' height='8' fill='%2300ff41'/><rect x='8' y='0' width='4' height='4' fill='%2300e5ff' opacity='.7'/><rect x='22' y='2' width='4' height='4' fill='%2300e5ff' opacity='.5'/></svg>">
 <style>
   html{background:#0b0e14!important}
@@ -248,18 +248,34 @@ Blocks:
   })();
   </script>
 
-  {# ── 移动端侧边栏 — 浮动汉堡按钮 + 抽屉面板 v6.3.1 ── #}
+  {# ── 移动端侧边栏 — 浮动汉堡按钮 + 抽屉面板 v6.3.4 ── #}
   <script>
   (function(){
     var btn = document.getElementById('tp-mobile-nav-btn');
     var backdrop = document.getElementById('tp-sidebar-backdrop');
     var html = document.documentElement;
+    var sidebarMenu = document.getElementById('sidebar-menu');
     if (!btn || !backdrop) return;
 
     function isMobile() { return window.innerWidth < 992; }
 
+    // ★ 关键：清除 Bootstrap collapse JS 残留的 inline style
+    function cleanCollapse() {
+      if (!sidebarMenu) return;
+      // 移除 Bootstrap collapse JS 设置的所有 inline 属性
+      sidebarMenu.style.removeProperty('height');
+      sidebarMenu.style.removeProperty('display');
+      sidebarMenu.style.removeProperty('overflow');
+      sidebarMenu.style.removeProperty('transition');
+      // 强制设为可见块级元素
+      sidebarMenu.style.display = 'block';
+      sidebarMenu.style.height = 'auto';
+      sidebarMenu.style.overflow = 'visible';
+    }
+
     function openNav() {
       if (!isMobile()) return;
+      cleanCollapse();  // ★ 先清理 BS collapse 残留，再显示面板
       html.classList.add('mobile-nav-open');
     }
 
