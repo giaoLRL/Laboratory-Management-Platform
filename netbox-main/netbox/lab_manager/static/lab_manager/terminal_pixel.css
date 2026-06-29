@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   TERMINAL//PIXEL v6.4.0 — 高级像素风双主题系统 (15+ 动画效果, visibility fixes)
+   TERMINAL//PIXEL v7.0 — 玻璃态双主题系统 (玻璃侧边栏 + 导航动效 + PC/移动端全面优化)
    使用 CSS 自定义属性，跟随 [data-bs-theme] 自动切换
    暗色模式：赛博霓虹风（霓虹绿/青/紫 + CRT + 粒子 + glitch）
    亮色模式：复古 8-bit 游戏风（像素浮雕 + 暖金 + 游戏 HUD）
@@ -108,7 +108,7 @@ html[data-bs-theme=light] {
   --tp-badge-dark-text: #f2efe8;
 
   /* 其他 */
-  --tp-text-muted: #8a7e6e;
+  --tp-text-muted: #6b5e52;
   --tp-link: #0d6b63;
   --tp-link-hover: #085049;
   --tp-code-bg: #f0ece4;
@@ -713,16 +713,29 @@ html[data-bs-theme=dark] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   2. 侧边栏
+   2. 侧边栏 — 玻璃态设计 v7.0
    ═══════════════════════════════════════════════════════════════════════ */
 .tp-page .navbar-vertical,
 html body .tp-page .navbar-vertical {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(128,128,128,0.02) 2px, rgba(128,128,128,0.02) 4px),
-    var(--tp-nav-bg) !important;
-  border-right: 2px solid var(--tp-nav-border) !important;
+    linear-gradient(135deg, var(--tp-nav-bg) 0%, color-mix(in srgb, var(--tp-nav-bg) 92%, var(--tp-nav-accent) 8%) 100%) !important;
+  border-right: 1px solid var(--tp-nav-border) !important;
+  box-shadow: 2px 0 24px rgba(0,0,0,0.04), inset -1px 0 0 rgba(255,255,255,0.03) !important;
 }
-/* 导航链接 */
+/* 桌面端玻璃态 — backdrop-filter 增强层次感 */
+@media(min-width:992px){
+  .tp-page .navbar-vertical,
+  html body .tp-page .navbar-vertical {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--tp-nav-bg) 88%, transparent) 0%, color-mix(in srgb, var(--tp-nav-bg) 78%, var(--tp-nav-accent) 8%) 100%) !important;
+  }
+}
+html[data-bs-theme=dark] .tp-page .navbar-vertical {
+  box-shadow: 2px 0 24px rgba(0,0,0,0.3), inset -1px 0 0 rgba(0,255,65,0.04) !important;
+}
+/* 导航链接 — 升级过渡动画 v7.0 */
 .tp-page .navbar-vertical a.nav-link,
 .tp-page .navbar-vertical .nav-link,
 .tp-page .navbar-vertical .navbar-nav a.nav-link,
@@ -738,7 +751,29 @@ html body .tp-page .navbar-vertical a.nav-link {
   padding: 10px 14px !important;
   line-height: 1.5 !important;
   letter-spacing: 0.02em !important;
-  transition: color 0.15s, background 0.15s, border-color 0.15s !important;
+  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease, transform 0.2s ease, padding-left 0.25s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+/* hover 背景从左扫入 */
+.tp-page .navbar-vertical .nav-link::after,
+html body .tp-page .navbar-vertical .nav-link::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--tp-nav-hover-bg);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1; opacity: 0;
+}
+.tp-page .navbar-vertical .nav-link:hover::after,
+html body .tp-page .navbar-vertical .nav-link:hover::after {
+  transform: scaleX(1); opacity: 1;
+}
+.tp-page .navbar-vertical .nav-link:hover,
+.tp-page .navbar-vertical a.nav-link:hover,
+html body .tp-page .navbar-vertical .nav-link:hover {
+  color: var(--tp-nav-text-hover) !important;
+  padding-left: 18px !important;
 }
 .tp-page .navbar-vertical .nav-link:hover,
 .tp-page .navbar-vertical a.nav-link:hover,
@@ -747,18 +782,28 @@ html body .tp-page .navbar-vertical .nav-link:hover {
   background: var(--tp-nav-hover-bg) !important;
   border-left-color: var(--tp-nav-accent) !important;
 }
+/* active 状态 — 渐变左边框 + 发光 v7.0 */
 .tp-page .navbar-vertical .nav-link.active,
 .tp-page .navbar-vertical a.nav-link.active,
 html body .tp-page .navbar-vertical .nav-link.active {
   color: var(--tp-nav-active-text) !important;
   background: var(--tp-nav-active-bg) !important;
-  border-left-color: var(--tp-nav-active-border) !important;
+  border-left: 3px solid var(--tp-nav-active-border) !important;
   font-weight: 600 !important;
+  padding-left: 18px !important;
 }
 .tp-page .navbar-vertical .nav-link.active::before { content: var(--tp-prefix-prompt); color: var(--tp-nav-active-text); font-weight: 700; }
 html[data-bs-theme=dark] .tp-page .navbar-vertical .nav-link.active {
-  text-shadow: 0 0 8px var(--tp-nav-active-border), 0 0 16px rgba(0, 255, 65, 0.15);
+  text-shadow: 0 0 10px var(--tp-nav-active-border), 0 0 20px rgba(0, 255, 65, 0.2);
+  border-left-color: var(--tp-nav-active-border) !important;
+  box-shadow: inset 3px 0 18px rgba(0,255,65,0.08), 0 0 12px rgba(0,255,65,0.04);
 }
+html[data-bs-theme=light] .tp-page .navbar-vertical .nav-link.active {
+  border-left-color: var(--tp-nav-active-border) !important;
+  box-shadow: inset 3px 0 10px rgba(13,107,99,0.06);
+}
+/* active 项的 ::after 禁用（由 background 接管） */
+.tp-page .navbar-vertical .nav-link.active::after { display: none !important; }
 /* ★ 子元素 .nav-link-title / .nav-link-icon — Tabler 有独立颜色 */
 .tp-page .navbar-vertical .nav-link-title,
 .tp-page .navbar-vertical .nav-link-icon,
@@ -781,40 +826,88 @@ html body .tp-page .navbar-vertical .nav-link-icon {
 .tp-page .navbar-vertical .nav-link .mdi,
 .tp-page .navbar-vertical .nav-link svg {
   color: var(--tp-nav-accent) !important;
-  font-size: 1.1rem !important;
+  font-size: 1.15rem !important;
   margin-right: 10px !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s ease !important;
+  flex-shrink: 0;
 }
-/* 分组标题 */
+/* 图标 hover 弹性缩放 */
+.tp-page .navbar-vertical .nav-link:hover i,
+.tp-page .navbar-vertical .nav-link:hover .mdi,
+.tp-page .navbar-vertical .nav-link:hover svg {
+  color: var(--tp-nav-accent) !important;
+  transform: scale(1.18);
+}
+.tp-page .navbar-vertical .nav-link.active i,
+.tp-page .navbar-vertical .nav-link.active .mdi,
+.tp-page .navbar-vertical .nav-link.active svg {
+  color: var(--tp-nav-active-text) !important;
+  transform: scale(1.08);
+}
+/* 暗色模式图标发光 */
+html[data-bs-theme=dark] .tp-page .navbar-vertical .nav-link.active i,
+html[data-bs-theme=dark] .tp-page .navbar-vertical .nav-link.active .mdi {
+  filter: drop-shadow(0 0 4px rgba(0,255,65,0.4));
+}
+/* 分组标题 — 装饰底线升级 v7.0 */
 .tp-page .navbar-vertical .nav-title,
 .tp-page .navbar-vertical .nav-group,
 .tp-page .navbar-vertical .nav-header,
 .tp-page .navbar-vertical h6,
 .tp-page .navbar-vertical .navbar-nav > li > span {
   font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
-  font-size: 0.7rem !important; font-weight: 700 !important;
+  font-size: 0.68rem !important; font-weight: 700 !important;
   color: var(--tp-nav-group-text) !important;
-  letter-spacing: 0.14em !important;
+  letter-spacing: 0.15em !important;
   text-transform: uppercase !important;
-  padding: 18px 16px 8px 16px !important; opacity: 0.9 !important;
+  padding: 20px 16px 10px 16px !important; opacity: 0.85 !important;
+  position: relative;
 }
 .tp-page .navbar-vertical .nav-title::before,
 .tp-page .navbar-vertical .nav-group::before,
 .tp-page .navbar-vertical .nav-header::before {
   content: var(--tp-prefix-comment); color: var(--tp-nav-active-text); font-weight: 700;
 }
+/* 分组标题下装饰线 */
+.tp-page .navbar-vertical .nav-title::after,
+.tp-page .navbar-vertical .nav-group::after {
+  content: '';
+  display: block;
+  width: 28px; height: 2px;
+  margin-top: 6px;
+  background: linear-gradient(90deg, var(--tp-nav-accent), transparent);
+  border-radius: 1px;
+}
 /* 导航组标题琥珀暖色 hover */
 .tp-page .navbar-vertical .nav-title:hover,
 .tp-page .navbar-vertical .nav-group:hover {
   color: var(--tp-amber-text) !important;
+  opacity: 1 !important;
 }
 /* 分隔线 & 品牌 */
 .tp-page .navbar-vertical hr,
 .tp-page .navbar-vertical .dropdown-divider {
   border-color: var(--tp-nav-divider) !important; margin: 6px 12px !important; opacity: 0.6 !important;
 }
-/* ── 品牌/Logo 区域：隐藏 NetBox SVG，替换为像素风实验室图标 ── */
+/* ── 品牌/Logo 区域 — 实验室标识 v7.0 ── */
 .tp-page .navbar-brand {
-  border-bottom: 2px solid var(--tp-nav-brand-border) !important; padding-bottom: 12px !important;
+  border-bottom: 1px solid var(--tp-nav-brand-border) !important; padding-bottom: 14px !important;
+  margin-bottom: 4px !important;
+}
+.tp-page .navbar-brand a {
+  gap: 8px !important;
+}
+.tp-page .navbar-brand .netbox-edition {
+  font-family: 'JetBrains Mono','Fira Code',Consolas,monospace !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  color: var(--tp-nav-accent) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+}
+html[data-bs-theme=dark] .tp-page .navbar-brand .netbox-edition {
+  color: var(--tp-nav-active-text) !important;
+  text-shadow: 0 0 12px rgba(0,255,65,0.2);
 }
 /* 隐藏原始 NetBox SVG logo */
 .tp-page .navbar-brand img.navbar-brand-image {
@@ -1482,12 +1575,17 @@ html[data-bs-theme=dark] .tp-cal-task[data-priority="high"]   { border-left: 2px
   border-bottom: 2px solid var(--tp-topnav-border) !important;
 }
 
-/* ── 14.10 侧边栏导航项像素缩进标记 ── */
+/* ── 14.10 侧边栏导航项像素缩进标记 v7.0 ── */
 .tp-page .navbar-vertical .nav-link {
-  border-left: 4px solid transparent !important;
+  border-left: 3px solid transparent !important;
 }
 .tp-page .navbar-vertical .nav-link.active {
-  border-left: 4px solid var(--tp-nav-active-border) !important;
+  border-left: 3px solid var(--tp-nav-active-border) !important;
+}
+/* 分组标题像素底线 */
+.tp-page .navbar-vertical .nav-title::after,
+.tp-page .navbar-vertical .nav-group::after {
+  background: linear-gradient(90deg, var(--tp-nav-accent), transparent);
 }
 
 /* ── 14.11 标签页像素激活指示器 ── */
@@ -1539,9 +1637,9 @@ html[data-bs-theme=light] .tp-grid-bg {
   opacity: 0.55;
 }
 
-/* ── 14.18 侧边导航 — 像素美化增强 v6.1 ── */
+/* ── 14.18 侧边导航 — 像素美化增强 v7.0 ── */
 
-/* 导航项之间加像素分隔线 */
+/* 导航项之间加分隔线 */
 .tp-page .navbar-vertical .navbar-nav .nav-item {
   border-bottom: 1px dotted var(--tp-nav-divider);
 }
@@ -1549,7 +1647,7 @@ html[data-bs-theme=light] .tp-grid-bg {
   border-bottom: none;
 }
 
-/* 导航链接：加厚左边框指示器 */
+/* 导航链接：左边框指示器 */
 .tp-page .navbar-vertical .nav-link,
 html body .tp-page .navbar-vertical .nav-link,
 html body .tp-page .navbar-vertical a.nav-link {
@@ -1560,6 +1658,8 @@ html body .tp-page .navbar-vertical a.nav-link {
   letter-spacing: 0.04em !important;
   text-transform: uppercase;
   font-size: 0.78rem !important;
+  position: relative;
+  z-index: 1;
 }
 
 /* Hover: 左边框渐显为 accent 色 */
@@ -1568,42 +1668,15 @@ html body .tp-page .navbar-vertical a.nav-link:hover {
   border-left-color: var(--tp-nav-accent) !important;
 }
 
-/* Active: 像素厚边框 + 暗色模式下内发光 */
+/* Active: 像素厚边框 + 内发光 */
 html body .tp-page .navbar-vertical .nav-link.active,
 html body .tp-page .navbar-vertical a.nav-link.active {
   border-left-color: var(--tp-nav-active-border) !important;
-  box-shadow: inset 3px 0 8px rgba(0,0,0,0.04);
+  box-shadow: inset 3px 0 10px rgba(0,0,0,0.04);
 }
 html[data-bs-theme=dark] .tp-page .navbar-vertical .nav-link.active,
 html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
-  box-shadow: inset 3px 0 14px rgba(0,255,65,0.1);
-}
-
-/* 图标：颜色过渡 + hover 微动 */
-.tp-page .navbar-vertical .nav-link i,
-.tp-page .navbar-vertical .nav-link .mdi {
-  font-size: 1rem !important;
-  width: 18px; text-align: center;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-.tp-page .navbar-vertical .nav-link:hover i,
-.tp-page .navbar-vertical .nav-link:hover .mdi {
-  color: var(--tp-nav-accent) !important;
-  transform: translateX(2px);
-}
-.tp-page .navbar-vertical .nav-link.active i,
-.tp-page .navbar-vertical .nav-link.active .mdi {
-  color: var(--tp-nav-active-text) !important;
-}
-
-/* 分组标题：像素强调底线 */
-.tp-page .navbar-vertical .nav-title::after,
-.tp-page .navbar-vertical .nav-group::after {
-  content: '';
-  display: block;
-  width: 24px; height: 2px;
-  background: var(--tp-nav-accent);
-  margin-top: 6px;
+  box-shadow: inset 3px 0 16px rgba(0,255,65,0.08);
 }
 
 /* ── 14.19 列表页：Results/Filters 标签栏 ── */
@@ -1934,25 +2007,25 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   animation: tp-progress-flow 0.6s linear infinite;
 }
 
-/* ── 侧边栏导航项滑入 ── */
+/* ── 侧边栏导航项淡入 + 微滑入 v7.0 ── */
 @keyframes tp-nav-slide-in {
-  from { opacity: 0; transform: translateX(-12px); }
+  from { opacity: 0; transform: translateX(-8px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 .tp-page .navbar-vertical .navbar-nav .nav-item {
-  animation: tp-nav-slide-in 0.35s ease-out both;
+  animation: tp-nav-slide-in 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(1)  { animation-delay: 0.03s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(2)  { animation-delay: 0.06s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(3)  { animation-delay: 0.09s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(4)  { animation-delay: 0.12s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(5)  { animation-delay: 0.15s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(6)  { animation-delay: 0.18s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(7)  { animation-delay: 0.21s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(8)  { animation-delay: 0.24s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(9)  { animation-delay: 0.27s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(10) { animation-delay: 0.30s; }
-.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(n+11){ animation-delay: 0.33s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(1)  { animation-delay: 0.02s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(2)  { animation-delay: 0.05s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(3)  { animation-delay: 0.08s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(4)  { animation-delay: 0.11s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(5)  { animation-delay: 0.14s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(6)  { animation-delay: 0.17s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(7)  { animation-delay: 0.20s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(8)  { animation-delay: 0.23s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(9)  { animation-delay: 0.26s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(10) { animation-delay: 0.29s; }
+.tp-page .navbar-vertical .navbar-nav .nav-item:nth-child(n+11){ animation-delay: 0.32s; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    16. 主题切换过渡动画
@@ -2131,22 +2204,28 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   }
 }
 
-/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v6.4.0 ── */
+/* ── 17.1 侧边栏导航 — 浮动汉堡按钮 + 抽屉式面板 v7.0 ── */
 @media (max-width: 991.98px) {
   /* 隐藏原 Bootstrap navbar-toggler（改用浮动按钮） */
   .tp-page .navbar-vertical .navbar-toggler {
     display: none !important;
   }
 
-  /* 侧边栏 — 固定滑出面板，更窄更紧凑 */
+  /* 侧边栏 — 固定滑出面板，从顶栏下方开始 v7.0.1 */
   .tp-page .navbar-vertical {
-    position: fixed !important; top: 0; left: 0; bottom: 0; z-index: 1050;
-    width: 240px; max-width: 72vw;
+    position: fixed !important; top: 60px; left: 0; bottom: 0; z-index: 1040;
+    width: 250px; max-width: 78vw;
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.45);
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 6px 0 32px rgba(0,0,0,0.5);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    background: var(--tp-nav-bg) !important;
+  }
+  /* 暗色模式抽屉阴影增强 */
+  html[data-bs-theme=dark] .tp-page .navbar-vertical {
+    box-shadow: 6px 0 36px rgba(0,0,0,0.65);
+    border-right: 1px solid rgba(0,255,65,0.08);
   }
 
   /* 全局间距压缩 — 清除所有子元素多余 margin */
@@ -2232,23 +2311,29 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     letter-spacing: 0.03em;
   }
 
-  /* ── 汉堡按钮 — 集成在顶部导航栏内，flex 自动排列，永不遮挡 ── */
+  /* ── 汉堡按钮 — 集成在顶部导航栏内 v7.0 ── */
   .tp-mobile-nav-btn {
     display: flex !important;
     flex-shrink: 0;
-    width: 34px; height: 34px;
-    margin-right: 6px;
+    width: 38px; height: 38px;
+    margin-right: 8px;
     border: 1.5px solid var(--tp-card-border);
-    border-radius: 4px;
-    background: transparent;
+    border-radius: 6px;
+    background: var(--tp-nav-bg);
     cursor: pointer;
     align-items: center; justify-content: center;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    transition: all 0.2s ease;
+  }
+  .tp-mobile-nav-btn:hover {
+    border-color: var(--tp-nav-accent);
+    background: var(--tp-nav-hover-bg);
   }
   .tp-mobile-nav-btn:active {
-    background: var(--tp-nav-hover-bg);
-    border-color: var(--tp-nav-accent);
+    background: var(--tp-nav-active-bg);
+    border-color: var(--tp-nav-active-border);
+    transform: scale(0.95);
   }
   /* 三横线图标（纯 CSS） */
   .tp-mobile-nav-btn::before {
@@ -2264,12 +2349,14 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
     );
   }
 
-  /* ── 暗色遮罩层 ── */
+  /* ── 暗色遮罩层 v7.0 — 加模糊 ── */
   .tp-sidebar-backdrop {
     position: fixed; inset: 0; z-index: 1045;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     opacity: 0; pointer-events: none;
-    transition: opacity 0.28s ease;
+    transition: opacity 0.3s ease;
   }
   html.mobile-nav-open .tp-sidebar-backdrop {
     opacity: 1; pointer-events: auto;
@@ -2312,7 +2399,7 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
   /* 顶部导航在移动端始终可见（撤销 d-none d-lg-flex） */
   .tp-page .navbar.sticky-top {
     display: flex !important;
-    position: sticky; top: 0; z-index: 1030;
+    position: sticky; top: 0; z-index: 1050;
     padding: 6px 8px;
     flex-wrap: nowrap;
     align-items: center;
@@ -2761,25 +2848,6 @@ html[data-bs-theme=dark] .tp-page .navbar-vertical a.nav-link.active {
 /* ── 17.10 隐藏粒子（手机端性能） ── */
 @media (max-width: 575.98px) {
   .tp-particles { display: none !important; }
-}
-
-/* ── 17.11 prefers-reduced-motion ── */
-@media (prefers-reduced-motion: reduce) {
-  .tp-page, .tp-page * {
-    transition-duration: 0.001ms !important;
-    animation-duration: 0.001ms !important;
-  }
-  .tp-particles::before,
-  .tp-particles::after { animation: none !important; }
-  .tp-page .navbar-vertical .navbar-nav .nav-item { animation: none !important; opacity: 1 !important; transform: none !important; }
-  .tp-page .progress-bar { animation: none !important; }
-  .tp-page .card::before,
-  .tp-page .card::after,
-  .tp-body .modal-content::before,
-  .tp-body .modal-content::after { animation: none !important; }
-  .tp-page .btn::after { display: none !important; }
-  .tp-pixel-spinner { animation: none !important; opacity: 0.5; }
-  .tp-unread-dot { animation: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

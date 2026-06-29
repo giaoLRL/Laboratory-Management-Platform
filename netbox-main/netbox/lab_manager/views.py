@@ -1,4 +1,4 @@
-﻿import json
+import json
 from datetime import timedelta
 
 from django.contrib import messages

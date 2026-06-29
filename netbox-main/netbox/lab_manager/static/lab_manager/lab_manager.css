@@ -1,7 +1,7 @@
-/* Lab Manager - Agent Console - TERMINAL//PIXEL v6.4.0
+/* Lab Manager - Agent Console - TERMINAL//PIXEL v7.0
    所有颜色使用 var(--tp-*) 引用 terminal_pixel.css 的 CSS 变量
    自动跟随 [data-bs-theme] 切换亮色/暗色模式
-   v6.4.0: header内嵌侧边栏切换 + 紧凑输入区 + 扩大对话可视区 */
+   v7.0: 玻璃态侧边栏 + 导航动效升级 + PC/移动端全面优化 */
 
 /* === Shell === */
 .agent-shell {
@@ -36,21 +36,27 @@
 /* v6.4: 历史对话展开按钮已移至 header 内，旧浮动按钮废弃 */
 .agent-sidebar-expand { display: none !important; }
 
-/* ── Header 内嵌侧边栏切换按钮 v6.4 ── */
+/* ── Header 内嵌侧边栏切换按钮 v7.0 ── */
 .agent-header-toggle {
     flex-shrink: 0;
-    background: none; border: 1px solid var(--tp-card-border);
+    background: var(--tp-agent-sidebar-bg);
+    border: 1px solid var(--tp-card-border);
     color: var(--tp-text-muted); cursor: pointer;
-    padding: 6px 10px; border-radius: 2px;
-    font-size: 1rem; line-height: 1;
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 1.1rem; line-height: 1;
     display: flex; align-items: center;
-    transition: all 0.15s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     -webkit-tap-highlight-color: transparent;
 }
 .agent-header-toggle:hover {
     background: var(--tp-agent-hover-bg);
     color: var(--tp-agent-accent-green-bright);
     border-color: var(--tp-agent-accent-green-bright);
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(0,255,65,0.1);
+}
+html[data-bs-theme=light] .agent-header-toggle:hover {
+    box-shadow: 0 0 10px rgba(13,107,99,0.1);
 }
 
 .agent-new-chat {
@@ -79,17 +85,23 @@
 
 .agent-conversation-item {
     display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px; border-radius: 2px;
+    padding: 8px 10px; border-radius: 4px;
     text-decoration: none; color: var(--tp-agent-sidebar-text);
-    font-size: 0.82rem; transition: background 0.12s;
+    font-size: 0.82rem; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     border: none; background: transparent;
     font-family: 'JetBrains Mono', Fira Code, Consolas, monospace;
     font-weight: 500;
+    margin: 1px 4px;
 }
-.agent-conversation-item:hover { background: var(--tp-agent-hover-bg); color: var(--tp-agent-accent-cyan); }
+.agent-conversation-item:hover {
+    background: var(--tp-agent-hover-bg); color: var(--tp-agent-accent-cyan);
+    transform: translateX(3px);
+}
 .agent-conversation-item.active {
     background: rgba(0,255,65,0.1); color: var(--tp-agent-accent-green-bright);
     border-left: 3px solid var(--tp-agent-accent-green-bright);
+    border-radius: 4px 6px 6px 4px;
+    font-weight: 600;
 }
 /* active 的 bg 在暗色用绿色透明，亮色用深青透明 */
 html[data-bs-theme=light] .agent-conversation-item.active {
@@ -251,7 +263,7 @@ html[data-bs-theme=light] .agent-empty-icon {
     line-height: 1.6; color: var(--tp-agent-composer-text); background: transparent;
     font-family: 'JetBrains Mono', Fira Code, Consolas, monospace;
 }
-.agent-composer textarea:focus { box-shadow: none; outline: none; }
+.agent-composer textarea:focus { box-shadow: none; outline: 2px solid var(--tp-agent-composer-focus-border); outline-offset: 2px; }
 .agent-composer textarea::placeholder { color: var(--tp-agent-composer-placeholder); opacity: 0.7; }
 
 .agent-composer-actions {

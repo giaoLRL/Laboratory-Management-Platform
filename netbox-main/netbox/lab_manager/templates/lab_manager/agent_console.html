@@ -133,6 +133,17 @@
 function renderMarkdown(text) {
     if (!text) return '';
     var t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Safe URL helper — only allow http/https/mailto/relative/media paths
+    function safeUrl(url) {
+        var u = url.trim();
+        if (/^(https?:\/*)/i.test(u)) return u;          // https://, http://
+        if (/^mailto:/i.test(u)) return u;               // mailto:
+        if (/^\/(media|static|plugins)\//i.test(u)) return u; // relative paths
+        if (/^\.\.?\//.test(u)) return u;                // ../ or ./
+        if (/^#/.test(u)) return u;                      // anchor
+        return '#'; // block javascript:, data:, etc.
+    }
+    function escAttr(s) { return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     // Code blocks
     t = t.replace(/```(\w*)\n([\s\S]*?)```/g, function(m,lang,code){ return '<pre><code>'+code.replace(/\n$/,'')+'</code></pre>'; });
     t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -146,11 +157,15 @@ function renderMarkdown(text) {
     t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
     t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // Markdown image syntax — MUST be before links (otherwise link regex eats ![alt](url))
-    t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:4px;margin:6px 0;" loading="lazy">');
-    // Links
-    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    // Auto-detect bare image URLs — negative lookbehind (?<![="']) skips URLs already inside HTML attributes
+    // Markdown image syntax — safe URL + escaped alt
+    t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(m,alt,url){
+        return '<img src="'+safeUrl(url)+'" alt="'+escAttr(alt)+'" style="max-width:100%;border-radius:4px;margin:6px 0;" loading="lazy">';
+    });
+    // Links — safe URL + escaped text
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(m,text,url){
+        return '<a href="'+safeUrl(url)+'" target="_blank" rel="noopener noreferrer">'+text+'</a>';
+    });
+    // Auto-detect bare image URLs
     t = t.replace(/(?<![="'])(\/media\/[^\s<>"']+\.(jpg|jpeg|png|gif|webp|bmp|svg|ico))/gi,
         function(m,u){ return '<img src="'+encodeURI(u)+'" alt="图片附件" style="max-width:100%;border-radius:4px;margin:6px 0;" loading="lazy">'; });
     // Tables
