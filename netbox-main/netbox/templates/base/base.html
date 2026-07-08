@@ -62,11 +62,91 @@
     {% block head %}{% endblock %}
     {% plugin_head %}
 
+    {# ── 电赛倒计时悬浮窗 CSS ── #}
+    <style>
+    .tp-countdown-widget{position:fixed;top:68px;right:16px;z-index:1030;font-family:'JetBrains Mono',Fira Code,Consolas,monospace;pointer-events:auto;transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s ease}
+    .tp-countdown-widget.is-dismissed{transform:translateY(calc(-100% - 80px));opacity:0;pointer-events:none}
+    .tp-countdown-card{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(11,14,20,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(0,229,255,.2);border-radius:4px;box-shadow:0 4px 28px rgba(0,0,0,.55),0 0 18px rgba(0,229,255,.05);clip-path:polygon(0px 3px,2px 0px,calc(100% - 2px) 0px,100% 3px,100% calc(100% - 3px),calc(100% - 2px) 100%,2px 100%,0px calc(100% - 3px));animation:tp-cd-pulse 3s ease-in-out infinite;user-select:none;-webkit-user-select:none}
+    @keyframes tp-cd-pulse{0%,100%{box-shadow:0 4px 28px rgba(0,0,0,.55),0 0 18px rgba(0,229,255,.05)}50%{box-shadow:0 4px 28px rgba(0,0,0,.55),0 0 32px rgba(0,255,65,.13)}}
+    html[data-bs-theme=light] .tp-countdown-card{animation-name:tp-cd-pulse-light}
+    @keyframes tp-cd-pulse-light{0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.1),0 0 14px rgba(13,107,99,.04)}50%{box-shadow:0 4px 24px rgba(0,0,0,.1),0 0 28px rgba(13,107,99,.1)}}
+    .tp-countdown-icon{font-size:1.25rem;line-height:1;filter:drop-shadow(0 0 7px rgba(0,255,65,.5));animation:tp-cd-bolt 2s ease-in-out infinite}
+    @keyframes tp-cd-bolt{0%,100%{opacity:1}50%{opacity:.45}}
+    .tp-countdown-body{display:flex;flex-direction:column;gap:1px;min-width:130px}
+    .tp-countdown-label{font-size:.65rem;font-weight:600;letter-spacing:.8px;color:rgba(0,229,255,.8);text-transform:uppercase}
+    .tp-countdown-timer{font-size:.92rem;font-weight:700;letter-spacing:.6px;color:#00ff41;font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(0,255,65,.3);white-space:nowrap}
+    .tp-countdown-timer .tp-cd-days{color:#00e5ff}
+    .tp-countdown-timer .tp-cd-sep{color:rgba(0,229,255,.5);margin:0 1px}
+    .tp-countdown-close-btn{background:0 0;border:0;color:rgba(255,255,255,.25);cursor:pointer;padding:4px 6px;font-size:.75rem;line-height:1;transition:color .15s;border-radius:2px;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+    .tp-countdown-close-btn:hover{color:#f55;background:rgba(255,85,85,.1)}
+    .tp-countdown-restore{position:fixed;top:68px;right:16px;z-index:1030;width:40px;height:40px;border-radius:4px;background:rgba(11,14,20,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(0,229,255,.2);color:#00e5ff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;line-height:1;box-shadow:0 4px 28px rgba(0,0,0,.55);transition:all .25s ease;clip-path:polygon(0px 2px,2px 0px,calc(100% - 2px) 0px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,0px calc(100% - 2px));-webkit-tap-highlight-color:transparent}
+    .tp-countdown-restore:hover{border-color:#00ff41;color:#00ff41;box-shadow:0 4px 28px rgba(0,0,0,.55),0 0 22px rgba(0,255,65,.2)}
+    .tp-countdown-restore.is-hidden{display:none}
+    html[data-bs-theme=light] .tp-countdown-card{background:rgba(242,239,232,.93);border-color:rgba(13,107,99,.25)}
+    html[data-bs-theme=light] .tp-countdown-label{color:rgba(13,107,99,.8)}
+    html[data-bs-theme=light] .tp-countdown-timer{color:#0d6b63;text-shadow:0 0 8px rgba(13,107,99,.15)}
+    html[data-bs-theme=light] .tp-countdown-timer .tp-cd-days{color:#0d7a8a}
+    html[data-bs-theme=light] .tp-countdown-timer .tp-cd-sep{color:rgba(13,107,99,.4)}
+    html[data-bs-theme=light] .tp-countdown-icon{filter:drop-shadow(0 0 6px rgba(13,107,99,.35))}
+    html[data-bs-theme=light] .tp-countdown-close-btn{color:rgba(0,0,0,.2)}
+    html[data-bs-theme=light] .tp-countdown-close-btn:hover{color:#c93535;background:rgba(201,53,53,.08)}
+    html[data-bs-theme=light] .tp-countdown-restore{background:rgba(242,239,232,.93);border-color:rgba(13,107,99,.25);color:#0d7a8a;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+    html[data-bs-theme=light] .tp-countdown-restore:hover{border-color:#0d6b63;color:#0d6b63;box-shadow:0 4px 24px rgba(0,0,0,.1),0 0 20px rgba(13,107,99,.12)}
+    @media(max-width:767.98px){.tp-countdown-widget{top:60px;right:10px}.tp-countdown-card{gap:6px;padding:7px 10px}.tp-countdown-icon{font-size:1rem}.tp-countdown-label{font-size:.58rem;letter-spacing:.4px}.tp-countdown-timer{font-size:.74rem}.tp-countdown-body{min-width:108px}.tp-countdown-restore{top:60px;right:10px;width:34px;height:34px;font-size:.95rem}}
+    @media(prefers-reduced-motion:reduce){.tp-countdown-card,.tp-countdown-icon{animation:none!important}}
+    </style>
+
   </head>
   <body>
 
     {# Page layout #}
     {% block layout %}{% endblock %}
+
+    {# ── 电赛倒计时全局悬浮窗 v1.0 ── #}
+    <div class="tp-countdown-widget" id="tp-countdown-widget">
+      <div class="tp-countdown-card">
+        <span class="tp-countdown-icon" aria-hidden="true">⚡</span>
+        <div class="tp-countdown-body">
+          <span class="tp-countdown-label">电赛倒计时</span>
+          <span class="tp-countdown-timer" id="tp-countdown-timer" aria-live="polite">--天 --:--:--</span>
+        </div>
+        <button class="tp-countdown-close-btn" id="tp-countdown-close-btn" title="关闭倒计时" aria-label="关闭倒计时">✕</button>
+      </div>
+    </div>
+    <button class="tp-countdown-restore is-hidden" id="tp-countdown-restore" title="显示倒计时" aria-label="显示倒计时">⚡</button>
+
+    <script>
+    (function(){
+      var TARGET=new Date('2026-07-30T08:00:00+08:00').getTime();
+      var widget=document.getElementById('tp-countdown-widget');
+      var timerEl=document.getElementById('tp-countdown-timer');
+      var closeBtn=document.getElementById('tp-countdown-close-btn');
+      var restoreBtn=document.getElementById('tp-countdown-restore');
+      var KEY='lab_cd_dismissed';
+      function pad(n){return n<10?'0'+n:''+n}
+      function update(){
+        var diff=TARGET-Date.now();
+        if(diff<=0){
+          timerEl.innerHTML='<span class="tp-cd-days" style="font-size:0.85em">⚡ 比赛进行中!</span>';
+          timerEl.setAttribute('aria-label','比赛进行中');return;
+        }
+        var d=Math.floor(diff/864e5),h=Math.floor((diff%864e5)/36e5),m=Math.floor((diff%36e5)/6e4),s=Math.floor((diff%6e4)/1e3);
+        timerEl.innerHTML='<span class="tp-cd-days">'+d+'</span>天 <span class="tp-cd-sep">'+pad(h)+'</span><span class="tp-cd-sep">:</span><span class="tp-cd-sep">'+pad(m)+'</span><span class="tp-cd-sep">:</span><span class="tp-cd-sep">'+pad(s)+'</span>';
+        timerEl.setAttribute('aria-label','距离电赛还有 '+d+' 天 '+h+' 小时 '+m+' 分 '+s+' 秒');
+      }
+      function dismiss(){
+        widget.classList.add('is-dismissed');restoreBtn.classList.remove('is-hidden');
+        try{localStorage.setItem(KEY,'1')}catch(e){}
+      }
+      function restoreC(){
+        widget.classList.remove('is-dismissed');restoreBtn.classList.add('is-hidden');
+        try{localStorage.removeItem(KEY)}catch(e){}update();
+      }
+      if(localStorage.getItem(KEY)==='1'){widget.classList.add('is-dismissed');restoreBtn.classList.remove('is-hidden')}
+      update();setInterval(update,1000);
+      closeBtn.addEventListener('click',dismiss);restoreBtn.addEventListener('click',restoreC);
+    })();
+    </script>
 
     {# Additional Javascript #}
     {% if copilot_enabled and request.user.is_authenticated %}
