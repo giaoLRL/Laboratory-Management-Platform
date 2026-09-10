@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    lm-ui.js — 全站交互层（命令面板 ⌘K / AI 副驾驶 / 密度切换 /
    看板拖拽 / 投屏模式 / 表格筛选记忆）
    零依赖，全部通过 data-* 属性驱动，模板不写内联业务脚本。
@@ -28,6 +28,8 @@
     try { saved = localStorage.getItem(KEY) || 'comfortable'; } catch (e) { /* ignore */ }
     document.body.classList.toggle('lm-density--compact', saved === 'compact');
     qsa('[data-lm-density-toggle]').forEach(function (btn) {
+      if (btn.dataset.lmBound === '1') return;
+      btn.dataset.lmBound = '1';
       btn.addEventListener('click', function () {
         var compact = !document.body.classList.contains('lm-density--compact');
         document.body.classList.toggle('lm-density--compact', compact);
@@ -203,6 +205,8 @@
   /* ── 6. 卡片行点击（替代内联 onclick） ───────────────────── */
   function initRowLinks() {
     qsa('[data-lm-href]').forEach(function (el) {
+      if (el.dataset.lmBound === '1') return;
+      el.dataset.lmBound = '1';
       el.style.cursor = 'pointer';
       el.addEventListener('click', function (e) {
         if (e.target.closest('a, button, input, select')) return;
@@ -211,6 +215,20 @@
       el.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') window.location = el.getAttribute('data-lm-href');
       });
+    });
+  }
+
+  /* ── 6b. 侧栏滚动位置保持：整页跳转也不会把菜单弹回顶部 ── */
+  function initSidebarScroll() {
+    var nav = document.querySelector('.navbar-vertical .navbar-collapse, .navbar-vertical');
+    if (!nav) return;
+    var KEY = 'lm_sidebar_scroll';
+    try {
+      var saved = parseInt(sessionStorage.getItem(KEY) || '0', 10);
+      if (saved > 0) nav.scrollTop = saved;
+    } catch (e) { /* ignore */ }
+    window.addEventListener('pagehide', function () {
+      try { sessionStorage.setItem(KEY, String(nav.scrollTop || 0)); } catch (e) { /* ignore */ }
     });
   }
 
@@ -240,6 +258,8 @@
     document.documentElement.classList.toggle('lm-effects', on);
     qsa('[data-lm-effects-toggle]').forEach(function (btn) {
       btn.textContent = on ? '关闭特效' : '开启特效';
+      if (btn.dataset.lmBound === '1') return;
+      btn.dataset.lmBound = '1';
       btn.addEventListener('click', function () {
         on = !document.documentElement.classList.contains('lm-effects');
         document.documentElement.classList.toggle('lm-effects', on);
@@ -249,8 +269,85 @@
     });
   }
 
+  /* ── 9. 侧栏局部导航（HTMX boost 的守门与善后） ─────────────────
+     目标：点击左侧菜单时只替换内容区，侧栏 DOM 完全不动（不再"菜单刷新"）。
+     风险控制：对含内联脚本或文件上传的页面禁用 boost，退回整页跳转；
+             换页后重新执行内容区脚本并重新初始化交互组件。 ── */
+  var BOOST_BLOCKLIST = ['/agent/', '/checkins/new/', '/logout/', '/login/'];
+
+  function initBoost() {
+    // 说明：本项目的 HTMX 打包在 netbox.js 内，window.htmx 可能不存在，
+    // 因此不依赖它做判断，直接按属性生效（无 HTMX 时这些属性是无害的）。
+    var boosted = document.querySelector('[hx-boost="true"]');
+    if (!boosted) return;
+    // 给不能局部替换的链接关闭 boost
+    qsa('.navbar-vertical a[href], a[data-no-boost]').forEach(function (a) {
+      var href = a.getAttribute('href') || '';
+      var blocked = a.hasAttribute('data-no-boost') || a.target === '_blank'
+        || BOOST_BLOCKLIST.some(function (p) { return href.indexOf(p) !== -1; });
+      if (blocked) a.setAttribute('hx-boost', 'false');
+    });
+
+    // htmx 在 DOMContentLoaded 时已绑定 boost 监听（bubble 阶段），
+    // 因此黑名单必须在捕获阶段拦截，直接走整页跳转。
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      var blocked = a.hasAttribute('data-no-boost') || a.target === '_blank'
+        || BOOST_BLOCKLIST.some(function (p) { return href.indexOf(p) !== -1; });
+      if (!blocked) return;
+      e.stopPropagation();     // 阻止 htmx 局部替换
+      e.preventDefault();
+      window.location.href = a.href;
+    }, true);
+
+    // 只换内容区时，NetBox 的 OOB 片段（通知角标等）找不到目标会打印诊断，
+    // 属纯提示、不影响功能，这里精确静音，避免刷控制台。
+    var _consoleError = console.error;
+    console.error = function () {
+      var first = String((arguments && arguments[0]) || '');
+      if (first.indexOf('htmx:oobErrorNoTarget') !== -1) return;
+      return _consoleError.apply(console, arguments);
+    };
+
+    // 用响应里的 <title> 更新标签页标题（hx-select 只取内容区，标题不在其中）
+    document.body.addEventListener('htmx:beforeSwap', function (e) {
+      var xhr = e.detail.xhr;
+      if (!xhr || !xhr.responseText) return;
+      var m = xhr.responseText.match(/<title>([\s\S]*?)<\/title>/i);
+      if (m) document.title = m[1].trim();
+    });
+
+    // OOB 片段（通知角标等）在只换内容区时找不到目标，静默跳过，避免刷控制台报错
+    document.body.addEventListener('htmx:oobErrorNoTarget', function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+    });
+
+    // 换页后：重新执行内容区内联脚本 + 重新初始化组件
+    var rebind = function () {
+      qsa('#page-content script').forEach(function (old) {
+        var s = document.createElement('script');
+        if (old.src) s.src = old.src; else s.textContent = old.textContent;
+        old.replaceWith(s);
+      });
+      initDensity(); initEffects(); initRowLinks(); initKanban();
+    };
+    document.body.addEventListener('htmx:afterSwap', rebind);
+    document.body.addEventListener('htmx:afterSettle', rebind);
+    // 兜底：不依赖 htmx 的事件名/实现，直接观察内容区被替换
+    var content = document.getElementById('page-content');
+    if (content && window.MutationObserver) {
+      new MutationObserver(function (muts) {
+        for (var i = 0; i < muts.length; i++) {
+          if (muts[i].addedNodes && muts[i].addedNodes.length) { rebind(); return; }
+        }
+      }).observe(content, { childList: true });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initDensity(); initPalette(); initCopilot(); initKanban(); initProjector(); initRowLinks();
-    initPrefetch(); initEffects();
+    initPrefetch(); initEffects(); initSidebarScroll(); initBoost();
   });
 })();

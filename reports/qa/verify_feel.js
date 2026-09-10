@@ -70,7 +70,7 @@ const { chromium } = require(PW);
   for (const target of ['/tasks/', '/checkins/', '/members/']) {
     const t0 = Date.now();
     await Promise.all([
-      page.waitForURL(u => u.pathname.includes(target), { timeout: 15000 }),
+      page.waitForFunction(t => location.pathname.indexOf(t) !== -1, target, { timeout: 15000 }),
       page.click(`.navbar-vertical a[href*="${target}"]`).catch(() => {}),
     ]);
     const ms = Date.now() - t0;

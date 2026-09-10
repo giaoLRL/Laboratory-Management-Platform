@@ -406,3 +406,43 @@ html:not(.lm-effects) .tp-page .tp-sidebar {
   .tp-page .page-wrapper { animation: none; }
 }
 html.lm-effects .tp-page .page-wrapper { animation-duration: 260ms; }
+
+/* ═══════════════════════════════════════════════════════════════
+   页面切换观感：跨文档 View Transitions
+   问题：每次跳转都是整页重载，侧栏会跟着重绘/重放过渡（含图标回弹），
+        视觉上非常显眼，像"菜单在刷新"。
+   做法：给侧栏与顶栏声明 view-transition-name —— 浏览器会把新旧页面的
+        这两块视为同一元素并直接替换（animation:none），因此看起来"没动"；
+        内容区只做一次很短的淡入淡出。
+   兼容：不支持的浏览器自动退化为普通跳转，无副作用。
+   ═══════════════════════════════════════════════════════════════ */
+@view-transition { navigation: auto; }
+
+.tp-page .navbar-vertical { view-transition-name: lm-sidebar; }
+.tp-page .navbar.sticky-top { view-transition-name: lm-topbar; }
+
+/* 侧栏/顶栏不做过渡 —— 视觉上完全静止 */
+::view-transition-old(lm-sidebar),
+::view-transition-new(lm-sidebar),
+::view-transition-old(lm-topbar),
+::view-transition-new(lm-topbar) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* 内容区：短促交叉淡入（比整页闪白舒服得多） */
+::view-transition-old(root) { animation: lm-vt-out 110ms ease-out both; }
+::view-transition-new(root) { animation: lm-vt-in 150ms ease-out both; }
+@keyframes lm-vt-out { to { opacity: 0; } }
+@keyframes lm-vt-in { from { opacity: 0; } }
+
+/* 有视图过渡时，不要再叠加 .page-wrapper 的淡入（避免双重动画） */
+@supports (view-transition-name: none) {
+  .tp-page .page-wrapper { animation: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
