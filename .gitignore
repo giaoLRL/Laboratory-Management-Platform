@@ -73,3 +73,16 @@ deploy_v53.py
 # ── QA 测试产物：保留脚本与报告，忽略体积大的截图与 DEBUG 错误页快照 ──
 reports/qa/errors/
 reports/qa/*.png
+# 注意：reports/qa/shots/ 下的关键截图（侧栏高亮、分页等）是要入库的，不要一起忽略
+# 一次性源码补丁脚本不入库：改动本身已在 git 历史里，留着容易误导后来人
+reports/qa/*_fix*.py
+
+# ── 本地验证产物（临时截图 / Playwright MCP 页面快照） ──
+/*.png
+/dashboard-snapshot.yml
+/.playwright-mcp/
+
+# ── AI 工具本地配置（含机器相关路径，不随仓库分发） ──
+/.mcp.json
+/.codex/
+/.claude/
