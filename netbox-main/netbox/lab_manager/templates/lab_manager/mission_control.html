@@ -1,0 +1,180 @@
+{% extends 'lab_manager/base.html' %}
+{% load i18n lm_ui static %}
+{% comment %}
+  指挥舱（Mission Control）：一屏 KPI + 待办 + 库存水位 + 实时事件流 + 考勤热力图 + 30 天趋势
+  支持「投屏模式」：隐藏侧栏、放大字号、自动刷新（见 lm-ui.js）
+{% endcomment %}
+
+{% block title %}{% trans "指挥舱" %}{% endblock %}
+
+{% block content %}
+<div class="lm-page" data-lm-autorefresh="60">
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1 class="mb-0">{% trans "实验室指挥舱" %}</h1>
+      <div class="text-muted small">
+        {{ trend.start }} ~ {{ trend.end }} · {% trans "每 60 秒自动刷新（投屏模式下生效）" %}
+      </div>
+    </div>
+    <div class="lm-toolbar__group">
+      <button type="button" class="btn btn-sm btn-outline-primary" data-lm-projector-toggle>
+        <i class="mdi mdi-projector-screen-outline"></i> {% trans "投屏模式" %}
+      </button>
+      <a href="{% url 'plugins:lab_manager:home' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="mdi mdi-view-dashboard-outline"></i> {% trans "仪表板" %}
+      </a>
+    </div>
+  </div>
+
+  {# ── KPI 条 ── #}
+  <div class="lm-kpi-row">
+    {% for k in kpis %}
+    <div class="lm-kpi {% if k.tone %}lm-kpi--{{ k.tone }}{% endif %}">
+      <div class="lm-kpi__value">{{ k.value }}</div>
+      <div class="lm-kpi__label">{{ k.label }}</div>
+      <div class="lm-kpi__hint">{{ k.hint }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="lm-mission">
+    {# ── 左：待办 + 趋势 ── #}
+    <div class="lm-section">
+      <div class="lm-card">
+        <div class="lm-card__header">
+          <span><i class="mdi mdi-flash-outline"></i> {% trans "需要我处理" %}</span>
+        </div>
+        <div class="lm-todo">
+          {% for hw in todos.pending_hardware %}
+          <div class="lm-todo__item">
+            <span class="lm-todo__icon">🧾</span>
+            <div class="lm-todo__body">
+              <div class="lm-todo__title">{{ hw.name }}</div>
+              <div class="lm-todo__meta">{% trans "待审批硬件" %} · {{ hw.get_category_display }}</div>
+            </div>
+            <a class="btn btn-sm btn-primary" href="{% url 'plugins:lab_manager:hardware_approval' hw.pk %}">{% trans "去审批" %}</a>
+          </div>
+          {% endfor %}
+          {% for t in todos.overdue_tasks %}
+          <div class="lm-todo__item">
+            <span class="lm-todo__icon">⏰</span>
+            <div class="lm-todo__body">
+              <div class="lm-todo__title">{{ t.title }}</div>
+              <div class="lm-todo__meta">{% trans "任务已逾期" %} · {{ t.assigned_to|default:_("未指派") }}</div>
+            </div>
+            <a class="btn btn-sm btn-outline-primary" href="{{ t.get_absolute_url }}">{% trans "查看" %}</a>
+          </div>
+          {% endfor %}
+          {% for b in todos.overdue_borrows %}
+          <div class="lm-todo__item">
+            <span class="lm-todo__icon">📦</span>
+            <div class="lm-todo__body">
+              <div class="lm-todo__title">{{ b.hardware.name }}</div>
+              <div class="lm-todo__meta">{% trans "逾期未还" %} · {{ b.borrower }}</div>
+            </div>
+            <a class="btn btn-sm btn-outline-primary" href="{{ b.get_absolute_url }}">{% trans "查看" %}</a>
+          </div>
+          {% endfor %}
+          {% for hw in todos.low_stock %}
+          <div class="lm-todo__item">
+            <span class="lm-todo__icon">⚠️</span>
+            <div class="lm-todo__body">
+              <div class="lm-todo__title">{{ hw.name }}</div>
+              <div class="lm-todo__meta">{% trans "低于最低库存" %} · {{ hw.quantity }}/{{ hw.minimum_stock }}</div>
+            </div>
+            <a class="btn btn-sm btn-outline-primary" href="{{ hw.get_absolute_url }}">{% trans "补货" %}</a>
+          </div>
+          {% endfor %}
+          {% if not todos.pending_hardware and not todos.overdue_tasks and not todos.overdue_borrows and not todos.low_stock %}
+          <div class="lm-todo__empty"><i class="mdi mdi-check-circle-outline"></i> {% trans "暂无待处理事项，一切正常。" %}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="lm-card">
+        <div class="lm-card__header">
+          <span><i class="mdi mdi-chart-timeline-variant"></i> {% trans "近 30 天趋势" %}</span>
+          <span class="lm-chart__legend">
+            {% for s in trend.series %}<span style="color:{{ s.color }}">■ {{ s.label }}（{{ s.total }}）</span>{% endfor %}
+          </span>
+        </div>
+        <div class="lm-card__body">
+          <div class="lm-chart">
+            <svg viewBox="0 0 {{ trend.chart_w }} {{ trend.chart_h }}" preserveAspectRatio="none" role="img"
+                 aria-label="{% trans '近 30 天趋势' %}">
+              {% for s in trend.series %}
+              <polyline fill="none" stroke="{{ s.color }}" stroke-width="2" points="{{ s.points }}" />
+              {% endfor %}
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="lm-card">
+        <div class="lm-card__header">
+          <span><i class="mdi mdi-calendar-check-outline"></i> {% trans "考勤热力图（近 26 周）" %}</span>
+          <span class="lm-badge lm-badge--muted">{{ heatmap_total }} {% trans "次打卡" %}</span>
+        </div>
+        <div class="lm-card__body">
+          <div class="lm-heatmap">
+            {% for week in heatmap_weeks %}
+            <div class="lm-heatmap__col">
+              {% for d in week %}
+              <span class="lm-heatmap__cell" data-level="{{ d.level }}" {% if d.future %}style="opacity:.25"{% endif %}
+                    title="{{ d.date }} · {{ d.count }} {% trans '次' %}"></span>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="lm-heatmap__legend mt-2">
+            {% trans "少" %}
+            <span class="lm-heatmap__cell" data-level="0"></span>
+            <span class="lm-heatmap__cell" data-level="1"></span>
+            <span class="lm-heatmap__cell" data-level="2"></span>
+            <span class="lm-heatmap__cell" data-level="3"></span>
+            <span class="lm-heatmap__cell" data-level="4"></span>
+            {% trans "多" %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── 右：库存水位 + 事件流 ── #}
+    <div class="lm-section">
+      <div class="lm-card">
+        <div class="lm-card__header"><span><i class="mdi mdi-water-outline"></i> {% trans "库存水位（按类别）" %}</span></div>
+        <div class="lm-card__body d-flex flex-column gap-2">
+          {% for w in waterlines %}
+          <div>
+            <div class="d-flex justify-content-between small">
+              <span>{{ w.category }}</span>
+              <span class="text-muted">{{ w.items }} {% trans "项" %}</span>
+            </div>
+            {% include 'lab_manager/inc/stock_bar.html' with available=w.available total=w.available minimum=w.minimum %}
+          </div>
+          {% empty %}
+          <div class="text-muted small">{% trans "暂无硬件数据" %}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="lm-card">
+        <div class="lm-card__header"><span><i class="mdi mdi-pulse"></i> {% trans "实时事件流" %}</span></div>
+        <div class="lm-card__body lm-mission__stream">
+          <div class="lm-timeline">
+            {% for e in stream %}
+            <div class="lm-timeline__item">
+              <div class="lm-timeline__time">{{ e.time|date:"m-d H:i" }}</div>
+              <div class="lm-timeline__text"><i class="mdi {{ e.icon }}"></i> {{ e.text }}</div>
+            </div>
+            {% empty %}
+            <div class="text-muted small">{% trans "暂无事件" %}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

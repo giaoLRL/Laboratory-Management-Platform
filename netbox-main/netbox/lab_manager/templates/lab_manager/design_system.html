@@ -1,0 +1,137 @@
+{% extends 'lab_manager/base.html' %}
+{% load i18n %}
+{% comment %}
+  设计系统展示页：设计令牌 + 组件示例，作为团队设计资产的单一来源。
+  新增页面时优先复用这些 lm-* 组件类，不要再写页面级 !important 覆盖。
+{% endcomment %}
+
+{% block title %}{% trans "设计系统" %}{% endblock %}
+
+{% block content %}
+<div class="lm-page">
+  <div>
+    <h1 class="mb-1">{% trans "设计系统" %}</h1>
+    <p class="text-muted mb-0">
+      {% trans "三层令牌（primitive → semantic → component）+ lm-* 组件类。所有组件零 !important，可随主题亮/暗自动适配。" %}
+    </p>
+  </div>
+
+  <div class="lm-section">
+    <h2 class="lm-section__title">1 · {% trans "设计令牌" %}</h2>
+    <div class="lm-grid lm-grid--3">
+      <div class="lm-card">
+        <div class="lm-card__header"><span>Primitive</span></div>
+        <div class="lm-card__body small">
+          <div>间距：<code>--lm-space-1..8</code>（4/8/12/16/24/32px）</div>
+          <div>字号：<code>--lm-font-11..24</code></div>
+          <div>圆角：<code>--lm-radius-sm/md/lg</code></div>
+          <div>动效：<code>--lm-dur-fast/base</code></div>
+        </div>
+      </div>
+      <div class="lm-card">
+        <div class="lm-card__header"><span>Semantic</span></div>
+        <div class="lm-card__body small">
+          <div>表面：<code>--lm-surface-1/2/3</code></div>
+          <div>描边：<code>--lm-border-subtle/strong</code></div>
+          <div>文本：<code>--lm-text-primary/muted</code></div>
+          <div>语义色：<code>--lm-accent/ok/warning/danger/info</code></div>
+        </div>
+      </div>
+      <div class="lm-card">
+        <div class="lm-card__header"><span>Component</span></div>
+        <div class="lm-card__body small">
+          <div>卡片：<code>--lm-card-radius/pad</code></div>
+          <div>表格：<code>--lm-row-h / --lm-head-h</code></div>
+          <div>控件：<code>--lm-btn-h</code>、<code>--lm-kpi-h</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lm-section">
+    <h2 class="lm-section__title">2 · {% trans "KPI 与卡片" %}</h2>
+    <div class="lm-kpi-row">
+      <div class="lm-kpi"><div class="lm-kpi__value">128</div><div class="lm-kpi__label">{% trans "默认" %}</div><div class="lm-kpi__hint">lm-kpi</div></div>
+      <div class="lm-kpi lm-kpi--ok"><div class="lm-kpi__value">96</div><div class="lm-kpi__label">{% trans "正常" %}</div><div class="lm-kpi__hint">--ok</div></div>
+      <div class="lm-kpi lm-kpi--warning"><div class="lm-kpi__value">7</div><div class="lm-kpi__label">{% trans "预警" %}</div><div class="lm-kpi__hint">--warning</div></div>
+      <div class="lm-kpi lm-kpi--danger"><div class="lm-kpi__value">0</div><div class="lm-kpi__label">{% trans "缺货" %}</div><div class="lm-kpi__hint">--danger</div></div>
+    </div>
+    <p class="text-muted small mb-0">{% trans "移动端自动变为横向 scroll-snap 滑动条，保证首屏露出下方内容。" %}</p>
+  </div>
+
+  <div class="lm-grid lm-grid--2">
+    <div class="lm-card">
+      <div class="lm-card__header"><span>3 · {% trans "状态徽标" %}</span></div>
+      <div class="lm-card__body d-flex flex-wrap gap-2">
+        <span class="lm-badge lm-badge--ok">{% trans "已通过" %}</span>
+        <span class="lm-badge lm-badge--warning">{% trans "待审批" %}</span>
+        <span class="lm-badge lm-badge--danger">{% trans "已驳回" %}</span>
+        <span class="lm-badge lm-badge--info">{% trans "进行中" %}</span>
+        <span class="lm-badge lm-badge--muted">{% trans "已归档" %}</span>
+      </div>
+    </div>
+    <div class="lm-card">
+      <div class="lm-card__header"><span>4 · {% trans "库存水位条" %}</span></div>
+      <div class="lm-card__body d-flex flex-column gap-2">
+        {% include 'lab_manager/inc/stock_bar.html' with available=12 total=12 minimum=2 %}
+        {% include 'lab_manager/inc/stock_bar.html' with available=3 total=12 minimum=2 %}
+        {% include 'lab_manager/inc/stock_bar.html' with available=0 total=12 minimum=2 %}
+      </div>
+    </div>
+  </div>
+
+  <div class="lm-section">
+    <h2 class="lm-section__title">5 · {% trans "表格" %}</h2>
+    <div class="lm-card">
+      <div class="table-responsive">
+        <table class="lm-table lm-table--cards">
+          <thead><tr><th>{% trans "名称" %}</th><th>{% trans "状态" %}</th><th>{% trans "数量" %}</th></tr></thead>
+          <tbody>
+            <tr><td data-label="{% trans '名称' %}">STM32F407</td><td data-label="{% trans '状态' %}"><span class="lm-badge lm-badge--ok">{% trans "在用" %}</span></td><td data-label="{% trans "数量" %}">12</td></tr>
+            <tr><td data-label="{% trans '名称' %}">树莓派 5</td><td data-label="{% trans '状态' %}"><span class="lm-badge lm-badge--warning">{% trans "维修" %}</span></td><td data-label="{% trans "数量" %}">2</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="text-muted small mb-0">{% trans "窄屏（<768px）自动切换为卡片布局；表头吸顶，首列固定。" %}</p>
+  </div>
+
+  <div class="lm-grid lm-grid--3">
+    <div class="lm-card">
+      <div class="lm-card__header"><span>6 · {% trans "空状态" %}</span></div>
+      {% include 'lab_manager/inc/empty_state.html' with icon='mdi-inbox-outline' title=_('暂无数据') desc=_('创建第一条记录后会显示在这里。') %}
+    </div>
+    <div class="lm-card">
+      <div class="lm-card__header"><span>7 · {% trans "骨架屏" %}</span></div>
+      <div class="lm-card__body">
+        <span class="lm-skeleton lm-skeleton--text" style="width:60%"></span>
+        <span class="lm-skeleton lm-skeleton--text" style="width:90%"></span>
+        <span class="lm-skeleton lm-skeleton--row"></span>
+        <span class="lm-skeleton lm-skeleton--row"></span>
+      </div>
+    </div>
+    <div class="lm-card">
+      <div class="lm-card__header"><span>8 · {% trans "时间线" %}</span></div>
+      <div class="lm-card__body">
+        <div class="lm-timeline">
+          <div class="lm-timeline__item"><div class="lm-timeline__time">09-10 14:20</div><div class="lm-timeline__text">{% trans "胡涵完成打卡" %}</div></div>
+          <div class="lm-timeline__item"><div class="lm-timeline__time">09-10 11:02</div><div class="lm-timeline__text">{% trans "管理员审批通过 2 项硬件" %}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lm-card">
+    <div class="lm-card__header"><span>9 · {% trans "使用约定" %}</span></div>
+    <div class="lm-card__body small">
+      <ul class="mb-0">
+        <li>{% trans "页面骨架统一用 .lm-page / .lm-section / .lm-card，不要再写页级 !important。" %}</li>
+        <li>{% trans "颜色一律引用 --lm-* 语义令牌；主题切换只改 semantic 层。" %}</li>
+        <li>{% trans "交互行为写到 lm-ui.js，用 data-* 驱动，模板不写业务脚本。" %}</li>
+        <li>{% trans "列表页统一用 .lm-table（含 .lm-table--cards 移动端卡片化）。" %}</li>
+        <li>{% trans "分页统一 include 'lab_manager/inc/paginator.html'（服务端分页 + 页大小）。" %}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

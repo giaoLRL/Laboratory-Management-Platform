@@ -1,0 +1,11 @@
+{% load i18n lm_ui %}
+{% comment %}
+  库存水位条：{% include 'lab_manager/inc/stock_bar.html' with available=obj.quantity total=obj.total_quantity minimum=obj.minimum_stock %}
+{% endcomment %}
+{% lm_stock_level available total minimum as level %}
+{% lm_stock_width available total as width %}
+<div class="lm-waterline {% if level == 'warning' %}lm-waterline--warning{% elif level == 'danger' %}lm-waterline--danger{% endif %}"
+     title="{% blocktrans with a=available t=total m=minimum %}可用 {{ a }} / 总量 {{ t }}（阈值 {{ m }}）{% endblocktrans %}">
+  <div class="lm-waterline__track"><div class="lm-waterline__fill" style="width: {{ width }}%"></div></div>
+  <span class="lm-waterline__text">{{ available }}/{{ total }}</span>
+</div>

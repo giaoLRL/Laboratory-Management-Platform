@@ -64,6 +64,18 @@ menu = PluginMenu(
                 link='plugins:lab_manager:my_tasks',
                 link_text='我的任务',
             ),
+            PluginMenuItem(
+                link='plugins:lab_manager:task_board',
+                link_text='任务看板',
+            ),
+            PluginMenuItem(
+                link='plugins:lab_manager:mission_control',
+                link_text='指挥舱 / 投屏',
+            ),
+            PluginMenuItem(
+                link='plugins:lab_manager:design_system',
+                link_text='设计系统',
+            ),
         )),
         ('打卡管理', (
             PluginMenuItem(

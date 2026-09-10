@@ -1,0 +1,64 @@
+{% load i18n lm_ui %}
+{% comment %}
+  统一分页器：共 N 条 · 第 x/y 页 · 每页大小 · 上一页/下一页/首页/末页
+  依赖上下文：page_obj、per_page、per_page_choices
+{% endcomment %}
+{% if page_obj %}
+<div class="lm-paginator">
+  <div>
+    {% blocktrans with n=page_obj.paginator.count %}共 <strong>{{ n }}</strong> 条{% endblocktrans %}
+    {% if page_obj.paginator.num_pages > 1 %}
+      · {% blocktrans with a=page_obj.number b=page_obj.paginator.num_pages %}第 {{ a }}/{{ b }} 页{% endblocktrans %}
+    {% endif %}
+    {% if page_obj.paginator.count > page_obj.paginator.per_page %}
+      <span class="text-warning ms-1">{% trans "（已分页，可翻页查看全部）" %}</span>
+    {% endif %}
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="{% trans '分页' %}">
+    <ul class="pagination pagination-sm">
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link" href="{% lm_qs page=1 %}">&laquo;</a>
+      </li>
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_previous %}{% lm_qs page=page_obj.previous_page_number %}{% else %}{% lm_qs page=1 %}{% endif %}">&lsaquo;</a>
+      </li>
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+          <li class="page-item"><a class="page-link" href="{% lm_qs page=num %}">{{ num }}</a></li>
+        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+          <li class="page-item"><a class="page-link" href="{% lm_qs page=num %}">{{ num }}</a></li>
+        {% elif num == page_obj.number|add:-4 or num == page_obj.number|add:4 %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_next %}{% lm_qs page=page_obj.next_page_number %}{% else %}{% lm_qs page=page_obj.paginator.num_pages %}{% endif %}">&rsaquo;</a>
+      </li>
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{% lm_qs page=page_obj.paginator.num_pages %}">&raquo;</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% if per_page_choices %}
+  <form method="get" class="d-flex align-items-center gap-2">
+    {% for key, values in request.GET.lists %}
+      {% if key != 'per_page' and key != 'page' %}
+        {% for v in values %}<input type="hidden" name="{{ key }}" value="{{ v }}" />{% endfor %}
+      {% endif %}
+    {% endfor %}
+    <label class="mb-0 text-nowrap">{% trans "每页" %}</label>
+    <select name="per_page" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+      {% for size in per_page_choices %}
+        <option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  {% endif %}
+</div>
+{% endif %}

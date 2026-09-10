@@ -1,0 +1,68 @@
+{% extends 'lab_manager/base.html' %}
+{% load i18n %}
+{% comment %}
+  任务看板：按状态三列，支持拖拽流转（lm-ui.js 接管），逾期卡片红色描边。
+{% endcomment %}
+
+{% block title %}{% trans "任务看板" %}{% endblock %}
+
+{% block content %}
+<div class="lm-page">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="mb-0">{% trans "任务看板" %}</h1>
+    <div class="lm-toolbar__group">
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-lm-density-toggle
+              title="{% trans '切换表格密度' %}">
+        <i class="mdi mdi-format-line-spacing"></i>
+      </button>
+      <a href="{% url 'plugins:lab_manager:task_list' %}" class="btn btn-sm btn-outline-primary">
+        <i class="mdi mdi-format-list-bulleted"></i> {% trans "列表视图" %}
+      </a>
+      {% if request.user.is_superuser %}
+        <a href="{% url 'plugins:lab_manager:task_add' %}" class="btn btn-sm btn-primary">
+          <i class="mdi mdi-plus-thick"></i> {% trans "新增任务" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="lm-kanban" data-lm-kanban="{% url 'plugins:lab_manager:task_status_update' %}">
+    {% for col in columns %}
+    <div class="lm-kanban__col" data-status="{{ col.value }}">
+      <div class="lm-kanban__col-head">
+        <span>{{ col.label }}</span>
+        <span>
+          <span class="count">{{ col.count }}</span>
+          {% if col.overdue %}<span class="text-danger"> · {{ col.overdue }} {% trans "逾期" %}</span>{% endif %}
+        </span>
+      </div>
+      <div class="lm-kanban__list">
+        {% for task in col.tasks %}
+        <div class="lm-kanban__card{% if task.deadline and task.deadline < now and col.value != 'completed' %} is-overdue{% endif %}"
+             data-pk="{{ task.pk }}">
+          <div class="lm-kanban__title">
+            <a href="{{ task.get_absolute_url }}" class="text-decoration-none">{{ task.title }}</a>
+          </div>
+          <div class="lm-kanban__meta d-flex justify-content-between">
+            <span>{% if task.assigned_to %}{{ task.assigned_to }}{% else %}{% trans "未指派" %}{% endif %}</span>
+            <span>
+              {% if task.priority == 'urgent' %}<span class="lm-badge lm-badge--danger">{% trans "紧急" %}</span>
+              {% elif task.priority == 'high' %}<span class="lm-badge lm-badge--warning">{% trans "高" %}</span>{% endif %}
+              {% if task.deadline %}{{ task.deadline|date:"m-d" }}{% endif %}
+            </span>
+          </div>
+        </div>
+        {% empty %}
+        <div class="lm-kanban__meta p-2">{% trans "暂无任务" %}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="text-muted small mb-0">
+    <i class="mdi mdi-information-outline"></i>
+    {% trans "拖拽卡片到其它列即可流转状态；仅任务创建人、执行人或管理员可修改。" %}
+  </p>
+</div>
+{% endblock %}

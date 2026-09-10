@@ -1,0 +1,258 @@
+{
+ "results": [
+  {
+   "name": "硬件",
+   "path": "/plugins/lab-manager/hardware/",
+   "expectedRows": 3,
+   "status": 200,
+   "rows": 3,
+   "pageLinks": 0,
+   "sizeLinks": [
+    "1",
+    "25",
+    "50",
+    "100",
+    "250",
+    "500"
+   ],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [
+    "Test MCU Board Updated 单片机/开发板 — 20 在用 已通过 — — 切换下"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "任务",
+   "path": "/plugins/lab-manager/tasks/",
+   "expectedRows": 12,
+   "status": 200,
+   "rows": 1,
+   "pageLinks": 0,
+   "sizeLinks": [
+    "1",
+    "25",
+    "50",
+    "100",
+    "250",
+    "500"
+   ],
+   "total": "12个",
+   "pagText": "1 2 3 … 7",
+   "rowTexts": [
+    "完成实验室安全检查报 已完成 中 huhan — 切换下拉菜单 Delete Changelog"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "借出",
+   "path": "/plugins/lab-manager/borrow-records/",
+   "expectedRows": 0,
+   "status": 200,
+   "rows": 1,
+   "pageLinks": 0,
+   "sizeLinks": [],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [
+    "— 找不到 硬件借用记录 —"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "项目",
+   "path": "/plugins/lab-manager/projects/",
+   "expectedRows": 1,
+   "status": 200,
+   "rows": 1,
+   "pageLinks": 0,
+   "sizeLinks": [
+    "1",
+    "25",
+    "50",
+    "100",
+    "250",
+    "500"
+   ],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [
+    "长沙微光众星科技有限公司 规划中 — — — 切换下拉菜单 Delete Changelog"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "工具",
+   "path": "/plugins/lab-manager/agent-tools/",
+   "expectedRows": 8,
+   "status": 200,
+   "rows": 1,
+   "pageLinks": 0,
+   "sizeLinks": [
+    "1",
+    "25",
+    "50",
+    "100",
+    "250",
+    "500"
+   ],
+   "total": "8个",
+   "pagText": "1 2 3",
+   "rowTexts": [
+    "list_records 列表查询 平台数据查询 数据查询 1 切换下拉菜单 Delete Chan"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "打卡记录",
+   "path": "/plugins/lab-manager/checkins/",
+   "expectedRows": 3,
+   "status": 200,
+   "rows": 3,
+   "pageLinks": 0,
+   "sizeLinks": [],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [
+    "June 24, 2026, 1:15 p.m. admin 26.1531000, 111.513"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "浏览记录",
+   "path": "/plugins/lab-manager/member-open-records/",
+   "expectedRows": 99,
+   "status": 200,
+   "rows": 104,
+   "pageLinks": 0,
+   "sizeLinks": [],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [
+    "本月总记录 42 本月活跃人数 1 今日打卡记录 0 历史总记录 99 历史总人数 2",
+    "09-10 16:36 admin - - 打卡记录 /plugins/lab-manager/ch"
+   ],
+   "cardLists": 0
+  },
+  {
+   "name": "通知",
+   "path": "/plugins/lab-manager/notifications/",
+   "expectedRows": 0,
+   "status": 200,
+   "rows": 0,
+   "pageLinks": 0,
+   "sizeLinks": [],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [],
+   "cardLists": 0
+  },
+  {
+   "name": "成员",
+   "path": "/plugins/lab-manager/members/",
+   "expectedRows": 2,
+   "status": 200,
+   "rows": 0,
+   "pageLinks": 0,
+   "sizeLinks": [],
+   "total": "",
+   "pagText": "",
+   "rowTexts": [],
+   "cardLists": 0
+  }
+ ],
+ "dash": {
+  "total": 14,
+  "inFold": 14,
+  "sections": [
+   {
+    "title": "(无标题)",
+    "top": 159,
+    "h": 115,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 159,
+    "h": 115,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 159,
+    "h": 115,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 159,
+    "h": 115,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 159,
+    "h": 105,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 159,
+    "h": 105,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 296,
+    "h": 65,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 296,
+    "h": 65,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 296,
+    "h": 65,
+    "w": 171
+   },
+   {
+    "title": "(无标题)",
+    "top": 296,
+    "h": 65,
+    "w": 171
+   },
+   {
+    "title": "待审批硬件",
+    "top": 384,
+    "h": 261,
+    "w": 545
+   },
+   {
+    "title": "逾期未还硬件",
+    "top": 384,
+    "h": 261,
+    "w": 545
+   },
+   {
+    "title": "低库存告警",
+    "top": 651,
+    "h": 261,
+    "w": 545
+   },
+   {
+    "title": "最近活动",
+    "top": 651,
+    "h": 261,
+    "w": 545
+   }
+  ],
+  "body": {
+   "scrollH": 902,
+   "vh": 900
+  }
+ }
+}

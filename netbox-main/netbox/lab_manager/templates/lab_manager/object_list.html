@@ -16,6 +16,10 @@
 {% block controls %}
   <div class="btn-list">
     {% plugin_list_buttons model %}
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-lm-density-toggle
+            title="{% trans '切换表格密度' %}" aria-pressed="false">
+      <i class="mdi mdi-format-line-spacing"></i>
+    </button>
     {% block extra_controls %}{% endblock %}
     {% action_buttons actions model %}
   </div>
@@ -81,6 +85,19 @@
         {# Warn of any missing prerequisite objects #}
         {% if prerequisite_model %}
           {% include 'inc/missing_prerequisites.html' %}
+        {% endif %}
+
+        {# 低库存横幅（仅硬件列表传入 low_stock） #}
+        {% if low_stock %}
+          <div class="lm-banner lm-banner--danger mb-2 flex-wrap">
+            <i class="mdi mdi-alert-outline"></i>
+            <span>{% blocktrans count n=low_stock|length %}{{ n }} 项硬件低于最低库存{% plural %}{{ n }} 项硬件低于最低库存{% endblocktrans %}：</span>
+            {% for hw in low_stock %}
+              <a href="{{ hw.get_absolute_url }}" class="lm-badge lm-badge--danger text-decoration-none">
+                {{ hw.name }} · {{ hw.quantity }}/{{ hw.minimum_stock }}
+              </a>
+            {% endfor %}
+          </div>
         {% endif %}
 
         {# Objects table #}

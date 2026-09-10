@@ -1,0 +1,14 @@
+{% load i18n %}
+{% comment %}
+  统一空状态：{% include 'lab_manager/inc/empty_state.html' with icon='mdi-cube-outline' title='暂无硬件' desc='...' action_url=... action_label=... %}
+{% endcomment %}
+<div class="lm-empty">
+  <div class="lm-empty__icon"><i class="mdi {{ icon|default:'mdi-inbox-outline' }}"></i></div>
+  <div class="lm-empty__title">{{ title|default:_("暂无数据") }}</div>
+  {% if desc %}<div class="lm-empty__desc">{{ desc }}</div>{% endif %}
+  {% if action_url and action_label %}
+    <a href="{{ action_url }}" class="btn btn-sm btn-primary">
+      <i class="mdi mdi-plus-thick"></i> {{ action_label }}
+    </a>
+  {% endif %}
+</div>

@@ -42,6 +42,9 @@ urlpatterns = [
 
     # 我的任务
     path('my-tasks/', views.MyTasksView.as_view(), name='my_tasks'),
+    path('tasks/board/', views.TaskBoardView.as_view(), name='task_board'),
+    path('mission-control/', views.MissionControlView.as_view(), name='mission_control'),
+    path('design-system/', views.DesignSystemView.as_view(), name='design_system'),
     path('member-open-records/', views.MemberOpenRecordListView.as_view(), name='member_open_records'),
     path('member-open-records/<int:pk>/', views.MemberOpenRecordDetailView.as_view(), name='member_open_record_detail'),
 
@@ -79,6 +82,9 @@ urlpatterns = [
     path('notifications/', views.NotificationListView.as_view(), name='notifications'),
     path('notifications/send/', views.NotificationSendView.as_view(), name='notification_send'),
     path('notifications/read-all/', views.NotificationMarkReadView.as_view(), name='notification_read_all'),
+    path('api/command-index/', views.CommandIndexView.as_view(), name='command_index'),
+    # 注意：不要放在 api/tasks/ 下，否则会被 DRF 的 api/tasks/<pk>/ 抢先匹配（POST → 405）
+    path('api/board/status/', views.TaskStatusUpdateView.as_view(), name='task_status_update'),
     path('notifications/<int:pk>/read/', views.NotificationMarkReadView.as_view(), name='notification_read'),
 
     # 任务日历

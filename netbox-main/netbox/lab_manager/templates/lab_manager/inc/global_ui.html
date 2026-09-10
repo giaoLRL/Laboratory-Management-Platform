@@ -1,0 +1,45 @@
+{% load i18n static %}
+{% comment %}
+  全站 UI 层：命令面板（⌘K）+ AI 副驾驶 + 密度切换入口。
+  由 base/layout.html 在最外层引入一次。
+{% endcomment %}
+
+{# ── AI 副驾驶 ── #}
+<button class="lm-copilot-btn" id="lm-copilot-btn" type="button"
+        title="{% trans 'AI 副驾驶（⌘K 命令面板）' %}" aria-label="{% trans 'AI 副驾驶' %}">
+  <i class="mdi mdi-robot-happy-outline"></i>
+</button>
+<div class="lm-copilot" id="lm-copilot" role="dialog" aria-label="{% trans 'AI 副驾驶' %}">
+  <div class="lm-copilot__head">
+    <span><i class="mdi mdi-robot-happy-outline"></i> {% trans "实验室副驾驶" %}</span>
+    <span>
+      <button type="button" class="btn btn-sm btn-ghost-secondary" data-lm-cmd-open title="{% trans '命令面板 ⌘K' %}">
+        <i class="mdi mdi-console-line"></i>
+      </button>
+      <button type="button" class="btn btn-sm btn-ghost-secondary" onclick="document.getElementById('lm-copilot').classList.remove('is-open')" aria-label="{% trans '关闭' %}">
+        <i class="mdi mdi-close"></i>
+      </button>
+    </span>
+  </div>
+  <div class="lm-copilot__ctx" id="lm-copilot-ctx"></div>
+  <div class="lm-copilot__log" id="lm-copilot-log" aria-live="polite"></div>
+  <div class="lm-copilot__foot">
+    <textarea class="form-control form-control-sm" id="lm-copilot-input" rows="1"
+              placeholder="{% trans '问点什么，或让我基于当前页面做事…' %}"></textarea>
+    <button class="btn btn-sm btn-primary" id="lm-copilot-send" type="button">
+      <i class="mdi mdi-send"></i>
+    </button>
+  </div>
+</div>
+
+{# ── 命令面板 ⌘K ── #}
+<div class="lm-cmd-overlay" id="lm-cmd-overlay"></div>
+<div class="lm-cmd" id="lm-cmd" role="dialog" aria-label="{% trans '命令面板' %}">
+  <input type="text" class="lm-cmd__input" id="lm-cmd-input" autocomplete="off"
+         placeholder="{% trans '跳转页面、搜索对象、执行操作…（↑↓ 选择，Enter 打开）' %}" />
+  <div class="lm-cmd__list" id="lm-cmd-list"></div>
+  <div class="lm-cmd__hint">
+    <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> {% trans "打开" %} · <kbd>Esc</kbd> {% trans "关闭" %} ·
+    <span data-lm-density-toggle role="button" tabindex="0">{% trans "切换表格密度" %}</span>
+  </div>
+</div>

@@ -1,21 +1,25 @@
+import csv
 import json
 from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
-from django.db.models import Count, Q
-from django.http import HttpResponseNotAllowed, JsonResponse
+from django.db.models import Count, F, Q, Sum
+from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .logging_config import logger
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 from netbox.views import generic
 from utilities.views import register_model_view
 
-from .choices import HardwareApprovalStatusChoices, TaskStatusChoices
+from .choices import HardwareApprovalStatusChoices, HardwareStatusChoices, TaskStatusChoices
 from .filtersets import (
     AgentToolFilterSet, HardwareBorrowRecordFilterSet, HardwareFilterSet,
     LabProjectFilterSet, TaskFilterSet,
@@ -86,7 +90,21 @@ class HardwareListView(generic.ObjectListView):
                 Q(approval_status=HardwareApprovalStatusChoices.APPROVED) |
                 Q(submitted_by=self.request.user)
             )
-        return qs
+        # 一次聚合：在借数量（供库存水位条使用，避免逐行查询）
+        return qs.annotate(
+            outstanding=Count(
+                'borrow_records',
+                filter=Q(borrow_records__status=BorrowStatusChoices.BORROWED),
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['low_stock'] = list(
+            Hardware.objects.filter(minimum_stock__gt=0, quantity__lt=F('minimum_stock'))
+            .order_by('quantity')[:5]
+        )
+        return ctx
 
 
 @register_model_view(Hardware)
@@ -478,6 +496,88 @@ class MyTasksView(LoginRequiredMixin, TemplateView):
 # 打卡防重复提交时间窗（秒）
 CHECKIN_DEDUPE_SECONDS = 60
 
+# 统一分页配置
+PAGE_SIZE_CHOICES = (25, 50, 100, 200)
+DEFAULT_PAGE_SIZE = 50
+
+
+def csv_response(filename, headers, rows):
+    """统一的 CSV 下载响应（带 BOM，Excel 可直接打开）。"""
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write('\ufeff')
+    writer = csv.writer(response)
+    writer.writerow(headers)
+    for row in rows:
+        writer.writerow(row)
+    return response
+
+
+def filter_checkins(request, queryset):
+    """打卡记录的公共筛选（列表与导出共用）。"""
+    if not request.user.is_superuser:
+        queryset = queryset.filter(user=request.user)
+    username = (request.GET.get('username') or '').strip()
+    keyword = (request.GET.get('q') or '').strip()
+    date_from = (request.GET.get('date_from') or '').strip()
+    date_to = (request.GET.get('date_to') or '').strip()
+    if username:
+        queryset = queryset.filter(
+            Q(user__username__icontains=username) | Q(user__first_name__icontains=username)
+            | Q(user__last_name__icontains=username) | Q(user__email__icontains=username)
+        )
+    if keyword:
+        queryset = queryset.filter(Q(address__icontains=keyword) | Q(note__icontains=keyword))
+    if date_from:
+        queryset = queryset.filter(created__date__gte=date_from)
+    if date_to:
+        queryset = queryset.filter(created__date__lte=date_to)
+    return queryset
+
+
+def filter_member_open_records(request, queryset):
+    """浏览记录的公共筛选（列表与导出共用）。"""
+    username = (request.GET.get('username') or '').strip()
+    target_type = (request.GET.get('target_type') or '').strip()
+    keyword = (request.GET.get('q') or '').strip()
+    date_from = (request.GET.get('date_from') or '').strip()
+    date_to = (request.GET.get('date_to') or '').strip()
+    if username:
+        queryset = queryset.filter(
+            Q(user__username__icontains=username) | Q(user__first_name__icontains=username)
+            | Q(user__last_name__icontains=username) | Q(user__email__icontains=username)
+        )
+    if target_type:
+        queryset = queryset.filter(target_type=target_type)
+    if keyword:
+        queryset = queryset.filter(Q(path__icontains=keyword) | Q(page_title__icontains=keyword))
+    if date_from:
+        queryset = queryset.filter(created__date__gte=date_from)
+    if date_to:
+        queryset = queryset.filter(created__date__lte=date_to)
+    return queryset
+
+
+def build_page(request, queryset, default_size=DEFAULT_PAGE_SIZE):
+    """统一的列表分页：?page=&per_page=（页大小限定在 PAGE_SIZE_CHOICES 内）。"""
+    from django.core.paginator import Paginator
+    try:
+        per_page = int(request.GET.get('per_page', default_size))
+    except (TypeError, ValueError):
+        per_page = default_size
+    if per_page not in PAGE_SIZE_CHOICES:
+        per_page = default_size
+    return Paginator(queryset, per_page).get_page(request.GET.get('page'))
+
+
+def add_pagination(ctx, request, queryset, default_size=DEFAULT_PAGE_SIZE):
+    """把分页对象与页大小选项塞进上下文，返回 page_obj。"""
+    page_obj = build_page(request, queryset, default_size)
+    ctx['page_obj'] = page_obj
+    ctx['per_page'] = page_obj.paginator.per_page
+    ctx['per_page_choices'] = PAGE_SIZE_CHOICES
+    return page_obj
+
 
 def _client_ip(request):
     forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -506,9 +606,24 @@ class MemberOpenRecordListView(LoginRequiredMixin, UserPassesTestMixin, Template
     def test_func(self):
         return self.request.user.is_superuser
 
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('export') == 'csv':
+            records = filter_member_open_records(
+                request, MemberOpenRecord.objects.select_related('user').order_by('-created')
+            )[:5000]
+            return csv_response(
+                'lab_member_open_records.csv',
+                ['时间', '成员', '对象类型', '页面', '路径', 'IP', '纬度', '经度'],
+                records.values_list('created', 'user__username', 'target_type', 'page_title',
+                                    'path', 'ip_address', 'latitude', 'longitude'),
+            )
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        records = MemberOpenRecord.objects.select_related('user').order_by('-created')
+        records = filter_member_open_records(
+            self.request, MemberOpenRecord.objects.select_related('user').order_by('-created')
+        )
         username = self.request.GET.get('username')
         target_type = self.request.GET.get('target_type')
         if username:
@@ -520,9 +635,23 @@ class MemberOpenRecordListView(LoginRequiredMixin, UserPassesTestMixin, Template
             )
         if target_type:
             records = records.filter(target_type=target_type)
-        ctx['records'] = records[:300]
+        keyword = (self.request.GET.get('q') or '').strip()
+        date_from = (self.request.GET.get('date_from') or '').strip()
+        date_to = (self.request.GET.get('date_to') or '').strip()
+        if keyword:
+            records = records.filter(Q(path__icontains=keyword) | Q(page_title__icontains=keyword))
+        if date_from:
+            records = records.filter(created__date__gte=date_from)
+        if date_to:
+            records = records.filter(created__date__lte=date_to)
+        page_obj = add_pagination(ctx, self.request, records, default_size=25)
+        ctx['records'] = page_obj.object_list
         ctx['username'] = username or ''
         ctx['target_type'] = target_type or ''
+        ctx['filter_q'] = keyword
+        ctx['filter_date_from'] = date_from
+        ctx['filter_date_to'] = date_to
+        ctx['filtered_count'] = page_obj.paginator.count
 
         # ── 统计数据 ──
         today = timezone.localdate()
@@ -668,16 +797,34 @@ class CheckInListView(LoginRequiredMixin, TemplateView):
     template_name = 'lab_manager/checkin_list.html'
 
     def get(self, request, *args, **kwargs):
+        if request.GET.get('export') == 'csv':
+            records = filter_checkins(
+                request, CheckInRecord.objects.select_related('user').order_by('-created')
+            )[:5000]
+            return csv_response(
+                'lab_checkins.csv',
+                ['时间', '成员', '纬度', '经度', '精度', '地址备注', '备注', '照片'],
+                records.values_list('created', 'user__username', 'latitude', 'longitude',
+                                    'accuracy', 'address', 'note', 'photo'),
+            )
         record_member_open(request, page_title='打卡记录', target_type='checkin_list')
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        records = CheckInRecord.objects.select_related('user').order_by('-created')
-        if not self.request.user.is_superuser:
-            records = records.filter(user=self.request.user)
-        ctx['records'] = records[:200]
-        ctx['is_superuser'] = self.request.user.is_superuser
+        request = self.request
+        records = filter_checkins(
+            request, CheckInRecord.objects.select_related('user').order_by('-created')
+        )
+        page_obj = add_pagination(ctx, request, records, default_size=25)
+        ctx['records'] = page_obj.object_list
+        ctx['is_superuser'] = request.user.is_superuser
+        ctx['filter_username'] = (request.GET.get('username') or '').strip()
+        ctx['filter_q'] = (request.GET.get('q') or '').strip()
+        ctx['filter_date_from'] = (request.GET.get('date_from') or '').strip()
+        ctx['filter_date_to'] = (request.GET.get('date_to') or '').strip()
+        ctx['filtered_count'] = page_obj.paginator.count
+        ctx['checkin_create_url'] = reverse('plugins:lab_manager:checkin_create')
         return ctx
 
 
@@ -945,6 +1092,238 @@ class LabHomeView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+# ── 界面增强：指挥舱（投屏大屏）+ 设计系统 ──────────────────────
+
+class MissionControlView(LoginRequiredMixin, TemplateView):
+    """指挥舱：一屏 KPI + 待办队列 + 库存水位 + 实时事件流 + 考勤热力图。"""
+
+    template_name = 'lab_manager/mission_control.html'
+
+    def get_context_data(self, **kwargs):
+        from django.db.models.functions import TruncDate
+
+        ctx = super().get_context_data(**kwargs)
+        request = self.request
+        now = timezone.now()
+        today = timezone.localdate()
+
+        tasks = Task.objects.all() if request.user.is_superuser else Task.objects.filter(
+            Q(assigned_to=request.user) | Q(created_by=request.user)
+        )
+        hardware = Hardware.objects.all()
+        if not request.user.is_superuser:
+            hardware = hardware.filter(
+                Q(approval_status=HardwareApprovalStatusChoices.APPROVED) | Q(submitted_by=request.user)
+            )
+
+        ctx['kpis'] = [
+            {'label': _('硬件总数'), 'value': hardware.count(), 'hint': _('含待审批')},
+            {'label': _('在用硬件'), 'value': hardware.filter(status=HardwareStatusChoices.IN_USE).count(),
+             'hint': _('状态=在用'), 'tone': 'ok'},
+            {'label': _('进行中任务'), 'value': tasks.filter(status=TaskStatusChoices.IN_PROGRESS).count(),
+             'hint': f"{tasks.filter(status=TaskStatusChoices.PENDING).count()} " + str(_('待开始'))},
+            {'label': _('今日打卡'), 'value': CheckInRecord.objects.filter(created__date=today).count(),
+             'hint': _('今天'), 'tone': 'warning'},
+        ]
+
+        pending_hw = hardware.filter(approval_status=HardwareApprovalStatusChoices.PENDING)[:5]
+        overdue_tasks = tasks.filter(
+            status__in=[TaskStatusChoices.PENDING, TaskStatusChoices.IN_PROGRESS], deadline__lt=now
+        )[:5]
+        overdue_borrows = HardwareBorrowRecord.objects.filter(
+            status=BorrowStatusChoices.BORROWED, expected_return_date__lt=now
+        ).select_related('hardware', 'borrower')[:5]
+        low_stock = hardware.filter(minimum_stock__gt=0, quantity__lt=F('minimum_stock'))[:5]
+        ctx['todos'] = {
+            'pending_hardware': list(pending_hw),
+            'overdue_tasks': list(overdue_tasks),
+            'overdue_borrows': list(overdue_borrows),
+            'low_stock': list(low_stock),
+        }
+
+        # 实时事件流：浏览记录 + 通知 + 打卡合并
+        stream = []
+        for rec in MemberOpenRecord.objects.select_related('user').order_by('-created')[:20]:
+            stream.append({'time': rec.created, 'icon': 'mdi-history',
+                           'text': f'{rec.user} · {rec.page_title or rec.path}'})
+        for ck in CheckInRecord.objects.select_related('user').order_by('-created')[:10]:
+            stream.append({'time': ck.created, 'icon': 'mdi-map-marker-check-outline',
+                           'text': f'{ck.user} · {_("完成打卡")} {ck.address or ""}'.strip()})
+        for nf in Notification.objects.select_related('user').order_by('-created')[:10]:
+            stream.append({'time': nf.created, 'icon': 'mdi-bell-outline', 'text': f'{nf.user} · {nf.title}'})
+        stream.sort(key=lambda x: x['time'], reverse=True)
+        ctx['stream'] = stream[:24]
+
+        # 库存水位（按类别聚合）
+        ctx['waterlines'] = list(
+            hardware.values('category').annotate(
+                available=Sum('quantity'), minimum=Sum('minimum_stock'), items=Count('id')
+            ).order_by('category')[:8]
+        )
+
+        # 近 26 周考勤热力图
+        start = today - timedelta(days=today.weekday() + 7 * 25)
+        counts = {
+            row['d']: row['n']
+            for row in CheckInRecord.objects.filter(created__date__gte=start)
+            .annotate(d=TruncDate('created')).values('d').annotate(n=Count('id'))
+        }
+        weeks, day = [], start
+        while day <= today:
+            week = []
+            for _i in range(7):
+                n = counts.get(day, 0)
+                level = 0 if n == 0 else (1 if n == 1 else 2 if n == 2 else 3 if n < 5 else 4)
+                week.append({'date': day, 'count': n, 'level': level,
+                             'future': day > today})
+                day += timedelta(days=1)
+            weeks.append(week)
+        ctx['heatmap_weeks'] = weeks
+        ctx['heatmap_total'] = sum(counts.values())
+
+        # 近 30 天趋势（任务完成 / 打卡 / 借出），服务端算好折线点
+        days = [today - timedelta(days=i) for i in range(29, -1, -1)]
+        def series(queryset, date_field):
+            rows = (queryset.filter(**{f'{date_field}__date__gte': days[0]})
+                    .annotate(d=TruncDate(date_field)).values('d').annotate(n=Count('id')))
+            mapping = {r['d']: r['n'] for r in rows}
+            return [mapping.get(d, 0) for d in days]
+
+        raw = {
+            '任务完成': series(Task.objects.filter(completed_at__isnull=False), 'completed_at'),
+            '打卡': series(CheckInRecord.objects.all(), 'created'),
+            '借出': series(HardwareBorrowRecord.objects.all(), 'borrow_date'),
+        }
+        chart_w, chart_h = 600, 120
+        peak = max([1] + [v for s in raw.values() for v in s])
+        chart = []
+        for idx, (label, values) in enumerate(raw.items()):
+            points = ' '.join(
+                f'{(i / (len(values) - 1)) * chart_w:.1f},{chart_h - (v / peak) * (chart_h - 8):.1f}'
+                for i, v in enumerate(values)
+            )
+            chart.append({'label': label, 'points': points, 'total': sum(values),
+                          'color': ['var(--lm-accent)', 'var(--lm-ok)', 'var(--lm-warning)'][idx % 3]})
+        ctx['trend'] = {'chart_w': chart_w, 'chart_h': chart_h, 'peak': peak,
+                        'series': chart, 'start': days[0], 'end': days[-1]}
+        return ctx
+
+
+class DesignSystemView(LoginRequiredMixin, TemplateView):
+    """设计系统展示页：令牌与组件示例（团队设计资产单一来源）。"""
+
+    template_name = 'lab_manager/design_system.html'
+
+
+# ── 界面增强：命令面板索引 / 任务看板 ──────────────────────────
+
+class CommandIndexView(LoginRequiredMixin, View):
+    """命令面板索引：导航 + 常用操作 + 少量动态对象（按需加载，不进入页面渲染）。"""
+
+    http_method_names = ['get']
+
+    def get(self, request):
+        def nav(label, url_name, icon, group, keywords=''):
+            try:
+                return {'label': label, 'url': reverse(f'plugins:lab_manager:{url_name}'),
+                        'icon': icon, 'group': group, 'keywords': keywords, 'action': 'goto'}
+            except NoReverseMatch:
+                return None
+
+        items = [x for x in [
+            nav('仪表板', 'home', 'mdi-view-dashboard-outline', '导航', 'home dashboard 首页'),
+            nav('硬件列表', 'hardware_list', 'mdi-cube-outline', '导航', 'hardware 设备'),
+            nav('任务列表', 'task_list', 'mdi-clipboard-text-outline', '导航', 'tasks 待办'),
+            nav('任务看板', 'task_board', 'mdi-view-column-outline', '导航', 'kanban 看板'),
+            nav('我的任务', 'my_tasks', 'mdi-account-check-outline', '导航', 'my tasks'),
+            nav('借出记录', 'hardwareborrowrecord_list', 'mdi-swap-horizontal', '导航', 'borrow 借出'),
+            nav('实验项目', 'labproject_list', 'mdi-flask-outline', '导航', 'project'),
+            nav('打卡记录', 'checkin_list', 'mdi-map-marker-check-outline', '导航', 'checkin 签到'),
+            nav('成员列表', 'member_list', 'mdi-account-group-outline', '导航', 'members'),
+            nav('任务日历', 'calendar', 'mdi-calendar-month-outline', '导航', 'calendar'),
+            nav('浏览记录', 'member_open_records', 'mdi-history', '导航', 'audit 审计'),
+            nav('通知中心', 'notifications', 'mdi-bell-outline', '导航', 'notifications'),
+            nav('智能体控制台', 'agent_console', 'mdi-robot-happy-outline', '导航', 'agent ai'),
+            nav('指挥舱', 'mission_control', 'mdi-monitor-dashboard', '导航', 'mission control 大屏'),
+            nav('数据导出', 'export_data', 'mdi-download-outline', '导航', 'export csv'),
+            nav('设计系统', 'design_system', 'mdi-palette-outline', '导航', 'design tokens 组件'),
+            nav('新增硬件', 'hardware_add', 'mdi-plus-thick', '操作', 'add hardware 提交'),
+            nav('新增任务', 'task_add', 'mdi-plus-thick', '操作', 'add task 派发'),
+            nav('登记借出', 'hardwareborrowrecord_add', 'mdi-plus-thick', '操作', 'borrow 借出'),
+            nav('新增项目', 'labproject_add', 'mdi-plus-thick', '操作', 'project'),
+            nav('拍照打卡', 'checkin_create', 'mdi-camera', '操作', 'checkin 打卡'),
+            nav('发送通知', 'notification_send', 'mdi-send', '操作', 'notify'),
+        ] if x]
+
+        if request.user.is_superuser:
+            for hw in Hardware.objects.order_by('name')[:40]:
+                items.append({'label': hw.name, 'url': hw.get_absolute_url(), 'icon': 'mdi-cube-outline',
+                              'group': '硬件', 'keywords': f'{hw.category} {hw.model_number} 硬件',
+                              'action': 'goto'})
+            for task in Task.objects.select_related('assigned_to').order_by('-created')[:30]:
+                items.append({'label': task.title, 'url': task.get_absolute_url(),
+                              'icon': 'mdi-clipboard-text-outline', 'group': '任务',
+                              'keywords': f'{task.status} {getattr(task.assigned_to, "username", "")}',
+                              'action': 'goto'})
+        else:
+            for task in Task.objects.filter(assigned_to=request.user).order_by('-created')[:30]:
+                items.append({'label': task.title, 'url': task.get_absolute_url(),
+                              'icon': 'mdi-clipboard-text-outline', 'group': '我的任务',
+                              'keywords': task.status, 'action': 'goto'})
+
+        return JsonResponse({'items': items})
+
+
+@method_decorator(require_POST, name='dispatch')
+class TaskStatusUpdateView(LoginRequiredMixin, View):
+    """看板拖拽改状态（JSON）。"""
+
+    def post(self, request):
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return JsonResponse({'ok': False, 'error': '请求体不是合法 JSON'}, status=400)
+        pk = payload.get('pk')
+        status = str(payload.get('status') or '').strip()
+        if status not in {c[0] for c in Task._meta.get_field('status').choices}:
+            return JsonResponse({'ok': False, 'error': 'status 不合法'}, status=400)
+        task = get_object_or_404(Task, pk=pk)
+        if not (request.user.is_superuser or request.user in (task.created_by, task.assigned_to)):
+            return JsonResponse({'ok': False, 'error': '无权修改该任务'}, status=403)
+        task.status = status
+        if status == TaskStatusChoices.COMPLETED:
+            task.completed_at = timezone.now()
+        else:
+            task.completed_at = None
+        task.save(update_fields=['status', 'completed_at', 'last_updated'])
+        return JsonResponse({'ok': True, 'status': task.status})
+
+
+class TaskBoardView(LoginRequiredMixin, TemplateView):
+    """任务看板：按状态三列，可拖拽流转。"""
+
+    template_name = 'lab_manager/task_board.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        request = self.request
+        tasks = Task.objects.select_related('assigned_to', 'created_by', 'project')
+        if not request.user.is_superuser:
+            tasks = tasks.filter(Q(assigned_to=request.user) | Q(created_by=request.user))
+        tasks = tasks.order_by('deadline', '-created')
+        now = timezone.now()
+        columns = []
+        for value, label in Task._meta.get_field('status').choices:
+            rows = [t for t in tasks if t.status == value]
+            columns.append({
+                'value': value, 'label': label, 'tasks': rows, 'count': len(rows),
+                'overdue': sum(1 for t in rows if t.deadline and t.deadline < now and value != TaskStatusChoices.COMPLETED),
+            })
+        ctx['columns'] = columns
+        ctx['now'] = now
+        return ctx
+
+
 # ── 站内通知 ──
 
 class NotificationListView(LoginRequiredMixin, TemplateView):
@@ -954,8 +1333,9 @@ class NotificationListView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
         notifications = Notification.objects.filter(user=user).order_by('-created')
-        ctx['notifications'] = notifications[:50]
         ctx['unread_count'] = notifications.filter(is_read=False).count()
+        page_obj = add_pagination(ctx, self.request, notifications)
+        ctx['notifications'] = page_obj.object_list
         return ctx
 
 
@@ -1119,7 +1499,11 @@ class MemberListView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         from users.models import User
 
-        users = list(User.objects.filter(is_active=True).order_by('username'))
+        page_obj = add_pagination(
+            ctx, self.request, User.objects.filter(is_active=True).order_by('username')
+        )
+        ctx['members_page'] = page_obj
+        users = list(page_obj.object_list)
         user_ids = [u.pk for u in users]
         today = timezone.localdate()
         now = timezone.now()
@@ -1192,7 +1576,7 @@ class MemberListView(LoginRequiredMixin, TemplateView):
             })
 
         ctx['members'] = members
-        ctx['total_members'] = len(members)
+        ctx['total_members'] = page_obj.paginator.count
         return ctx
 
 
@@ -1360,7 +1744,8 @@ class AgentAssistantView(LoginRequiredMixin, TemplateView):
             '帮我找出最近 7 天已完成任务里的视频附件',
             '请帮我解释一下两段式硬件导入应该怎么用',
         ]
-        ctx['conversations'] = conversations[:20]
+        page_obj = add_pagination(ctx, self.request, conversations, default_size=25)
+        ctx['conversations'] = page_obj.object_list
         ctx['active_conversation'] = active_conversation
         # 长会话只加载最近 200 条，避免整表加载与渲染
         if active_conversation:
