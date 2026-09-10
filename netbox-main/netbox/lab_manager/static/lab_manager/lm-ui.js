@@ -1,4 +1,4 @@
-﻿/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    lm-ui.js — 全站交互层（命令面板 ⌘K / AI 副驾驶 / 密度切换 /
    看板拖拽 / 投屏模式 / 表格筛选记忆）
    零依赖，全部通过 data-* 属性驱动，模板不写内联业务脚本。
@@ -218,6 +218,51 @@
     });
   }
 
+  /* ── 10. 侧栏当前项高亮同步 ─────────────────────────────────────
+     服务器把 active 类渲染在 .dropdown-item（链接外层 div）上；
+     局部导航不会重渲染侧栏，因此必须按当前 URL 自行同步，否则高亮会停在上一次。 ── */
+  function syncNavActive() {
+    var nav = document.querySelector('.navbar-vertical');
+    if (!nav) return;
+    var path = location.pathname.replace(/\/+$/, '');
+    // 先全部清除
+    qsa('.active', nav).forEach(function (el) {   // 清除侧栏内所有 active（含首页项、分组标题）
+      el.classList.remove('active');
+    });
+    qsa('[aria-current]', nav).forEach(function (el) { el.removeAttribute('aria-current'); });
+    var candidates = [];
+    qsa('a[href]', nav).forEach(function (a) {
+      var href = (a.getAttribute('href') || '').split('?')[0].split('#')[0];
+      if (href.charAt(0) !== '/') return;
+      // 跳过行内小图标按钮（如「录入硬件」），它们不是菜单项本身
+      if (a.closest('.btn-group') || a.classList.contains('btn')) return;
+      var clean = href.replace(/\/+$/, '');
+      if (!clean) return;
+      // 首页只在完全相等时才算（否则它会匹配所有 /plugins/lab-manager/* 路径）
+      var exactOnly = clean === '/plugins/lab-manager';
+      if ((!exactOnly && (path === clean || path.indexOf(clean + '/') === 0)) || path === clean) {
+        candidates.push({ a: a, len: clean.length });
+      }
+    });
+    if (!candidates.length) return;
+    candidates.sort(function (x, y) { return y.len - x.len; });
+    var best = candidates[0].a;
+    best.setAttribute('aria-current', 'page');
+    // 高亮外层（与服务器渲染一致）
+    var wrapper = best.closest('.dropdown-item') || best.closest('.nav-item');
+    if (wrapper) wrapper.classList.add('active');
+    else best.classList.add('active');
+    // 顺带标记所属分组标题，便于主题做视觉强调
+    var menu = best.closest('.dropdown-menu');
+    if (menu) {
+      var group = menu.closest('.nav-item');
+      if (group) {
+        var toggle = group.querySelector('.nav-link.dropdown-toggle');
+        if (toggle) toggle.classList.add('active');
+      }
+    }
+  }
+
   /* ── 6b. 侧栏滚动位置保持：整页跳转也不会把菜单弹回顶部 ── */
   function initSidebarScroll() {
     var nav = document.querySelector('.navbar-vertical .navbar-collapse, .navbar-vertical');
@@ -331,10 +376,15 @@
         if (old.src) s.src = old.src; else s.textContent = old.textContent;
         old.replaceWith(s);
       });
-      initDensity(); initEffects(); initRowLinks(); initKanban();
+      initDensity(); initEffects(); initRowLinks(); initKanban(); syncNavActive();
+      // 兜底：htmx 推送 URL 与 DOM 替换存在时序差，稍后再校准一次高亮
+      setTimeout(syncNavActive, 80);
     };
     document.body.addEventListener('htmx:afterSwap', rebind);
     document.body.addEventListener('htmx:afterSettle', rebind);
+    document.body.addEventListener('htmx:afterOnLoad', rebind);
+    // URL 推送完成后是校准高亮的最终时机
+    document.body.addEventListener('htmx:pushedIntoHistory', syncNavActive);
     // 兜底：不依赖 htmx 的事件名/实现，直接观察内容区被替换
     var content = document.getElementById('page-content');
     if (content && window.MutationObserver) {
@@ -348,6 +398,6 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initDensity(); initPalette(); initCopilot(); initKanban(); initProjector(); initRowLinks();
-    initPrefetch(); initEffects(); initSidebarScroll(); initBoost();
+    initPrefetch(); initEffects(); initSidebarScroll(); syncNavActive(); initBoost();
   });
 })();

@@ -81,13 +81,12 @@ menu = PluginMenu(
             PluginMenuItem(
                 link='plugins:lab_manager:checkin_create',
                 link_text='拍照定位打卡',
-                buttons=(
-                    PluginMenuButton(
-                        link='plugins:lab_manager:checkin_list',
-                        title='打卡记录',
-                        icon_class='mdi mdi-format-list-bulleted',
-                    ),
-                )
+            ),
+            # 打卡记录是高频入口，作为独立菜单项（而非挂在上一行的小图标按钮），
+            # 否则侧栏高亮会落在「拍照定位打卡」整行上，容易误判当前页面。
+            PluginMenuItem(
+                link='plugins:lab_manager:checkin_list',
+                link_text='打卡记录',
             ),
             PluginMenuItem(
                 link='plugins:lab_manager:member_open_records',

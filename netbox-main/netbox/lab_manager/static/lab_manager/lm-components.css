@@ -413,3 +413,44 @@ html.lm-effects .tp-page .page-wrapper { animation-duration: 260ms; }
    实测本环境 NetBox 自带页面过渡逻辑，自定义的过渡声明会与之冲突
    （控制台出现 Transition was skipped），故此文件不声明任何页面过渡规则。
    内容区替换后的重新绑定由 lm-ui.js 的 rebind() + MutationObserver 负责。 */
+
+/* ── 侧栏「当前页」高亮 ────────────────────────────────────────────
+   主题只为顶级 .nav-link.active（分组标题）做了强调，子项 .dropdown-item.active
+   默认只有 6% 黑底，暗色主题下几乎看不见，用户反馈"不知道自己点到了哪"。
+   这里补齐：强调色底 + 内嵌左侧色条（用 box-shadow 而非 border，避免文字位移），
+   并用 aria-current="page"（由 lm-ui.js 的 syncNavActive 写入）标出精确页面对应的链接。 */
+.tp-page .navbar-vertical .dropdown-item.active,
+html body .tp-page .navbar-vertical .dropdown-menu .dropdown-item.active {
+  /* 注意：不用 --tp-nav-active-bg —— 暗色主题下它是绿色 rgba(0,255,65,.12)，
+     而 --tp-nav-accent 是青色 #00e5ff，两者叠加会发浑。
+     统一从 accent 派生，两套主题观感一致。 */
+  background-color: color-mix(in srgb, var(--tp-nav-accent) 14%, transparent) !important;
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tp-nav-accent) 20%, transparent),
+    color-mix(in srgb, var(--tp-nav-accent) 6%, transparent)
+  ) !important;
+  box-shadow: inset 3px 0 0 var(--tp-nav-accent);
+  border-radius: 0 6px 6px 0;
+}
+html body .tp-page .navbar-vertical .dropdown-menu .dropdown-item.active > a {
+  color: var(--tp-nav-accent) !important;
+  font-weight: 600 !important;
+}
+/* 同一行内的行内按钮（如「录入硬件」）不参与高亮，避免抢焦点 */
+html body .tp-page .navbar-vertical .dropdown-menu .dropdown-item.active .btn-group a {
+  color: inherit !important;
+  font-weight: 400 !important;
+  opacity: .75;
+}
+/* 精确匹配的链接加前方标记，明确"你现在在这里" */
+html body .tp-page .navbar-vertical .dropdown-menu .dropdown-item a[aria-current="page"]::before {
+  content: "▸";
+  margin-right: 4px;
+  color: var(--tp-nav-accent);
+  font-weight: 700;
+}
+html:not(.lm-effects) body .tp-page .navbar-vertical .dropdown-menu .dropdown-item a[aria-current="page"]::before {
+  content: "›";
+}
+
