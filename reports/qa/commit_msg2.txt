@@ -1,0 +1,8 @@
+﻿fix(ui): 移除与 NetBox 自带页面过渡冲突的自定义 View Transition 规则
+
+排查"侧栏每次切换都刷新"时加了 @view-transition 与 view-transition-name，
+但本环境 NetBox 自带页面过渡逻辑，两者冲突导致控制台抛
+"Transition was skipped"（连续局部导航时第 4 次起出现）。
+侧栏刷新问题已由 HTMX 局部导航解决，无需自定义过渡规则，故移除。
+
+验证：连续 6 次侧栏局部导航全部成功且零控制台报错。
