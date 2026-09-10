@@ -10,8 +10,10 @@ __all__ = (
 
 
 class EnhancedPaginator(Paginator):
+    # 10 放在首位：本平台默认每页 10 条（PAGINATE_COUNT = 10），
+    # 下拉框必须包含当前页大小，否则用户选了其它值就回不到默认值。
     default_page_lengths = (
-        25, 50, 100, 250, 500, 1000
+        10, 25, 50, 100, 250, 500, 1000
     )
 
     def __init__(self, object_list, per_page, orphans=None, **kwargs):
@@ -24,11 +26,11 @@ class EnhancedPaginator(Paginator):
         except ValueError:
             per_page = get_config().PAGINATE_COUNT
 
-        # Set orphans count based on page size
-        if orphans is None and per_page <= 50:
-            orphans = 5
-        elif orphans is None:
-            orphans = 10
+        # 本平台要求"每页 N 条"严格等于 N：不再沿用 NetBox 默认的 orphans 合并策略
+        # （per_page<=50 时 orphans=5，会把末页零头并进上一页——例如 12 条会在第 1 页
+        # 显示 12 条，看起来像"每页 10 条"没生效）。调用方仍可显式传入 orphans 覆盖。
+        if orphans is None:
+            orphans = 0
 
         super().__init__(object_list, per_page, orphans=orphans, **kwargs)
 

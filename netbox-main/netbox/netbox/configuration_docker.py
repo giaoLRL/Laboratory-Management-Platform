@@ -1,4 +1,4 @@
-﻿import os
+import os
 from netbox.configuration import *
 
 ALLOWED_HOSTS = ["*"]
@@ -6,6 +6,10 @@ DEBUG = True
 
 # 关闭 Django Debug Toolbar：它会遮挡窄屏页面控件，且导致 manage.py test 无法运行
 ENABLE_DEBUG_TOOLBAR = False
+
+# 列表页默认每页 10 条（与 lab_manager/views.py 的 DEFAULT_PAGE_SIZE 一致）
+PAGINATE_COUNT = 10
+
 SECRET_KEY = "JI-wq1y%gBCSorighg9CIf!EGfKCtPOoMd4(Oq@2kanNo@KR1X"
 
 DATABASES = {

@@ -246,6 +246,19 @@ print('model:', get_plugin_config('lab_manager', 'langchain_model', 'NOT SET'))
 - 插件上传目录（`checkins/`、`task_attachments/`、`hardware/`）在 `MediaView` 中做对象级鉴权；
   附件与发票强制 `Content-Disposition: attachment`。
 
+### 分页
+- **全站列表默认每页 10 条**，两个入口必须保持一致：
+  - NetBox 核心/插件通用列表（`ObjectListView`）读 `configuration.py` 的 `PAGINATE_COUNT`（已设 10）；
+  - 插件自写列表走 `lab_manager/views.py` 的 `add_pagination()`，其 `DEFAULT_PAGE_SIZE = 10`、
+    `PAGE_SIZE_CHOICES = (10, 25, 50, 100, 200)`。**新增列表请调用 `add_pagination()`，
+    不要再硬编码 `default_size=25`。**
+- `utilities/paginator.py`：
+  - `EnhancedPaginator.default_page_lengths` 首位补了 `10`（下拉框必须包含当前页大小，否则回不到默认值）；
+  - `orphans` 默认改为 `0`。NetBox 原本在 `per_page <= 50` 时用 `orphans=5` 把末页零头并进上一页，
+    会出现"设置每页 10 条却显示 12 条"的观感。需要恢复该行为时显式传 `orphans=5`。
+- 用户级偏好 `user.config['pagination.per_page']` 会覆盖 `PAGINATE_COUNT`；
+  排查"分页设置没生效"时先查这个（`reports/qa/check_paginate_prefs.py`）。
+
 ### 测试
 - 测试位于 `lab_manager/tests/`，覆盖借出库存、信号通知、404/405、媒体鉴权、打卡去重、
   导入并发、Agent API 输入校验、工具参数归一化等回归点。

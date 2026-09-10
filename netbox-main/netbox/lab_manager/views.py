@@ -496,9 +496,9 @@ class MyTasksView(LoginRequiredMixin, TemplateView):
 # 打卡防重复提交时间窗（秒）
 CHECKIN_DEDUPE_SECONDS = 60
 
-# 统一分页配置
-PAGE_SIZE_CHOICES = (25, 50, 100, 200)
-DEFAULT_PAGE_SIZE = 50
+# 统一分页配置（默认每页 10 条，可在页脚切换）
+PAGE_SIZE_CHOICES = (10, 25, 50, 100, 200)
+DEFAULT_PAGE_SIZE = 10
 
 
 def csv_response(filename, headers, rows):
@@ -644,7 +644,7 @@ class MemberOpenRecordListView(LoginRequiredMixin, UserPassesTestMixin, Template
             records = records.filter(created__date__gte=date_from)
         if date_to:
             records = records.filter(created__date__lte=date_to)
-        page_obj = add_pagination(ctx, self.request, records, default_size=25)
+        page_obj = add_pagination(ctx, self.request, records)
         ctx['records'] = page_obj.object_list
         ctx['username'] = username or ''
         ctx['target_type'] = target_type or ''
@@ -816,7 +816,7 @@ class CheckInListView(LoginRequiredMixin, TemplateView):
         records = filter_checkins(
             request, CheckInRecord.objects.select_related('user').order_by('-created')
         )
-        page_obj = add_pagination(ctx, request, records, default_size=25)
+        page_obj = add_pagination(ctx, request, records)
         ctx['records'] = page_obj.object_list
         ctx['is_superuser'] = request.user.is_superuser
         ctx['filter_username'] = (request.GET.get('username') or '').strip()
@@ -1755,7 +1755,7 @@ class AgentAssistantView(LoginRequiredMixin, TemplateView):
             '帮我找出最近 7 天已完成任务里的视频附件',
             '请帮我解释一下两段式硬件导入应该怎么用',
         ]
-        page_obj = add_pagination(ctx, self.request, conversations, default_size=25)
+        page_obj = add_pagination(ctx, self.request, conversations)
         ctx['conversations'] = page_obj.object_list
         ctx['active_conversation'] = active_conversation
         # 长会话只加载最近 200 条，避免整表加载与渲染
