@@ -1,0 +1,970 @@
+[
+ {
+  "name": "hardware-list",
+  "pattern": "plugins/lab-manager/api/^hardware/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareViewSet",
+  "url": "/plugins/lab-manager/api/hardware/"
+ },
+ {
+  "name": "hardware-list",
+  "pattern": "plugins/lab-manager/api/^hardware\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareViewSet",
+  "url": "/plugins/lab-manager/api/hardware\\.1/"
+ },
+ {
+  "name": "hardware-detail",
+  "pattern": "plugins/lab-manager/api/^hardware/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareViewSet",
+  "url": "/plugins/lab-manager/api/hardware/1/"
+ },
+ {
+  "name": "hardware-detail",
+  "pattern": "plugins/lab-manager/api/^hardware/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareViewSet",
+  "url": "/plugins/lab-manager/api/hardware/1\\.1/"
+ },
+ {
+  "name": "task-list",
+  "pattern": "plugins/lab-manager/api/^tasks/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskViewSet",
+  "url": "/plugins/lab-manager/api/tasks/"
+ },
+ {
+  "name": "task-list",
+  "pattern": "plugins/lab-manager/api/^tasks\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskViewSet",
+  "url": "/plugins/lab-manager/api/tasks\\.1/"
+ },
+ {
+  "name": "task-detail",
+  "pattern": "plugins/lab-manager/api/^tasks/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskViewSet",
+  "url": "/plugins/lab-manager/api/tasks/1/"
+ },
+ {
+  "name": "task-detail",
+  "pattern": "plugins/lab-manager/api/^tasks/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskViewSet",
+  "url": "/plugins/lab-manager/api/tasks/1\\.1/"
+ },
+ {
+  "name": "taskcomment-list",
+  "pattern": "plugins/lab-manager/api/^task-comments/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskCommentViewSet",
+  "url": "/plugins/lab-manager/api/task-comments/"
+ },
+ {
+  "name": "taskcomment-list",
+  "pattern": "plugins/lab-manager/api/^task-comments\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskCommentViewSet",
+  "url": "/plugins/lab-manager/api/task-comments\\.1/"
+ },
+ {
+  "name": "taskcomment-detail",
+  "pattern": "plugins/lab-manager/api/^task-comments/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskCommentViewSet",
+  "url": "/plugins/lab-manager/api/task-comments/1/"
+ },
+ {
+  "name": "taskcomment-detail",
+  "pattern": "plugins/lab-manager/api/^task-comments/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskCommentViewSet",
+  "url": "/plugins/lab-manager/api/task-comments/1\\.1/"
+ },
+ {
+  "name": "taskattachment-list",
+  "pattern": "plugins/lab-manager/api/^task-attachments/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskAttachmentViewSet",
+  "url": "/plugins/lab-manager/api/task-attachments/"
+ },
+ {
+  "name": "taskattachment-list",
+  "pattern": "plugins/lab-manager/api/^task-attachments\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskAttachmentViewSet",
+  "url": "/plugins/lab-manager/api/task-attachments\\.1/"
+ },
+ {
+  "name": "taskattachment-detail",
+  "pattern": "plugins/lab-manager/api/^task-attachments/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskAttachmentViewSet",
+  "url": "/plugins/lab-manager/api/task-attachments/1/"
+ },
+ {
+  "name": "taskattachment-detail",
+  "pattern": "plugins/lab-manager/api/^task-attachments/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "TaskAttachmentViewSet",
+  "url": "/plugins/lab-manager/api/task-attachments/1\\.1/"
+ },
+ {
+  "name": "checkinrecord-list",
+  "pattern": "plugins/lab-manager/api/^checkin-records/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "CheckInRecordViewSet",
+  "url": "/plugins/lab-manager/api/checkin-records/"
+ },
+ {
+  "name": "checkinrecord-list",
+  "pattern": "plugins/lab-manager/api/^checkin-records\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "CheckInRecordViewSet",
+  "url": "/plugins/lab-manager/api/checkin-records\\.1/"
+ },
+ {
+  "name": "checkinrecord-detail",
+  "pattern": "plugins/lab-manager/api/^checkin-records/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "CheckInRecordViewSet",
+  "url": "/plugins/lab-manager/api/checkin-records/1/"
+ },
+ {
+  "name": "checkinrecord-detail",
+  "pattern": "plugins/lab-manager/api/^checkin-records/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "CheckInRecordViewSet",
+  "url": "/plugins/lab-manager/api/checkin-records/1\\.1/"
+ },
+ {
+  "name": "memberopenrecord-list",
+  "pattern": "plugins/lab-manager/api/^member-open-records/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "MemberOpenRecordViewSet",
+  "url": "/plugins/lab-manager/api/member-open-records/"
+ },
+ {
+  "name": "memberopenrecord-list",
+  "pattern": "plugins/lab-manager/api/^member-open-records\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "MemberOpenRecordViewSet",
+  "url": "/plugins/lab-manager/api/member-open-records\\.1/"
+ },
+ {
+  "name": "memberopenrecord-detail",
+  "pattern": "plugins/lab-manager/api/^member-open-records/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "MemberOpenRecordViewSet",
+  "url": "/plugins/lab-manager/api/member-open-records/1/"
+ },
+ {
+  "name": "memberopenrecord-detail",
+  "pattern": "plugins/lab-manager/api/^member-open-records/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "MemberOpenRecordViewSet",
+  "url": "/plugins/lab-manager/api/member-open-records/1\\.1/"
+ },
+ {
+  "name": "hardwareimportbatch-list",
+  "pattern": "plugins/lab-manager/api/^import-batches/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareImportBatchViewSet",
+  "url": "/plugins/lab-manager/api/import-batches/"
+ },
+ {
+  "name": "hardwareimportbatch-list",
+  "pattern": "plugins/lab-manager/api/^import-batches\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareImportBatchViewSet",
+  "url": "/plugins/lab-manager/api/import-batches\\.1/"
+ },
+ {
+  "name": "hardwareimportbatch-detail",
+  "pattern": "plugins/lab-manager/api/^import-batches/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareImportBatchViewSet",
+  "url": "/plugins/lab-manager/api/import-batches/1/"
+ },
+ {
+  "name": "hardwareimportbatch-detail",
+  "pattern": "plugins/lab-manager/api/^import-batches/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareImportBatchViewSet",
+  "url": "/plugins/lab-manager/api/import-batches/1\\.1/"
+ },
+ {
+  "name": "agenttool-list",
+  "pattern": "plugins/lab-manager/api/^agent-tools/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentToolViewSet",
+  "url": "/plugins/lab-manager/api/agent-tools/"
+ },
+ {
+  "name": "agenttool-list",
+  "pattern": "plugins/lab-manager/api/^agent-tools\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentToolViewSet",
+  "url": "/plugins/lab-manager/api/agent-tools\\.1/"
+ },
+ {
+  "name": "agenttool-detail",
+  "pattern": "plugins/lab-manager/api/^agent-tools/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentToolViewSet",
+  "url": "/plugins/lab-manager/api/agent-tools/1/"
+ },
+ {
+  "name": "agenttool-detail",
+  "pattern": "plugins/lab-manager/api/^agent-tools/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentToolViewSet",
+  "url": "/plugins/lab-manager/api/agent-tools/1\\.1/"
+ },
+ {
+  "name": "labproject-list",
+  "pattern": "plugins/lab-manager/api/^projects/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "LabProjectViewSet",
+  "url": "/plugins/lab-manager/api/projects/"
+ },
+ {
+  "name": "labproject-list",
+  "pattern": "plugins/lab-manager/api/^projects\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "LabProjectViewSet",
+  "url": "/plugins/lab-manager/api/projects\\.1/"
+ },
+ {
+  "name": "labproject-detail",
+  "pattern": "plugins/lab-manager/api/^projects/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "LabProjectViewSet",
+  "url": "/plugins/lab-manager/api/projects/1/"
+ },
+ {
+  "name": "labproject-detail",
+  "pattern": "plugins/lab-manager/api/^projects/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "LabProjectViewSet",
+  "url": "/plugins/lab-manager/api/projects/1\\.1/"
+ },
+ {
+  "name": "hardwareborrowrecord-list",
+  "pattern": "plugins/lab-manager/api/^borrow-records/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareBorrowRecordViewSet",
+  "url": "/plugins/lab-manager/api/borrow-records/"
+ },
+ {
+  "name": "hardwareborrowrecord-list",
+  "pattern": "plugins/lab-manager/api/^borrow-records\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareBorrowRecordViewSet",
+  "url": "/plugins/lab-manager/api/borrow-records\\.1/"
+ },
+ {
+  "name": "hardwareborrowrecord-detail",
+  "pattern": "plugins/lab-manager/api/^borrow-records/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareBorrowRecordViewSet",
+  "url": "/plugins/lab-manager/api/borrow-records/1/"
+ },
+ {
+  "name": "hardwareborrowrecord-detail",
+  "pattern": "plugins/lab-manager/api/^borrow-records/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "HardwareBorrowRecordViewSet",
+  "url": "/plugins/lab-manager/api/borrow-records/1\\.1/"
+ },
+ {
+  "name": "agentconversation-list",
+  "pattern": "plugins/lab-manager/api/^conversations/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentConversationViewSet",
+  "url": "/plugins/lab-manager/api/conversations/"
+ },
+ {
+  "name": "agentconversation-list",
+  "pattern": "plugins/lab-manager/api/^conversations\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentConversationViewSet",
+  "url": "/plugins/lab-manager/api/conversations\\.1/"
+ },
+ {
+  "name": "agentconversation-detail",
+  "pattern": "plugins/lab-manager/api/^conversations/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentConversationViewSet",
+  "url": "/plugins/lab-manager/api/conversations/1/"
+ },
+ {
+  "name": "agentconversation-detail",
+  "pattern": "plugins/lab-manager/api/^conversations/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentConversationViewSet",
+  "url": "/plugins/lab-manager/api/conversations/1\\.1/"
+ },
+ {
+  "name": "agentmessage-list",
+  "pattern": "plugins/lab-manager/api/^messages/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentMessageViewSet",
+  "url": "/plugins/lab-manager/api/messages/"
+ },
+ {
+  "name": "agentmessage-list",
+  "pattern": "plugins/lab-manager/api/^messages\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentMessageViewSet",
+  "url": "/plugins/lab-manager/api/messages\\.1/"
+ },
+ {
+  "name": "agentmessage-detail",
+  "pattern": "plugins/lab-manager/api/^messages/(?P<pk>[^/.]+)/$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentMessageViewSet",
+  "url": "/plugins/lab-manager/api/messages/1/"
+ },
+ {
+  "name": "agentmessage-detail",
+  "pattern": "plugins/lab-manager/api/^messages/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "AgentMessageViewSet",
+  "url": "/plugins/lab-manager/api/messages/1\\.1/"
+ },
+ {
+  "name": "api-root",
+  "pattern": "plugins/lab-manager/api/",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/"
+ },
+ {
+  "name": "api-root",
+  "pattern": "plugins/lab-manager/api/<drf_format_suffix:format>",
+  "namespaces": "plugins.lab_manager.lab_manager-api",
+  "module": "lab_manager.api.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/<drf_format_suffix:format>"
+ },
+ {
+  "name": "agent_hardware_search",
+  "pattern": "plugins/lab-manager/api/agent/hardware/search/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/hardware/search/"
+ },
+ {
+  "name": "agent_hardware_gap_analysis",
+  "pattern": "plugins/lab-manager/api/agent/hardware/gap-analysis/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/hardware/gap-analysis/"
+ },
+ {
+  "name": "agent_members_search",
+  "pattern": "plugins/lab-manager/api/agent/members/search/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/members/search/"
+ },
+ {
+  "name": "agent_platform_query",
+  "pattern": "plugins/lab-manager/api/agent/platform/query/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/platform/query/"
+ },
+ {
+  "name": "agent_tasks_search",
+  "pattern": "plugins/lab-manager/api/agent/tasks/search/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/tasks/search/"
+ },
+ {
+  "name": "agent_task_create",
+  "pattern": "plugins/lab-manager/api/agent/tasks/create/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/tasks/create/"
+ },
+ {
+  "name": "agent_task_videos",
+  "pattern": "plugins/lab-manager/api/agent/tasks/videos/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/tasks/videos/"
+ },
+ {
+  "name": "agent_checkin_search",
+  "pattern": "plugins/lab-manager/api/agent/checkins/search/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/checkins/search/"
+ },
+ {
+  "name": "agent_member_open_records_search",
+  "pattern": "plugins/lab-manager/api/agent/member-open-records/search/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/member-open-records/search/"
+ },
+ {
+  "name": "agent_hardware_import_validate",
+  "pattern": "plugins/lab-manager/api/agent/hardware/import/validate/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/hardware/import/validate/"
+ },
+ {
+  "name": "agent_hardware_import_commit",
+  "pattern": "plugins/lab-manager/api/agent/hardware/import/commit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.agent_api",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/api/agent/hardware/import/commit/"
+ },
+ {
+  "name": "agent_console",
+  "pattern": "plugins/lab-manager/agent/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent/"
+ },
+ {
+  "name": "agent_chat_proxy",
+  "pattern": "plugins/lab-manager/agent/chat/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent/chat/"
+ },
+ {
+  "name": "hardware_list",
+  "pattern": "plugins/lab-manager/hardware/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/"
+ },
+ {
+  "name": "hardware_add",
+  "pattern": "plugins/lab-manager/hardware/add/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/add/"
+ },
+ {
+  "name": "hardware_journal",
+  "pattern": "plugins/lab-manager/hardware/<int:pk>/journal/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/<int:pk>/journal/"
+ },
+ {
+  "name": "hardware_changelog",
+  "pattern": "plugins/lab-manager/hardware/<int:pk>/changelog/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/<int:pk>/changelog/"
+ },
+ {
+  "name": "hardware",
+  "pattern": "plugins/lab-manager/hardware/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/<int:pk>/"
+ },
+ {
+  "name": "hardware_edit",
+  "pattern": "plugins/lab-manager/hardware/<int:pk>/edit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/<int:pk>/edit/"
+ },
+ {
+  "name": "hardware_delete",
+  "pattern": "plugins/lab-manager/hardware/<int:pk>/delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/<int:pk>/delete/"
+ },
+ {
+  "name": "hardware_approval",
+  "pattern": "plugins/lab-manager/hardware/<int:pk>/approval/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/hardware/<int:pk>/approval/"
+ },
+ {
+  "name": "task_list",
+  "pattern": "plugins/lab-manager/tasks/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/"
+ },
+ {
+  "name": "task_add",
+  "pattern": "plugins/lab-manager/tasks/add/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/add/"
+ },
+ {
+  "name": "task_journal",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/journal/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/journal/"
+ },
+ {
+  "name": "task_changelog",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/changelog/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/changelog/"
+ },
+ {
+  "name": "task",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/"
+ },
+ {
+  "name": "task_edit",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/edit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/edit/"
+ },
+ {
+  "name": "task_delete",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/delete/"
+ },
+ {
+  "name": "my_tasks",
+  "pattern": "plugins/lab-manager/my-tasks/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/my-tasks/"
+ },
+ {
+  "name": "member_open_records",
+  "pattern": "plugins/lab-manager/member-open-records/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/member-open-records/"
+ },
+ {
+  "name": "member_open_record_detail",
+  "pattern": "plugins/lab-manager/member-open-records/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/member-open-records/<int:pk>/"
+ },
+ {
+  "name": "checkin_list",
+  "pattern": "plugins/lab-manager/checkins/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/checkins/"
+ },
+ {
+  "name": "checkin_create",
+  "pattern": "plugins/lab-manager/checkins/new/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/checkins/new/"
+ },
+ {
+  "name": "checkin_detail",
+  "pattern": "plugins/lab-manager/checkins/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/checkins/<int:pk>/"
+ },
+ {
+  "name": "task_upload",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/upload/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/upload/"
+ },
+ {
+  "name": "task_complete",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/complete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/complete/"
+ },
+ {
+  "name": "task_comment",
+  "pattern": "plugins/lab-manager/tasks/<int:pk>/comment/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/tasks/<int:pk>/comment/"
+ },
+ {
+  "name": "task_attachment_delete",
+  "pattern": "plugins/lab-manager/attachments/<int:pk>/delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/attachments/<int:pk>/delete/"
+ },
+ {
+  "name": "hardwareborrowrecord_list",
+  "pattern": "plugins/lab-manager/borrow-records/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/"
+ },
+ {
+  "name": "hardwareborrowrecord_add",
+  "pattern": "plugins/lab-manager/borrow-records/add/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/add/"
+ },
+ {
+  "name": "hardwareborrowrecord_journal",
+  "pattern": "plugins/lab-manager/borrow-records/<int:pk>/journal/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/<int:pk>/journal/"
+ },
+ {
+  "name": "hardwareborrowrecord_changelog",
+  "pattern": "plugins/lab-manager/borrow-records/<int:pk>/changelog/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/<int:pk>/changelog/"
+ },
+ {
+  "name": "hardwareborrowrecord",
+  "pattern": "plugins/lab-manager/borrow-records/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/<int:pk>/"
+ },
+ {
+  "name": "hardwareborrowrecord_edit",
+  "pattern": "plugins/lab-manager/borrow-records/<int:pk>/edit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/<int:pk>/edit/"
+ },
+ {
+  "name": "hardwareborrowrecord_delete",
+  "pattern": "plugins/lab-manager/borrow-records/<int:pk>/delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/<int:pk>/delete/"
+ },
+ {
+  "name": "borrow_return",
+  "pattern": "plugins/lab-manager/borrow-records/<int:pk>/return/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/borrow-records/<int:pk>/return/"
+ },
+ {
+  "name": "labproject_list",
+  "pattern": "plugins/lab-manager/projects/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/"
+ },
+ {
+  "name": "labproject_add",
+  "pattern": "plugins/lab-manager/projects/add/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/add/"
+ },
+ {
+  "name": "labproject_journal",
+  "pattern": "plugins/lab-manager/projects/<int:pk>/journal/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/<int:pk>/journal/"
+ },
+ {
+  "name": "labproject_changelog",
+  "pattern": "plugins/lab-manager/projects/<int:pk>/changelog/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/<int:pk>/changelog/"
+ },
+ {
+  "name": "labproject",
+  "pattern": "plugins/lab-manager/projects/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/<int:pk>/"
+ },
+ {
+  "name": "labproject_edit",
+  "pattern": "plugins/lab-manager/projects/<int:pk>/edit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/<int:pk>/edit/"
+ },
+ {
+  "name": "labproject_delete",
+  "pattern": "plugins/lab-manager/projects/<int:pk>/delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/projects/<int:pk>/delete/"
+ },
+ {
+  "name": "agenttool_list",
+  "pattern": "plugins/lab-manager/agent-tools/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/"
+ },
+ {
+  "name": "agenttool_add",
+  "pattern": "plugins/lab-manager/agent-tools/add/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/add/"
+ },
+ {
+  "name": "agenttool_journal",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/journal/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/journal/"
+ },
+ {
+  "name": "agenttool_changelog",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/changelog/",
+  "namespaces": "plugins.lab_manager",
+  "module": "netbox.views.generic.feature_views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/changelog/"
+ },
+ {
+  "name": "agenttool",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/"
+ },
+ {
+  "name": "agenttool_edit",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/edit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/edit/"
+ },
+ {
+  "name": "agenttool_delete",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/delete/"
+ },
+ {
+  "name": "agenttool_bulk_delete",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/bulk_delete/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/bulk_delete/"
+ },
+ {
+  "name": "agenttool_bulk_edit",
+  "pattern": "plugins/lab-manager/agent-tools/<int:pk>/bulk_edit/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/agent-tools/<int:pk>/bulk_edit/"
+ },
+ {
+  "name": "notifications",
+  "pattern": "plugins/lab-manager/notifications/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/notifications/"
+ },
+ {
+  "name": "notification_send",
+  "pattern": "plugins/lab-manager/notifications/send/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/notifications/send/"
+ },
+ {
+  "name": "notification_read_all",
+  "pattern": "plugins/lab-manager/notifications/read-all/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/notifications/read-all/"
+ },
+ {
+  "name": "notification_read",
+  "pattern": "plugins/lab-manager/notifications/<int:pk>/read/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/notifications/<int:pk>/read/"
+ },
+ {
+  "name": "calendar",
+  "pattern": "plugins/lab-manager/calendar/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/calendar/"
+ },
+ {
+  "name": "export_data",
+  "pattern": "plugins/lab-manager/export/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/export/"
+ },
+ {
+  "name": "member_list",
+  "pattern": "plugins/lab-manager/members/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/members/"
+ },
+ {
+  "name": "member_detail",
+  "pattern": "plugins/lab-manager/members/<int:pk>/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/members/<int:pk>/"
+ },
+ {
+  "name": "home",
+  "pattern": "plugins/lab-manager/",
+  "namespaces": "plugins.lab_manager",
+  "module": "lab_manager.views",
+  "qualname": "View.as_view.<locals>.view",
+  "url": "/plugins/lab-manager/"
+ }
+]

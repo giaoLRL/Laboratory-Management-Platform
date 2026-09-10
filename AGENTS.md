@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## 项目概览
 
@@ -12,10 +12,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 实验室/
-├── CLAUDE.md              # 本文件
+├── AGENTS.md              # 本文件
 ├── start.sh / stop.sh     # 一键启停
 ├── netbox-main/           # ★ 主项目
-│   ├── CLAUDE.md          # → 指向 AGENTS.md（NetBox 上游开发指南）
+│   ├── AGENTS.md          # → 指向 AGENTS.md（NetBox 上游开发指南）
 │   ├── AGENTS.md          # NetBox 框架架构/命令/约定（必读）
 │   ├── requirements.txt
 │   └── netbox/

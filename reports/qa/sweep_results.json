@@ -1,0 +1,3097 @@
+{
+ "generated": "2026-09-11 00:23:33",
+ "admin_status_counts": {
+  "200": 203,
+  "404": 12,
+  "405": 14,
+  "302": 2
+ },
+ "anon_status_counts": {
+  "302": 57,
+  "404": 3,
+  "403": 25,
+  "401": 11
+ },
+ "results": [
+  {
+   "url": "/plugins/lab-manager/",
+   "label": "admin",
+   "status": 200,
+   "len": 62180,
+   "ms": 110,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/",
+   "label": "admin",
+   "status": 200,
+   "len": 79232,
+   "ms": 225,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 58485,
+   "ms": 70,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/bulk_delete/",
+   "label": "admin",
+   "status": 404,
+   "len": 31998,
+   "ms": 66,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/bulk_edit/",
+   "label": "admin",
+   "status": 404,
+   "len": 31992,
+   "ms": 56,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/changelog/",
+   "label": "admin",
+   "status": 200,
+   "len": 55116,
+   "ms": 105,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/delete/",
+   "label": "admin",
+   "status": 200,
+   "len": 55102,
+   "ms": 108,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/edit/",
+   "label": "admin",
+   "status": 200,
+   "len": 64169,
+   "ms": 160,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/journal/",
+   "label": "admin",
+   "status": 200,
+   "len": 59765,
+   "ms": 135,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/add/",
+   "label": "admin",
+   "status": 200,
+   "len": 63436,
+   "ms": 121,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent/",
+   "label": "admin",
+   "status": 200,
+   "len": 92424,
+   "ms": 87,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent/chat/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 50,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/",
+   "label": "admin",
+   "status": 200,
+   "len": 925,
+   "ms": 58,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent-tools/",
+   "label": "admin",
+   "status": 200,
+   "len": 6440,
+   "ms": 80,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent-tools/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 1086,
+   "ms": 79,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/checkins/search/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 34,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/gap-analysis/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 32,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/import/commit/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 41,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/import/validate/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 47,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/search/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 37,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/member-open-records/search/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 55,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/members/search/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 29,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/platform/query/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 47,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/tasks/create/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 31,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/tasks/search/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 32,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/tasks/videos/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 44,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/borrow-records/",
+   "label": "admin",
+   "status": 200,
+   "len": 52,
+   "ms": 141,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/borrow-records/1/",
+   "label": "admin",
+   "status": 404,
+   "len": 61,
+   "ms": 51,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/checkin-records/",
+   "label": "admin",
+   "status": 200,
+   "len": 1361,
+   "ms": 98,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/checkin-records/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 440,
+   "ms": 69,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/conversations/",
+   "label": "admin",
+   "status": 200,
+   "len": 27533,
+   "ms": 136,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/conversations/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 605,
+   "ms": 100,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/hardware/",
+   "label": "admin",
+   "status": 200,
+   "len": 1906,
+   "ms": 107,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/hardware/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 748,
+   "ms": 84,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/import-batches/",
+   "label": "admin",
+   "status": 200,
+   "len": 52,
+   "ms": 64,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/import-batches/1/",
+   "label": "admin",
+   "status": 404,
+   "len": 60,
+   "ms": 63,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/member-open-records/",
+   "label": "admin",
+   "status": 200,
+   "len": 27654,
+   "ms": 110,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/member-open-records/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 497,
+   "ms": 99,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/messages/",
+   "label": "admin",
+   "status": 200,
+   "len": 31478,
+   "ms": 165,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/messages/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 324,
+   "ms": 119,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/projects/",
+   "label": "admin",
+   "status": 200,
+   "len": 386,
+   "ms": 85,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/projects/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 334,
+   "ms": 72,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-attachments/",
+   "label": "admin",
+   "status": 200,
+   "len": 742,
+   "ms": 77,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-attachments/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 358,
+   "ms": 76,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-comments/",
+   "label": "admin",
+   "status": 200,
+   "len": 52,
+   "ms": 65,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-comments/1/",
+   "label": "admin",
+   "status": 404,
+   "len": 52,
+   "ms": 77,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/tasks/",
+   "label": "admin",
+   "status": 200,
+   "len": 4738,
+   "ms": 85,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/tasks/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 409,
+   "ms": 79,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/attachments/1/delete/",
+   "label": "admin",
+   "status": 200,
+   "len": 54902,
+   "ms": 93,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/",
+   "label": "admin",
+   "status": 200,
+   "len": 64911,
+   "ms": 190,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/",
+   "label": "admin",
+   "status": 404,
+   "len": 23162,
+   "ms": 59,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/changelog/",
+   "label": "admin",
+   "status": 404,
+   "len": 22622,
+   "ms": 64,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/delete/",
+   "label": "admin",
+   "status": 404,
+   "len": 24377,
+   "ms": 66,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/edit/",
+   "label": "admin",
+   "status": 404,
+   "len": 23773,
+   "ms": 64,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/journal/",
+   "label": "admin",
+   "status": 404,
+   "len": 22012,
+   "ms": 66,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/return/",
+   "label": "admin",
+   "status": 404,
+   "len": 24863,
+   "ms": 66,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/add/",
+   "label": "admin",
+   "status": 200,
+   "len": 59432,
+   "ms": 103,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/calendar/",
+   "label": "admin",
+   "status": 200,
+   "len": 66475,
+   "ms": 72,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/",
+   "label": "admin",
+   "status": 200,
+   "len": 56278,
+   "ms": 110,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 55456,
+   "ms": 96,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/new/",
+   "label": "admin",
+   "status": 200,
+   "len": 62205,
+   "ms": 106,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/export/",
+   "label": "admin",
+   "status": 200,
+   "len": 56481,
+   "ms": 75,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/",
+   "label": "admin",
+   "status": 200,
+   "len": 71481,
+   "ms": 154,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 57150,
+   "ms": 66,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/approval/",
+   "label": "admin",
+   "status": 200,
+   "len": 55651,
+   "ms": 66,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/changelog/",
+   "label": "admin",
+   "status": 200,
+   "len": 57088,
+   "ms": 106,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/delete/",
+   "label": "admin",
+   "status": 200,
+   "len": 55092,
+   "ms": 71,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/edit/",
+   "label": "admin",
+   "status": 200,
+   "len": 66700,
+   "ms": 145,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/journal/",
+   "label": "admin",
+   "status": 200,
+   "len": 59768,
+   "ms": 108,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/add/",
+   "label": "admin",
+   "status": 200,
+   "len": 66341,
+   "ms": 125,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/",
+   "label": "admin",
+   "status": 200,
+   "len": 139036,
+   "ms": 487,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 55494,
+   "ms": 119,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/members/",
+   "label": "admin",
+   "status": 200,
+   "len": 60124,
+   "ms": 119,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/members/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 92239,
+   "ms": 150,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/my-tasks/",
+   "label": "admin",
+   "status": 200,
+   "len": 56259,
+   "ms": 92,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/",
+   "label": "admin",
+   "status": 200,
+   "len": 54459,
+   "ms": 90,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/1/read/",
+   "label": "admin",
+   "status": 404,
+   "len": 25370,
+   "ms": 54,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/read-all/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 59,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/send/",
+   "label": "admin",
+   "status": 200,
+   "len": 57925,
+   "ms": 80,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/",
+   "label": "admin",
+   "status": 200,
+   "len": 67391,
+   "ms": 156,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 55701,
+   "ms": 95,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/changelog/",
+   "label": "admin",
+   "status": 200,
+   "len": 57569,
+   "ms": 383,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/delete/",
+   "label": "admin",
+   "status": 200,
+   "len": 55100,
+   "ms": 242,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/edit/",
+   "label": "admin",
+   "status": 200,
+   "len": 60004,
+   "ms": 125,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/journal/",
+   "label": "admin",
+   "status": 200,
+   "len": 59769,
+   "ms": 131,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/projects/add/",
+   "label": "admin",
+   "status": 200,
+   "len": 60217,
+   "ms": 140,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/",
+   "label": "admin",
+   "status": 200,
+   "len": 82479,
+   "ms": 216,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/",
+   "label": "admin",
+   "status": 200,
+   "len": 57551,
+   "ms": 112,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/changelog/",
+   "label": "admin",
+   "status": 200,
+   "len": 57985,
+   "ms": 101,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/comment/",
+   "label": "admin",
+   "status": 405,
+   "len": 0,
+   "ms": 29,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/complete/",
+   "label": "admin",
+   "status": 200,
+   "len": 55158,
+   "ms": 62,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/delete/",
+   "label": "admin",
+   "status": 200,
+   "len": 55085,
+   "ms": 97,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/edit/",
+   "label": "admin",
+   "status": 302,
+   "len": 0,
+   "ms": 33,
+   "sig": "",
+   "loc": "/plugins/lab-manager/tasks/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/journal/",
+   "label": "admin",
+   "status": 200,
+   "len": 60173,
+   "ms": 104,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/upload/",
+   "label": "admin",
+   "status": 302,
+   "len": 0,
+   "ms": 30,
+   "sig": "",
+   "loc": "/plugins/lab-manager/tasks/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/add/",
+   "label": "admin",
+   "status": 200,
+   "len": 61009,
+   "ms": 80,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 8,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 4,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/bulk_delete/",
+   "label": "anon",
+   "status": 404,
+   "len": 31998,
+   "ms": 16,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/bulk_edit/",
+   "label": "anon",
+   "status": 404,
+   "len": 31992,
+   "ms": 17,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/changelog/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/changelog/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/delete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/delete/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/edit/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/edit/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/1/journal/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/journal/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/add/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 4,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent-tools/add/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent/chat/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/agent/chat/"
+  },
+  {
+   "url": "/plugins/lab-manager/api/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 8,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent-tools/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent-tools/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 8,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/checkins/search/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/gap-analysis/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/import/commit/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/import/validate/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 126,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/hardware/search/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/member-open-records/search/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/members/search/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/platform/query/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/tasks/create/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/tasks/search/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/agent/tasks/videos/",
+   "label": "anon",
+   "status": 401,
+   "len": 125,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/borrow-records/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/borrow-records/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/checkin-records/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/checkin-records/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/conversations/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/conversations/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/hardware/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/hardware/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/import-batches/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/import-batches/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/member-open-records/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/member-open-records/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/messages/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/messages/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/projects/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/projects/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-attachments/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-attachments/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-comments/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/task-comments/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 6,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/tasks/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 7,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/api/tasks/1/",
+   "label": "anon",
+   "status": 403,
+   "len": 58,
+   "ms": 5,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/attachments/1/delete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 47,
+   "sig": "",
+   "loc": "/plugins/lab-manager/tasks/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/changelog/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/changelog/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/delete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/delete/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/edit/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/edit/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/journal/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/journal/"
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/1/return/",
+   "label": "anon",
+   "status": 404,
+   "len": 24863,
+   "ms": 50,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/borrow-records/add/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/borrow-records/add/"
+  },
+  {
+   "url": "/plugins/lab-manager/calendar/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 8,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/calendar/"
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/checkins/"
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 44,
+   "sig": "",
+   "loc": "/plugins/lab-manager/checkins/"
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/new/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/checkins/new/"
+  },
+  {
+   "url": "/plugins/lab-manager/export/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/export/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/approval/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 30,
+   "sig": "",
+   "loc": "/plugins/lab-manager/hardware/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/changelog/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/1/changelog/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/delete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 8,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/1/delete/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/edit/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/1/edit/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/1/journal/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/1/journal/"
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/add/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/hardware/add/"
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/member-open-records/"
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 26,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/member-open-records/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/members/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/members/"
+  },
+  {
+   "url": "/plugins/lab-manager/members/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/members/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/my-tasks/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/my-tasks/"
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/notifications/"
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/1/read/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/notifications/1/read/"
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/read-all/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 8,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/notifications/read-all/"
+  },
+  {
+   "url": "/plugins/lab-manager/notifications/send/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/plugins/lab-manager/notifications/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/changelog/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/1/changelog/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/delete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/1/delete/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/edit/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 8,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/1/edit/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/1/journal/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/1/journal/"
+  },
+  {
+   "url": "/plugins/lab-manager/projects/add/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/projects/add/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/changelog/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/1/changelog/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/comment/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 5,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/1/comment/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/complete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 63,
+   "sig": "",
+   "loc": "/plugins/lab-manager/tasks/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/delete/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/1/delete/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/edit/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 7,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/1/edit/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/journal/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 6,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/1/journal/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/1/upload/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 69,
+   "sig": "",
+   "loc": "/plugins/lab-manager/tasks/1/"
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/add/",
+   "label": "anon",
+   "status": 302,
+   "len": 0,
+   "ms": 9,
+   "sig": "",
+   "loc": "/login/?next=/plugins/lab-manager/tasks/add/"
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/2/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57967,
+   "ms": 74,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/3/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58120,
+   "ms": 81,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/4/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58184,
+   "ms": 69,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/5/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57248,
+   "ms": 84,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/6/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57734,
+   "ms": 67,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/7/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57789,
+   "ms": 97,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/agent-tools/8/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58406,
+   "ms": 90,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/2/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55476,
+   "ms": 104,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/checkins/3/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55425,
+   "ms": 106,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/2/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56888,
+   "ms": 83,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/hardware/3/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56980,
+   "ms": 78,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/10/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 63,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/103/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 60,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/104/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55489,
+   "ms": 85,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/105/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 67,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/106/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 87,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/107/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55489,
+   "ms": 63,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/108/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 68,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/109/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 88,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/11/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 67,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/110/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 85,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/111/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 69,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/112/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55489,
+   "ms": 84,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/113/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 89,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/114/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 108,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/115/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55586,
+   "ms": 141,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/116/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55592,
+   "ms": 120,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/117/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55489,
+   "ms": 108,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/118/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 88,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/119/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 81,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/12/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 108,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/13/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 206,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/14/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55470,
+   "ms": 133,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/15/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 82,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/16/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 79,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/17/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55470,
+   "ms": 65,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/18/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 73,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/19/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 73,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/2/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55484,
+   "ms": 71,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/20/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 61,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/21/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 65,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/22/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 61,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/23/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55470,
+   "ms": 82,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/24/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 68,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/25/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 90,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/26/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 117,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/27/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 118,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/28/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55470,
+   "ms": 121,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/29/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 104,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/3/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 112,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/30/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 89,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/31/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 87,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/32/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 94,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/33/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 106,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/34/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 79,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/35/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 68,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/36/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 81,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/37/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 69,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/38/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 70,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/39/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 137,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/4/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 77,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/40/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 77,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/41/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 69,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/42/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 139,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/43/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55921,
+   "ms": 86,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/44/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55593,
+   "ms": 104,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/45/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 68,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/46/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 71,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/47/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 79,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/48/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 98,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/49/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 99,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/5/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55467,
+   "ms": 98,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/50/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 74,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/51/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 87,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/52/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 292,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/53/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 294,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/54/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 186,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/55/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 101,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/56/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 113,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/57/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55598,
+   "ms": 98,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/58/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55468,
+   "ms": 794,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/59/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55489,
+   "ms": 65,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/6/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 65,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/60/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 59,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/61/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 45,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/62/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55489,
+   "ms": 101,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/63/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 58,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/64/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55495,
+   "ms": 82,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/65/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 132,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/66/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55491,
+   "ms": 138,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/67/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 92,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/68/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55474,
+   "ms": 98,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/7/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55597,
+   "ms": 105,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/75/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55586,
+   "ms": 145,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/76/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55592,
+   "ms": 221,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/77/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55592,
+   "ms": 99,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/78/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55608,
+   "ms": 171,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/8/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55972,
+   "ms": 208,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/9/",
+   "label": "crawl",
+   "status": 200,
+   "len": 55593,
+   "ms": 81,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/10/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56905,
+   "ms": 121,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/11/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57003,
+   "ms": 707,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/12/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56902,
+   "ms": 159,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/18/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56959,
+   "ms": 64,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/3/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57701,
+   "ms": 109,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/3/upload/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57671,
+   "ms": 109,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/4/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57023,
+   "ms": 109,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/5/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57014,
+   "ms": 128,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/6/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56892,
+   "ms": 142,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/7/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57021,
+   "ms": 131,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/8/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56893,
+   "ms": 197,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/tasks/9/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57012,
+   "ms": 136,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/user/api-tokens/",
+   "label": "crawl",
+   "status": 200,
+   "len": 56741,
+   "ms": 289,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/user/bookmarks/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57519,
+   "ms": 261,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/user/preferences/",
+   "label": "crawl",
+   "status": 200,
+   "len": 63591,
+   "ms": 112,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/user/profile/",
+   "label": "crawl",
+   "status": 200,
+   "len": 67524,
+   "ms": 141,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/user/subscriptions/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57543,
+   "ms": 71,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/groups/",
+   "label": "crawl",
+   "status": 200,
+   "len": 69782,
+   "ms": 104,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/groups/add/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58473,
+   "ms": 52,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/groups/import/",
+   "label": "crawl",
+   "status": 200,
+   "len": 68168,
+   "ms": 61,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/owner-groups/",
+   "label": "crawl",
+   "status": 200,
+   "len": 65774,
+   "ms": 85,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/owner-groups/add/",
+   "label": "crawl",
+   "status": 200,
+   "len": 57259,
+   "ms": 96,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/owner-groups/import/",
+   "label": "crawl",
+   "status": 200,
+   "len": 68203,
+   "ms": 117,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/owners/",
+   "label": "crawl",
+   "status": 200,
+   "len": 69118,
+   "ms": 188,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/owners/add/",
+   "label": "crawl",
+   "status": 200,
+   "len": 59916,
+   "ms": 87,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/owners/import/",
+   "label": "crawl",
+   "status": 200,
+   "len": 69594,
+   "ms": 132,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/permissions/",
+   "label": "crawl",
+   "status": 200,
+   "len": 89312,
+   "ms": 237,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/permissions/add/",
+   "label": "crawl",
+   "status": 200,
+   "len": 67680,
+   "ms": 119,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/tokens/",
+   "label": "crawl",
+   "status": 200,
+   "len": 70644,
+   "ms": 174,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/tokens/add/",
+   "label": "crawl",
+   "status": 200,
+   "len": 60620,
+   "ms": 135,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/tokens/import/",
+   "label": "crawl",
+   "status": 200,
+   "len": 71225,
+   "ms": 144,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/users/",
+   "label": "crawl",
+   "status": 200,
+   "len": 72611,
+   "ms": 253,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/users/1/",
+   "label": "crawl",
+   "status": 200,
+   "len": 70327,
+   "ms": 687,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/users/3/",
+   "label": "crawl",
+   "status": 200,
+   "len": 60973,
+   "ms": 265,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/users/add/",
+   "label": "crawl",
+   "status": 200,
+   "len": 62171,
+   "ms": 98,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/users/users/import/",
+   "label": "crawl",
+   "status": 200,
+   "len": 71319,
+   "ms": 91,
+   "sig": "",
+   "loc": ""
+  }
+ ],
+ "crawl_discovered": [
+  "/plugins/lab-manager/agent-tools/2/",
+  "/plugins/lab-manager/agent-tools/3/",
+  "/plugins/lab-manager/agent-tools/4/",
+  "/plugins/lab-manager/agent-tools/5/",
+  "/plugins/lab-manager/agent-tools/6/",
+  "/plugins/lab-manager/agent-tools/7/",
+  "/plugins/lab-manager/agent-tools/8/",
+  "/plugins/lab-manager/checkins/2/",
+  "/plugins/lab-manager/checkins/3/",
+  "/plugins/lab-manager/hardware/2/",
+  "/plugins/lab-manager/hardware/3/",
+  "/plugins/lab-manager/member-open-records/10/",
+  "/plugins/lab-manager/member-open-records/103/",
+  "/plugins/lab-manager/member-open-records/104/",
+  "/plugins/lab-manager/member-open-records/105/",
+  "/plugins/lab-manager/member-open-records/106/",
+  "/plugins/lab-manager/member-open-records/107/",
+  "/plugins/lab-manager/member-open-records/108/",
+  "/plugins/lab-manager/member-open-records/109/",
+  "/plugins/lab-manager/member-open-records/11/",
+  "/plugins/lab-manager/member-open-records/110/",
+  "/plugins/lab-manager/member-open-records/111/",
+  "/plugins/lab-manager/member-open-records/112/",
+  "/plugins/lab-manager/member-open-records/113/",
+  "/plugins/lab-manager/member-open-records/114/",
+  "/plugins/lab-manager/member-open-records/115/",
+  "/plugins/lab-manager/member-open-records/116/",
+  "/plugins/lab-manager/member-open-records/117/",
+  "/plugins/lab-manager/member-open-records/118/",
+  "/plugins/lab-manager/member-open-records/119/",
+  "/plugins/lab-manager/member-open-records/12/",
+  "/plugins/lab-manager/member-open-records/13/",
+  "/plugins/lab-manager/member-open-records/14/",
+  "/plugins/lab-manager/member-open-records/15/",
+  "/plugins/lab-manager/member-open-records/16/",
+  "/plugins/lab-manager/member-open-records/17/",
+  "/plugins/lab-manager/member-open-records/18/",
+  "/plugins/lab-manager/member-open-records/19/",
+  "/plugins/lab-manager/member-open-records/2/",
+  "/plugins/lab-manager/member-open-records/20/",
+  "/plugins/lab-manager/member-open-records/21/",
+  "/plugins/lab-manager/member-open-records/22/",
+  "/plugins/lab-manager/member-open-records/23/",
+  "/plugins/lab-manager/member-open-records/24/",
+  "/plugins/lab-manager/member-open-records/25/",
+  "/plugins/lab-manager/member-open-records/26/",
+  "/plugins/lab-manager/member-open-records/27/",
+  "/plugins/lab-manager/member-open-records/28/",
+  "/plugins/lab-manager/member-open-records/29/",
+  "/plugins/lab-manager/member-open-records/3/",
+  "/plugins/lab-manager/member-open-records/30/",
+  "/plugins/lab-manager/member-open-records/31/",
+  "/plugins/lab-manager/member-open-records/32/",
+  "/plugins/lab-manager/member-open-records/33/",
+  "/plugins/lab-manager/member-open-records/34/",
+  "/plugins/lab-manager/member-open-records/35/",
+  "/plugins/lab-manager/member-open-records/36/",
+  "/plugins/lab-manager/member-open-records/37/",
+  "/plugins/lab-manager/member-open-records/38/",
+  "/plugins/lab-manager/member-open-records/39/",
+  "/plugins/lab-manager/member-open-records/4/",
+  "/plugins/lab-manager/member-open-records/40/",
+  "/plugins/lab-manager/member-open-records/41/",
+  "/plugins/lab-manager/member-open-records/42/",
+  "/plugins/lab-manager/member-open-records/43/",
+  "/plugins/lab-manager/member-open-records/44/",
+  "/plugins/lab-manager/member-open-records/45/",
+  "/plugins/lab-manager/member-open-records/46/",
+  "/plugins/lab-manager/member-open-records/47/",
+  "/plugins/lab-manager/member-open-records/48/",
+  "/plugins/lab-manager/member-open-records/49/",
+  "/plugins/lab-manager/member-open-records/5/",
+  "/plugins/lab-manager/member-open-records/50/",
+  "/plugins/lab-manager/member-open-records/51/",
+  "/plugins/lab-manager/member-open-records/52/",
+  "/plugins/lab-manager/member-open-records/53/",
+  "/plugins/lab-manager/member-open-records/54/",
+  "/plugins/lab-manager/member-open-records/55/",
+  "/plugins/lab-manager/member-open-records/56/",
+  "/plugins/lab-manager/member-open-records/57/",
+  "/plugins/lab-manager/member-open-records/58/",
+  "/plugins/lab-manager/member-open-records/59/",
+  "/plugins/lab-manager/member-open-records/6/",
+  "/plugins/lab-manager/member-open-records/60/",
+  "/plugins/lab-manager/member-open-records/61/",
+  "/plugins/lab-manager/member-open-records/62/",
+  "/plugins/lab-manager/member-open-records/63/",
+  "/plugins/lab-manager/member-open-records/64/",
+  "/plugins/lab-manager/member-open-records/65/",
+  "/plugins/lab-manager/member-open-records/66/",
+  "/plugins/lab-manager/member-open-records/67/",
+  "/plugins/lab-manager/member-open-records/68/",
+  "/plugins/lab-manager/member-open-records/7/",
+  "/plugins/lab-manager/member-open-records/75/",
+  "/plugins/lab-manager/member-open-records/76/",
+  "/plugins/lab-manager/member-open-records/77/",
+  "/plugins/lab-manager/member-open-records/78/",
+  "/plugins/lab-manager/member-open-records/8/",
+  "/plugins/lab-manager/member-open-records/9/",
+  "/plugins/lab-manager/tasks/10/",
+  "/plugins/lab-manager/tasks/11/",
+  "/plugins/lab-manager/tasks/12/",
+  "/plugins/lab-manager/tasks/18/",
+  "/plugins/lab-manager/tasks/3/",
+  "/plugins/lab-manager/tasks/3/upload/",
+  "/plugins/lab-manager/tasks/4/",
+  "/plugins/lab-manager/tasks/5/",
+  "/plugins/lab-manager/tasks/6/",
+  "/plugins/lab-manager/tasks/7/",
+  "/plugins/lab-manager/tasks/8/",
+  "/plugins/lab-manager/tasks/9/",
+  "/user/api-tokens/",
+  "/user/bookmarks/",
+  "/user/preferences/",
+  "/user/profile/",
+  "/user/subscriptions/",
+  "/users/groups/",
+  "/users/groups/add/",
+  "/users/groups/import/",
+  "/users/owner-groups/",
+  "/users/owner-groups/add/",
+  "/users/owner-groups/import/",
+  "/users/owners/",
+  "/users/owners/add/",
+  "/users/owners/import/",
+  "/users/permissions/",
+  "/users/permissions/add/",
+  "/users/tokens/",
+  "/users/tokens/add/",
+  "/users/tokens/import/",
+  "/users/users/",
+  "/users/users/1/",
+  "/users/users/3/",
+  "/users/users/add/",
+  "/users/users/import/"
+ ]
+}

@@ -1,0 +1,39 @@
+
+===== A. 桌面端页面巡检（1440x900）=====
+登录后 URL: http://127.0.0.1:8001/plugins/lab-manager/
+  200   首页仪表板        JS错误=0  /plugins/lab-manager/
+  200   硬件列表         JS错误=0  /plugins/lab-manager/hardware/
+  200   任务列表         JS错误=0  /plugins/lab-manager/tasks/
+  200   成员列表         JS错误=0  /plugins/lab-manager/members/
+  200   打卡记录         JS错误=0  /plugins/lab-manager/checkins/
+  200   签到页          JS错误=0  /plugins/lab-manager/checkins/new/
+  200   日历           JS错误=0  /plugins/lab-manager/calendar/
+  200   智能体控制台       JS错误=0  /plugins/lab-manager/agent/
+
+--- 首页统计卡可见性 ---
+  [{"cls":"row tp-stat-row","opacity":"1","visible":true,"text":"3\n                "},{"cls":"card text-bg-primary tp-stat-animate-in","opacity":"1","visible":true,"text":"3\n                "},{"cls":"mb-0 tp-count-up","opacity":"1","visible":true,"text":"3"},{"cls":"card text-bg-success tp-stat-animate-in","opacity":"1","visible":true,"text":"2\n                "},{"cls":"mb-0 tp-count-up","opacity":"1","visible":true,"text":"2"},{"cls":"card text-bg-warning tp-stat-animate-in","opacity":"1","visible":true,"text":"0\n                "},{"cls":"mb-0 tp-count-up","opacity":"1","visible":true,"text":"0"},{"cls":"card text-bg-info tp-stat-animate-in","opacity":"1","visible":true,"text":"12\n               "},{"cls":"mb-0 tp-count-up","opacity":"1","visible":true,"text":"12"},{"cls":"card text-bg-dark tp-stat-animate-in","opacity":"1","visible":true,"text":"1\n                "}]
+
+--- 智能体控制台：历史消息是否被渲染成 HTML ---
+  {"count":4,"sampleHtml":"<p>你好！👋 有什么我可以帮你的吗？</p>\n<p>你可以问我以下类型的问题：</p>\n<ul><li><strong>查询硬件设备</strong> - 查看实验室有哪些硬件设备</li>\n<li><strong>查询任务</strong> - 查看任务列表或任务详情</li>\n<li><strong>查询用户</strong> - 查看平台用户信息</li>\n<li><strong>硬件缺口分析</strong> - 某个项目缺什么硬件、采购建议</li>\n<li><strong>视频检索</strong>","hasStrong":true,"hasTable":true,"rawMarkdownLeft":false,"hasDataRaw":true}
+  删除会话 JS 目标 URL 常量: agent-conversation/' + pk + '/delete/', {
+
+--- 打卡页：未选照片时提交按钮状态 ---
+  {"disabledAfterLatLng":true,"photoRequired":true,"hasTagsField":true}
+
+===== B. 屏蔽 animations.js 后统计卡是否可见 =====
+登录后 URL: http://127.0.0.1:8001/plugins/lab-manager/
+  [{"opacity":"1","text":"3\n            "},{"opacity":"1","text":"3\n            "},{"opacity":"1","text":"3"},{"opacity":"1","text":"2\n            "},{"opacity":"1","text":"2"},{"opacity":"1","text":"0\n            "},{"opacity":"1","text":"0"},{"opacity":"1","text":"12\n           "}]
+
+===== C. 移动端（390x844 iPhone 尺寸）=====
+登录后 URL: http://127.0.0.1:8001/plugins/lab-manager/
+  首页: {"pageScrollW":390,"viewportW":390,"horizOverflow":false,"innerH":844,"navbarHeight":784}
+  任务列表: {"pageScrollW":390,"viewportW":390,"horizOverflow":false,"innerH":844,"tableScrollW":380,"tableClientW":380,"tableScrollable":false,"navbarHeight":784}
+  硬件列表: {"pageScrollW":390,"viewportW":390,"horizOverflow":false,"innerH":844,"tableScrollW":380,"tableClientW":380,"tableScrollable":false,"navbarHeight":784}
+  智能体: {"pageScrollW":390,"viewportW":390,"horizOverflow":false,"innerH":844,"footerTop":894,"footerBottom":1047,"footerInViewport":false,"shellHeight":844,"navbarHeight":784}
+
+===== D. 控制台/网络错误汇总 =====
+  console.errors: []
+  pageerrors    : []
+  http>=400     : []
+  移动端 errors : []
+  移动端 http   : []
