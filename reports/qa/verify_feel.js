@@ -67,11 +67,11 @@ const { chromium } = require(PW);
   // 3. 点击跳转延迟（真实点击侧栏）
   await page.goto(BASE + '/plugins/lab-manager/', { waitUntil: 'load' });
   await page.waitForTimeout(500);
-  for (const target of ['/tasks/', '/checkins/', '/members/']) {
+  for (const target of ['/tasks/', '/checkins/', '/calendar/']) {
     const t0 = Date.now();
     await Promise.all([
       page.waitForFunction(t => location.pathname.indexOf(t) !== -1, target, { timeout: 15000 }),
-      page.click(`.navbar-vertical a[href*="${target}"]`).catch(() => {}),
+      page.evaluate(t => { const a = [...document.querySelectorAll('.navbar-vertical a')].find(x => (x.getAttribute('href') || '').indexOf(t) !== -1); if (a) a.click(); }, target),
     ]);
     const ms = Date.now() - t0;
     check(`点击跳转 ${target}`, ms < 900, `${ms}ms`);
