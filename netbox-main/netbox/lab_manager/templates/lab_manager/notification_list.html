@@ -61,5 +61,5 @@
         {% endif %}
     </div>
 </div>
-{% if page_obj %}<div class="px-2">{% include 'lab_manager/inc/paginator.html' %}</div>{% endif %}
+{% if page_obj.paginator %}<div class="px-2">{% include 'lab_manager/inc/paginator.html' %}</div>{% endif %}
 {% endblock %}

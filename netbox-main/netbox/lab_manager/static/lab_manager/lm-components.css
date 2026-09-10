@@ -17,23 +17,35 @@
   --lm-radius-sm: 3px; --lm-radius-md: 6px; --lm-radius-lg: 10px;
   --lm-dur-fast: 120ms; --lm-dur-base: 200ms;
 
-  /* ── semantic（跟随主题变量，亮/暗自动适配）── */
-  --lm-surface-1: var(--tp-card-bg, #111726);
-  --lm-surface-2: var(--tp-card-hover-bg, #161d2e);
-  --lm-surface-3: var(--tp-nav-hover-bg, #1b2438);
-  --lm-border-subtle: var(--tp-card-border, rgba(0, 229, 255, .14));
-  --lm-border-strong: var(--tp-nav-accent, rgba(0, 229, 255, .34));
-  --lm-text-primary: var(--tp-card-text, #e6f1ff);
-  --lm-text-muted: var(--tp-text-muted, #8ea0b8);
-  --lm-accent: var(--tp-nav-accent, #00e5ff);
-  --lm-accent-soft: rgba(0, 229, 255, .12);
-  --lm-ok: #00c853; --lm-warning: #ff9800; --lm-danger: #f44336; --lm-info: #2196f3;
+  /* ── semantic ──────────────────────────────────────────────
+     只引用主题中真实存在的变量（terminal_pixel.css 的 --tp-*）：
+       --tp-card-bg / --tp-table-hover-bg / --tp-card-header-bg /
+       --tp-card-header-text / --tp-card-body-text / --tp-text-muted /
+       --tp-card-border / --tp-card-hover-border / --tp-nav-accent
+     最后一级回退用中性值（rgba(127,127,127,x)），保证亮/暗都不出错。
+     ────────────────────────────────────────────────────────── */
+  --lm-surface-1: var(--tp-card-bg, #ffffff);
+  --lm-surface-2: var(--tp-table-hover-bg, rgba(127, 127, 127, .08));
+  --lm-surface-3: var(--tp-card-header-bg, var(--tp-table-hover-bg, rgba(127, 127, 127, .12)));
+  --lm-border-subtle: var(--tp-card-border, rgba(127, 127, 127, .28));
+  --lm-border-strong: var(--tp-card-hover-border, var(--tp-nav-accent, rgba(127, 127, 127, .55)));
+  --lm-text-primary: var(--tp-card-header-text, var(--tp-card-body-text, var(--bs-body-color, #2b2b2b)));
+  --lm-text-muted: var(--tp-text-muted, var(--tp-card-footer-text, rgba(127, 127, 127, .95)));
+  --lm-accent: var(--tp-nav-accent, #0d6b63);
+  --lm-accent-soft: var(--tp-nav-active-bg, rgba(127, 127, 127, .12));
+  /* 状态色：浅色主题用深一档以保证 ≥4.5:1，暗色主题用高亮色 */
+  --lm-ok: #0f7a3d; --lm-warning: #a35b00; --lm-danger: #c62828; --lm-info: #1565c0;
 
   /* ── component ── */
   --lm-card-radius: var(--lm-radius-md);
   --lm-card-pad: var(--lm-space-4);
   --lm-row-h: 40px; --lm-head-h: 36px;
   --lm-btn-h: 32px; --lm-kpi-h: 96px; --lm-toolbar-h: 56px;
+}
+
+/* 暗色主题：状态色切回高亮版本（亮色值在暗底上对比度不足） */
+html[data-bs-theme=dark] {
+  --lm-ok: #00ff41; --lm-warning: #ffaa33; --lm-danger: #ff5566; --lm-info: #4aa8ff;
 }
 
 /* ═══ 布局骨架 ═══ */
@@ -254,10 +266,10 @@
 .lm-heatmap { display: flex; gap: 3px; overflow-x: auto; padding-bottom: var(--lm-space-1); }
 .lm-heatmap__col { display: flex; flex-direction: column; gap: 3px; }
 .lm-heatmap__cell { width: 11px; height: 11px; border-radius: 2px; background: var(--lm-surface-3); }
-.lm-heatmap__cell[data-level="1"] { background: rgba(0, 229, 255, .25); }
-.lm-heatmap__cell[data-level="2"] { background: rgba(0, 229, 255, .45); }
-.lm-heatmap__cell[data-level="3"] { background: rgba(0, 229, 255, .7); }
-.lm-heatmap__cell[data-level="4"] { background: var(--lm-accent); }
+.lm-heatmap__cell[data-level="1"] { background: var(--lm-accent); opacity: .28; }
+.lm-heatmap__cell[data-level="2"] { background: var(--lm-accent); opacity: .5; }
+.lm-heatmap__cell[data-level="3"] { background: var(--lm-accent); opacity: .74; }
+.lm-heatmap__cell[data-level="4"] { background: var(--lm-accent); opacity: 1; }
 .lm-heatmap__cell[data-absent="1"] { outline: 1px solid var(--lm-danger); outline-offset: -1px; }
 .lm-heatmap__legend { display: flex; align-items: center; gap: 4px; font-size: var(--lm-font-11); color: var(--lm-text-muted); }
 
@@ -269,7 +281,7 @@
 /* ═══ 命令面板 ═══ */
 .lm-cmd-overlay {
   position: fixed; inset: 0; z-index: 1080; display: none;
-  background: rgba(3, 6, 12, .55); backdrop-filter: blur(3px);
+  background: rgba(20, 20, 20, .38); backdrop-filter: blur(3px);
 }
 .lm-cmd-overlay.is-open { display: block; }
 .lm-cmd {

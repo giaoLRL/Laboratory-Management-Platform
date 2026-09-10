@@ -18,6 +18,10 @@ const { chromium } = require(PW);
     .map(s => { const i = s.indexOf('='); return { name: s.slice(0, i), value: s.slice(i + 1), domain: '127.0.0.1', path: '/' }; });
 
   const shots = [
+    ['desktop-mission-control', '/plugins/lab-manager/mission-control/', { width: 1440, height: 900 }, false],
+    ['desktop-task-board', '/plugins/lab-manager/tasks/board/', { width: 1440, height: 900 }, false],
+    ['desktop-checkin-list', '/plugins/lab-manager/checkins/', { width: 1440, height: 900 }, false],
+    ['mobile-mission-control', '/plugins/lab-manager/mission-control/', { width: 390, height: 844 }, true],
     ['desktop-dashboard', '/plugins/lab-manager/', { width: 1440, height: 900 }, false],
     ['desktop-member-open-records', '/plugins/lab-manager/member-open-records/', { width: 1440, height: 900 }, false],
     ['desktop-task-detail', '/plugins/lab-manager/tasks/1/', { width: 1440, height: 900 }, false],

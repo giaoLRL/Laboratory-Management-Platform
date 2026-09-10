@@ -100,14 +100,28 @@
           </span>
         </div>
         <div class="lm-card__body">
+          {% if trend.empty %}
+            {% include 'lab_manager/inc/empty_state.html' with icon='mdi-chart-line' title=_('近 30 天暂无数据') desc=_('有任务完成、打卡或借出记录后，这里会显示趋势曲线。') %}
+          {% else %}
           <div class="lm-chart">
             <svg viewBox="0 0 {{ trend.chart_w }} {{ trend.chart_h }}" preserveAspectRatio="none" role="img"
                  aria-label="{% trans '近 30 天趋势' %}">
+              <line x1="0" y1="{{ trend.chart_h }}" x2="{{ trend.chart_w }}" y2="{{ trend.chart_h }}"
+                    stroke="var(--lm-border-subtle)" stroke-width="1" />
+              <line x1="0" y1="4" x2="{{ trend.chart_w }}" y2="4"
+                    stroke="var(--lm-border-subtle)" stroke-width="1" stroke-dasharray="3 4" />
               {% for s in trend.series %}
-              <polyline fill="none" stroke="{{ s.color }}" stroke-width="2" points="{{ s.points }}" />
+              <polyline fill="none" stroke="{{ s.color }}" stroke-width="2"
+                        points="{{ s.points }}" vector-effect="non-scaling-stroke" />
               {% endfor %}
             </svg>
+            <div class="d-flex justify-content-between text-muted small mt-1">
+              <span>{{ trend.start|date:'m-d' }}</span>
+              <span>{% trans '峰值' %} {{ trend.peak }}</span>
+              <span>{{ trend.end|date:'m-d' }}</span>
+            </div>
           </div>
+          {% endif %}
         </div>
       </div>
 
@@ -151,7 +165,7 @@
               <span>{{ w.category }}</span>
               <span class="text-muted">{{ w.items }} {% trans "项" %}</span>
             </div>
-            {% include 'lab_manager/inc/stock_bar.html' with available=w.available total=w.available minimum=w.minimum %}
+            {% include 'lab_manager/inc/stock_bar.html' with available=w.available total=w.total minimum=w.minimum %}
           </div>
           {% empty %}
           <div class="text-muted small">{% trans "暂无硬件数据" %}</div>

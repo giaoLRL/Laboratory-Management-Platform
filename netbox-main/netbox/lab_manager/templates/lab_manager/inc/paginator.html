@@ -1,9 +1,9 @@
-{% load i18n lm_ui %}
+﻿{% load i18n lm_ui %}
 {% comment %}
   统一分页器：共 N 条 · 第 x/y 页 · 每页大小 · 上一页/下一页/首页/末页
   依赖上下文：page_obj、per_page、per_page_choices
 {% endcomment %}
-{% if page_obj %}
+{% if page_obj.paginator %}
 <div class="lm-paginator">
   <div>
     {% blocktrans with n=page_obj.paginator.count %}共 <strong>{{ n }}</strong> 条{% endblocktrans %}

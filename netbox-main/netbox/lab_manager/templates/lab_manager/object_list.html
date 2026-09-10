@@ -16,10 +16,6 @@
 {% block controls %}
   <div class="btn-list">
     {% plugin_list_buttons model %}
-    <button type="button" class="btn btn-sm btn-outline-secondary" data-lm-density-toggle
-            title="{% trans '切换表格密度' %}" aria-pressed="false">
-      <i class="mdi mdi-format-line-spacing"></i>
-    </button>
     {% block extra_controls %}{% endblock %}
     {% action_buttons actions model %}
   </div>
@@ -47,6 +43,23 @@
 {% block content %}
   {# Object list tab #}
   <div class="tab-pane show active" id="object-list" role="tabpanel" aria-labelledby="object-list-tab">
+
+    {# ── 列表工具条：密度切换 + 结果计数（content 块参与渲染） ── #}
+    <div class="lm-toolbar mb-2">
+      <div class="lm-toolbar__group">
+        <span class="text-muted small">{% trans "视图" %}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-lm-density-toggle
+                title="{% trans '切换表格密度（紧凑/舒适）' %}" aria-pressed="false">
+          <i class="mdi mdi-format-line-spacing"></i> {% trans "密度" %}
+        </button>
+      </div>
+      <div class="lm-toolbar__group">
+        <span class="lm-badge lm-badge--muted">
+          {% if table.page.paginator.count %}{{ table.page.paginator.count }}{% else %}{{ total_count|default:"0" }}{% endif %}
+          {% trans "条结果" %}
+        </span>
+      </div>
+    </div>
 
     {# Applied filters #}
     {% if filter_form %}

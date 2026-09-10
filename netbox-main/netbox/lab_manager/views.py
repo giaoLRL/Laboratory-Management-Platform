@@ -1155,11 +1155,21 @@ class MissionControlView(LoginRequiredMixin, TemplateView):
         ctx['stream'] = stream[:24]
 
         # 库存水位（按类别聚合）
-        ctx['waterlines'] = list(
-            hardware.values('category').annotate(
-                available=Sum('quantity'), minimum=Sum('minimum_stock'), items=Count('id')
-            ).order_by('category')[:8]
-        )
+        waterlines = []
+        for row in (
+            hardware.values('category')
+            .annotate(
+                available=Sum('quantity'), minimum=Sum('minimum_stock'), items=Count('id'),
+                outstanding=Count(
+                    'borrow_records',
+                    filter=Q(borrow_records__status=BorrowStatusChoices.BORROWED),
+                ),
+            )
+            .order_by('category')[:8]
+        ):
+            row['total'] = (row['available'] or 0) + (row['outstanding'] or 0)
+            waterlines.append(row)
+        ctx['waterlines'] = waterlines
 
         # 近 26 周考勤热力图
         start = today - timedelta(days=today.weekday() + 7 * 25)
@@ -1205,7 +1215,8 @@ class MissionControlView(LoginRequiredMixin, TemplateView):
             chart.append({'label': label, 'points': points, 'total': sum(values),
                           'color': ['var(--lm-accent)', 'var(--lm-ok)', 'var(--lm-warning)'][idx % 3]})
         ctx['trend'] = {'chart_w': chart_w, 'chart_h': chart_h, 'peak': peak,
-                        'series': chart, 'start': days[0], 'end': days[-1]}
+                        'series': chart, 'start': days[0], 'end': days[-1],
+                        'empty': all(item['total'] == 0 for item in chart)}
         return ctx
 
 
