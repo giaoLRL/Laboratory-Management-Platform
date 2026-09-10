@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -25,7 +25,8 @@ from .forms.filtersets import (
     LabProjectFilterForm, TaskFilterForm,
 )
 from .forms.model_forms import (
-    AgentToolForm, CheckInForm, HardwareBorrowRecordForm, HardwareForm,
+    AgentToolForm, CheckInForm, HardwareBorrowRecordForm,
+    HardwareBorrowRecordMemberForm, HardwareForm,
     HardwareMemberForm, LabProjectForm, TaskForm, TaskMemberForm, TaskCommentForm,
 )
 from .models import (
@@ -41,6 +42,28 @@ from .tables.borrow import HardwareBorrowRecordTable
 from .tables.hardware import HardwareTable
 from .tables.project import LabProjectTable
 from .tables.task import TaskTable
+
+
+def _safe_int(value, default, minimum=None, maximum=None):
+    """把 GET 参数安全地转成整数并夹取范围；非法输入回退默认值，绝不抛异常。"""
+    try:
+        result = int(value)
+    except (TypeError, ValueError):
+        return default
+    if minimum is not None:
+        result = max(minimum, result)
+    if maximum is not None:
+        result = min(maximum, result)
+    return result
+
+
+def _safe_redirect_target(url):
+    """只允许站内相对路径，避免开放重定向。"""
+    if not url:
+        return None
+    if url.startswith('/') and not url.startswith('//'):
+        return url
+    return None
 
 # ── Hardware ──
 
@@ -106,7 +129,7 @@ class HardwareEditView(generic.ObjectEditView):
     def get(self, request, *args, **kwargs):
         self._resolve_role(request)
         if 'pk' in self.kwargs:
-            obj = Hardware.objects.get(pk=self.kwargs['pk'])
+            obj = get_object_or_404(Hardware, pk=self.kwargs['pk'])
             if not request.user.is_superuser and request.user != obj.submitted_by:
                 messages.error(request, _('你没有权限编辑此硬件'))
                 return redirect(obj.get_absolute_url())
@@ -118,7 +141,7 @@ class HardwareEditView(generic.ObjectEditView):
     def post(self, request, *args, **kwargs):
         self._resolve_role(request)
         if 'pk' in self.kwargs:
-            obj = Hardware.objects.get(pk=self.kwargs['pk'])
+            obj = get_object_or_404(Hardware, pk=self.kwargs['pk'])
             if not request.user.is_superuser and request.user != obj.submitted_by:
                 messages.error(request, _('你没有权限编辑此硬件'))
                 return redirect(obj.get_absolute_url())
@@ -214,7 +237,7 @@ class TaskEditView(generic.ObjectEditView):
             messages.error(request, _('你没有权限创建任务，请联系管理员'))
             return redirect('plugins:lab_manager:task_list')
         if 'pk' in self.kwargs:
-            obj = Task.objects.get(pk=self.kwargs['pk'])
+            obj = get_object_or_404(Task, pk=self.kwargs['pk'])
             if not request.user.is_superuser and request.user != obj.created_by and request.user != obj.assigned_to:
                 messages.error(request, _('你没有权限编辑此任务'))
                 return redirect(obj.get_absolute_url())
@@ -234,7 +257,7 @@ class TaskEditView(generic.ObjectEditView):
             messages.error(request, _('你没有权限创建任务，请联系管理员'))
             return redirect('plugins:lab_manager:task_list')
         if 'pk' in self.kwargs:
-            obj = Task.objects.get(pk=self.kwargs['pk'])
+            obj = get_object_or_404(Task, pk=self.kwargs['pk'])
             if not request.user.is_superuser and request.user != obj.created_by and request.user != obj.assigned_to:
                 messages.error(request, _('你没有权限编辑此任务'))
                 return redirect(obj.get_absolute_url())
@@ -284,6 +307,13 @@ class HardwareBorrowRecordView(generic.ObjectView):
     def has_permission(self):
         return self.request.user.is_authenticated
 
+    def get(self, request, *args, **kwargs):
+        obj = get_object_or_404(HardwareBorrowRecord, pk=kwargs['pk'])
+        if not request.user.is_superuser and request.user != obj.borrower:
+            messages.error(request, _('你没有权限查看此借出记录'))
+            return redirect('plugins:lab_manager:hardwareborrowrecord_list')
+        return super().get(request, *args, **kwargs)
+
     def get_extra_context(self, request, instance):
         return {
             'is_overdue': instance.is_overdue,
@@ -304,11 +334,37 @@ class HardwareBorrowRecordEditView(generic.ObjectEditView):
     def has_permission(self):
         return self.request.user.is_authenticated
 
+    def _resolve_role(self, request):
+        # 普通成员用受限表单，不能把借用人改成别人
+        self.form = (
+            HardwareBorrowRecordForm if request.user.is_superuser
+            else HardwareBorrowRecordMemberForm
+        )
+
+    def _owner_denied(self, request):
+        if 'pk' not in self.kwargs:
+            return None
+        obj = get_object_or_404(HardwareBorrowRecord, pk=self.kwargs['pk'])
+        if not request.user.is_superuser and request.user != obj.borrower:
+            messages.error(request, _('你没有权限编辑此借出记录'))
+            return redirect('plugins:lab_manager:hardwareborrowrecord_list')
+        return None
+
     def alter_object(self, obj, request, url_args, url_kwargs):
         if not obj.pk:
             obj.borrower = request.user
             obj.status = BorrowStatusChoices.BORROWED
         return obj
+
+    def get(self, request, *args, **kwargs):
+        self._resolve_role(request)
+        denied = self._owner_denied(request)
+        return denied or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self._resolve_role(request)
+        denied = self._owner_denied(request)
+        return denied or super().post(request, *args, **kwargs)
 
 
 @register_model_view(HardwareBorrowRecord, 'delete')
@@ -326,7 +382,10 @@ class HardwareBorrowReturnView(LoginRequiredMixin, TemplateView):
     template_name = 'lab_manager/hardwareborrowrecord_return.html'
 
     def dispatch(self, request, *args, **kwargs):
-        record = HardwareBorrowRecord.objects.select_related('hardware', 'borrower').get(pk=self.kwargs['pk'])
+        record = get_object_or_404(
+            HardwareBorrowRecord.objects.select_related('hardware', 'borrower'),
+            pk=self.kwargs['pk'],
+        )
         if record.status != BorrowStatusChoices.BORROWED:
             messages.error(request, _('该记录不是借出中状态，无法归还'))
             return redirect(record.get_absolute_url())
@@ -343,7 +402,7 @@ class HardwareBorrowReturnView(LoginRequiredMixin, TemplateView):
         return ctx
 
     def post(self, request, pk):
-        record = HardwareBorrowRecord.objects.get(pk=pk)
+        record = get_object_or_404(HardwareBorrowRecord, pk=pk)
         notes = request.POST.get('notes', '')
         record.mark_returned(notes=notes)
         messages.success(request, _('硬件已归还'))
@@ -416,6 +475,10 @@ class MyTasksView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+# 打卡防重复提交时间窗（秒）
+CHECKIN_DEDUPE_SECONDS = 60
+
+
 def _client_ip(request):
     forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if forwarded_for:
@@ -474,7 +537,9 @@ class MemberOpenRecordListView(LoginRequiredMixin, UserPassesTestMixin, Template
         today_records = base_qs.filter(created__gte=today_start)
         ctx['today_total'] = today_records.count()
         ctx['today_users'] = today_records.values('user').distinct().count()
-        ctx['today_checkins'] = today_records.filter(target_type='checkin').count()
+        # 打卡数直接以 CheckInRecord 为准（MemberOpenRecord 记录的是页面浏览行为，
+        # 浏览打卡详情页也曾被计入打卡数，导致统计虚高）
+        ctx['today_checkins'] = CheckInRecord.objects.filter(created__gte=today_start).count()
 
         # 本周统计
         week_records = base_qs.filter(created__date__gte=week_start)
@@ -532,7 +597,9 @@ class MemberOpenRecordDetailView(LoginRequiredMixin, UserPassesTestMixin, Templa
         return self.request.user.is_superuser
 
     def dispatch(self, request, *args, **kwargs):
-        self.record = MemberOpenRecord.objects.select_related('user').get(pk=self.kwargs['pk'])
+        self.record = get_object_or_404(
+            MemberOpenRecord.objects.select_related('user'), pk=self.kwargs['pk']
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -557,6 +624,13 @@ class CheckInCreateView(LoginRequiredMixin, TemplateView):
         return ctx
 
     def post(self, request):
+        # 防重复提交：时间窗内已有打卡记录则忽略本次提交（连点/刷新不会产生重复打卡）
+        if CheckInRecord.objects.filter(
+            user=request.user,
+            created__gte=timezone.now() - timedelta(seconds=CHECKIN_DEDUPE_SECONDS),
+        ).exists():
+            messages.warning(request, _('刚刚已完成打卡，请勿重复提交'))
+            return redirect('plugins:lab_manager:checkin_list')
         form = CheckInForm(request.POST, request.FILES)
         if form.is_valid():
             with transaction.atomic():
@@ -611,12 +685,14 @@ class CheckInDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'lab_manager/checkin_detail.html'
 
     def dispatch(self, request, *args, **kwargs):
-        record = CheckInRecord.objects.select_related('user').get(pk=self.kwargs['pk'])
+        record = get_object_or_404(
+            CheckInRecord.objects.select_related('user'), pk=self.kwargs['pk']
+        )
         if not request.user.is_superuser and record.user != request.user:
             messages.error(request, _('你没有权限查看此打卡记录'))
             return redirect('plugins:lab_manager:checkin_list')
         self.record = record
-        record_member_open(request, page_title='打卡详情', target_type='checkin', target_id=record.pk)
+        record_member_open(request, page_title='打卡详情', target_type='checkin_detail', target_id=record.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -631,7 +707,7 @@ class TaskUploadAttachmentView(LoginRequiredMixin, TemplateView):
     template_name = 'lab_manager/task_upload.html'
 
     def dispatch(self, request, *args, **kwargs):
-        task = Task.objects.get(pk=self.kwargs['pk'])
+        task = get_object_or_404(Task, pk=self.kwargs['pk'])
         # 权限 + 截止时间 + 完成状态检查
         if not request.user.is_superuser and request.user != task.assigned_to and request.user != task.created_by:
             messages.error(request, _('你没有权限上传附件'))
@@ -646,11 +722,11 @@ class TaskUploadAttachmentView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['task'] = Task.objects.get(pk=self.kwargs['pk'])
+        ctx['task'] = get_object_or_404(Task, pk=self.kwargs['pk'])
         return ctx
 
     def post(self, request, pk):
-        task = Task.objects.get(pk=pk)
+        task = get_object_or_404(Task, pk=pk)
         files = request.FILES.getlist('files')
         remark = request.POST.get('remark', '')
         completion_note = request.POST.get('completion_note', '')
@@ -690,23 +766,23 @@ class HardwareApprovalView(LoginRequiredMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superuser:
-            hw = Hardware.objects.get(pk=self.kwargs['pk'])
+            hw = get_object_or_404(Hardware, pk=self.kwargs['pk'])
             messages.error(request, _('你没有权限审核硬件'))
             return redirect(hw.get_absolute_url())
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['hardware'] = Hardware.objects.get(pk=self.kwargs['pk'])
+        ctx['hardware'] = get_object_or_404(Hardware, pk=self.kwargs['pk'])
         return ctx
 
     def post(self, request, pk):
         if not request.user.is_superuser:
-            hw = Hardware.objects.get(pk=pk)
+            hw = get_object_or_404(Hardware, pk=pk)
             messages.error(request, _('你没有权限审核硬件'))
             return redirect(hw.get_absolute_url())
 
-        hw = Hardware.objects.get(pk=pk)
+        hw = get_object_or_404(Hardware, pk=pk)
         action = request.POST.get('action')
         note = request.POST.get('approval_note', '')
 
@@ -732,22 +808,22 @@ class TaskCompleteView(LoginRequiredMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superuser:
-            task = Task.objects.get(pk=self.kwargs['pk'])
+            task = get_object_or_404(Task, pk=self.kwargs['pk'])
             messages.error(request, _('你没有权限操作此任务'))
             return redirect(task.get_absolute_url())
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['task'] = Task.objects.get(pk=self.kwargs['pk'])
+        ctx['task'] = get_object_or_404(Task, pk=self.kwargs['pk'])
         return ctx
 
     def post(self, request, pk):
         if not request.user.is_superuser:
-            task = Task.objects.get(pk=pk)
+            task = get_object_or_404(Task, pk=pk)
             messages.error(request, _('你没有权限操作此任务'))
             return redirect(task.get_absolute_url())
-        task = Task.objects.get(pk=pk)
+        task = get_object_or_404(Task, pk=pk)
         task.completion_note = request.POST.get('completion_note', '')
         from .services.task_utils import mark_task_completed
         mark_task_completed(task)
@@ -757,17 +833,20 @@ class TaskCompleteView(LoginRequiredMixin, TemplateView):
 
 # ── 评论 ──
 
-class TaskCommentView(LoginRequiredMixin, TemplateView):
-    """提交评论 — 所有人可评论"""
+class TaskCommentView(LoginRequiredMixin, View):
+    """提交评论 — 所有人可评论（仅接受 POST）"""
+
+    http_method_names = ['post', 'head', 'options']
 
     def post(self, request, pk):
-        task = Task.objects.get(pk=pk)
+        task = get_object_or_404(Task, pk=pk)
         form = TaskCommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.task = task
             comment.user = request.user
             comment.save()
+            form.save_m2m()
             messages.success(request, _('评论已发布'))
         else:
             messages.error(request, _('评论内容不能为空'))
@@ -780,7 +859,7 @@ class TaskAttachmentDeleteView(LoginRequiredMixin, TemplateView):
     template_name = 'lab_manager/task_attachment_delete.html'
 
     def dispatch(self, request, *args, **kwargs):
-        att = TaskAttachment.objects.get(pk=self.kwargs['pk'])
+        att = get_object_or_404(TaskAttachment, pk=self.kwargs['pk'])
         if not request.user.is_superuser and request.user != att.task.assigned_to and request.user != att.task.created_by:
             messages.error(request, _('你没有权限删除此附件'))
             return redirect(att.task.get_absolute_url())
@@ -788,11 +867,11 @@ class TaskAttachmentDeleteView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['attachment'] = TaskAttachment.objects.get(pk=self.kwargs['pk'])
+        ctx['attachment'] = get_object_or_404(TaskAttachment, pk=self.kwargs['pk'])
         return ctx
 
     def post(self, request, pk):
-        att = TaskAttachment.objects.get(pk=pk)
+        att = get_object_or_404(TaskAttachment, pk=pk)
         task = att.task
         if not request.user.is_superuser and request.user != task.assigned_to and request.user != task.created_by:
             messages.error(request, _('你没有权限删除此附件'))
@@ -881,22 +960,44 @@ class NotificationListView(LoginRequiredMixin, TemplateView):
 
 
 class NotificationMarkReadView(LoginRequiredMixin, View):
-    def post(self, request):
-        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-        return JsonResponse({'ok': True})
+    """标记通知已读。
 
-    def get(self, request, pk=None):
-        # pk=None → 全部已读（来自 /notifications/read-all/）
+    - POST /notifications/read-all/ → 全部已读（不接受 GET，避免被 <img> 之类触发状态变更）
+    - POST /notifications/<pk>/read/ → 单条已读
+    - GET  /notifications/<pk>/read/ → 单条已读并跳转（纯导航，只影响本人的已读标记）
+    """
+
+    def post(self, request, pk=None):
         if pk is None:
             Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'ok': True})
+            messages.success(request, _('已全部标为已读'))
             return redirect('plugins:lab_manager:notifications')
-        notif = Notification.objects.get(pk=pk, user=request.user)
+        return self._mark_single(request, pk)
+
+    def get(self, request, pk=None):
+        if pk is None:
+            return HttpResponseNotAllowed(['POST'])
+        return self._mark_single(request, pk)
+
+    def _mark_single(self, request, pk):
+        notif = get_object_or_404(Notification, pk=pk, user=request.user)
         if not notif.is_read:
             notif.is_read = True
             notif.save(update_fields=['is_read'])
-        if notif.link:
-            return redirect(notif.link)
-        return redirect('plugins:lab_manager:notifications')
+        return redirect(_safe_redirect_target(notif.link) or 'plugins:lab_manager:notifications')
+
+class AgentConversationDeleteView(LoginRequiredMixin, View):
+    """删除本人的智能体会话（连同消息）。仅 POST。"""
+
+    http_method_names = ['post']
+
+    def post(self, request, pk):
+        conversation = get_object_or_404(AgentConversation, pk=pk, user=request.user)
+        conversation.delete()
+        return JsonResponse({'ok': True})
+
 
 class NotificationSendView(LoginRequiredMixin, TemplateView):
     template_name = 'lab_manager/notification_send.html'
@@ -964,10 +1065,8 @@ class TaskCalendarView(LoginRequiredMixin, TemplateView):
         from datetime import date, timedelta
 
         today = timezone.localdate()
-        year = int(self.request.GET.get('year', today.year))
-        month = int(self.request.GET.get('month', today.month))
-        # 限制范围
-        month = max(1, min(12, month))
+        year = _safe_int(self.request.GET.get('year'), today.year, minimum=1970, maximum=2999)
+        month = _safe_int(self.request.GET.get('month'), today.month, minimum=1, maximum=12)
 
         # 该月有 deadline 的任务
         first_day = date(year, month, 1)
@@ -1020,40 +1119,60 @@ class MemberListView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         from users.models import User
 
-        users = User.objects.filter(is_active=True).order_by('username')
+        users = list(User.objects.filter(is_active=True).order_by('username'))
+        user_ids = [u.pk for u in users]
         today = timezone.localdate()
+        now = timezone.now()
+
+        def counts(queryset, key, **filters):
+            return {
+                row[key]: row['n']
+                for row in queryset.filter(**filters).values(key).annotate(n=Count('pk'))
+            }
+
+        assigned_qs = Task.objects.filter(assigned_to_id__in=user_ids)
+        task_total_map = counts(assigned_qs, 'assigned_to_id')
+        task_completed_map = counts(assigned_qs, 'assigned_to_id', status=TaskStatusChoices.COMPLETED)
+        task_progress_map = counts(assigned_qs, 'assigned_to_id', status=TaskStatusChoices.IN_PROGRESS)
+        task_pending_map = counts(assigned_qs, 'assigned_to_id', status=TaskStatusChoices.PENDING)
+        task_overdue_map = counts(
+            assigned_qs, 'assigned_to_id',
+            status__in=[TaskStatusChoices.PENDING, TaskStatusChoices.IN_PROGRESS], deadline__lt=now,
+        )
+        borrow_qs = HardwareBorrowRecord.objects.filter(borrower_id__in=user_ids)
+        borrowed_total_map = counts(borrow_qs, 'borrower_id')
+        borrowed_current_map = counts(borrow_qs, 'borrower_id', status=BorrowStatusChoices.BORROWED)
+        checkin_qs = CheckInRecord.objects.filter(user_id__in=user_ids)
+        checkin_total_map = counts(checkin_qs, 'user_id')
+        checkin_today_map = counts(checkin_qs, 'user_id', created__date=today)
+        member_projects = counts(LabProject.objects.filter(members__in=user_ids), 'members')
+        led_projects = counts(LabProject.objects.filter(leader_id__in=user_ids), 'leader_id')
+        last_open_map = dict(
+            MemberOpenRecord.objects.filter(user_id__in=user_ids)
+            .order_by('user_id', '-created').distinct('user_id')
+            .values_list('user_id', 'created')
+        )
+        last_checkin_map = dict(
+            CheckInRecord.objects.filter(user_id__in=user_ids)
+            .order_by('user_id', '-created').distinct('user_id')
+            .values_list('user_id', 'created')
+        )
 
         members = []
         for user in users:
-            # 任务统计
-            assigned = user.assigned_tasks.all()
-            task_total = assigned.count()
-            task_completed = assigned.filter(status=TaskStatusChoices.COMPLETED).count()
-            task_in_progress = assigned.filter(status=TaskStatusChoices.IN_PROGRESS).count()
-            task_pending = assigned.filter(status=TaskStatusChoices.PENDING).count()
-            task_overdue = assigned.filter(
-                status__in=[TaskStatusChoices.PENDING, TaskStatusChoices.IN_PROGRESS],
-                deadline__lt=timezone.now(),
-            ).count()
-
-            # 借出统计
-            borrowed_total = user.borrowed_hardware.count()
-            borrowed_current = user.borrowed_hardware.filter(
-                status=BorrowStatusChoices.BORROWED,
-            ).count()
-
-            # 打卡统计
-            checkin_total = user.lab_checkins.count()
-            checkin_today = user.lab_checkins.filter(
-                created__date=today,
-            ).count()
-
-            # 项目统计
-            project_count = user.project_memberships.count() + user.led_projects.count()
-
-            # 最近活动
-            last_open = user.lab_open_records.order_by('-created').first()
-            last_checkin = user.lab_checkins.order_by('-created').first()
+            uid = user.pk
+            task_total = task_total_map.get(uid, 0)
+            task_completed = task_completed_map.get(uid, 0)
+            task_in_progress = task_progress_map.get(uid, 0)
+            task_pending = task_pending_map.get(uid, 0)
+            task_overdue = task_overdue_map.get(uid, 0)
+            borrowed_total = borrowed_total_map.get(uid, 0)
+            borrowed_current = borrowed_current_map.get(uid, 0)
+            checkin_total = checkin_total_map.get(uid, 0)
+            checkin_today = checkin_today_map.get(uid, 0)
+            project_count = member_projects.get(uid, 0) + led_projects.get(uid, 0)
+            last_open = last_open_map.get(uid)
+            last_checkin = last_checkin_map.get(uid)
 
             members.append({
                 'user': user,
@@ -1133,8 +1252,8 @@ class MemberDetailView(LoginRequiredMixin, TemplateView):
         import calendar as cal_mod
         from datetime import date
 
-        cal_year = int(self.request.GET.get('cal_year', today.year))
-        cal_month = int(self.request.GET.get('cal_month', today.month))
+        cal_year = _safe_int(self.request.GET.get('cal_year'), today.year, minimum=1970, maximum=2999)
+        cal_month = _safe_int(self.request.GET.get('cal_month'), today.month, minimum=1, maximum=12)
         cal_month = max(1, min(12, cal_month))
 
         cal_first = date(cal_year, cal_month, 1)
@@ -1243,7 +1362,13 @@ class AgentAssistantView(LoginRequiredMixin, TemplateView):
         ]
         ctx['conversations'] = conversations[:20]
         ctx['active_conversation'] = active_conversation
-        ctx['conversation_messages'] = active_conversation.messages.all() if active_conversation else []
+        # 长会话只加载最近 200 条，避免整表加载与渲染
+        if active_conversation:
+            recent_messages = list(active_conversation.messages.order_by('-created')[:200])
+            recent_messages.reverse()
+        else:
+            recent_messages = []
+        ctx['conversation_messages'] = recent_messages
         ctx['active_conversation_id'] = active_conversation.pk if active_conversation else ''
         ctx['initial_workflow_alias'] = ''
         return ctx
@@ -1434,7 +1559,7 @@ class AgentToolDeleteView(generic.ObjectDeleteView):
         return self.request.user.is_superuser
 
 
-@register_model_view(AgentTool, 'bulk_delete')
+@register_model_view(AgentTool, 'bulk_delete', path='bulk-delete', detail=False)
 class AgentToolBulkDeleteView(generic.BulkDeleteView):
     queryset = AgentTool.objects.all()
     table = AgentToolTable
@@ -1444,7 +1569,7 @@ class AgentToolBulkDeleteView(generic.BulkDeleteView):
         return self.request.user.is_superuser
 
 
-@register_model_view(AgentTool, 'bulk_edit')
+@register_model_view(AgentTool, 'bulk_edit', path='bulk-edit', detail=False)
 class AgentToolBulkEditView(generic.BulkEditView):
     queryset = AgentTool.objects.all()
     filterset = AgentToolFilterSet

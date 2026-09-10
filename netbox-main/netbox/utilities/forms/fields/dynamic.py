@@ -2,6 +2,7 @@ import django_filters
 from django import forms
 from django.conf import settings
 from django.forms import BoundField
+from django.urls import NoReverseMatch
 
 from utilities.forms import widgets
 from utilities.views import get_action_url
@@ -174,7 +175,14 @@ class DynamicModelChoiceMixin:
 
         # Set the data URL on the APISelect widget (if not already set)
         if not widget.attrs.get('data-url'):
-            widget.attrs['data-url'] = get_action_url(self.queryset.model, action='list', rest_api=True)
+            try:
+                widget.attrs['data-url'] = get_action_url(
+                    self.queryset.model, action='list', rest_api=True
+                )
+            except NoReverseMatch:
+                # 本实例裁剪掉了核心 REST API（core-api 命名空间不存在）时，
+                # 动态字段退化为无 API 自动补全，而不是让整个表单页面 500。
+                widget.attrs['data-url'] = ''
 
         # Include quick add?
         if self.quick_add:

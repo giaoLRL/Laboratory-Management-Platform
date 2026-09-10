@@ -37,7 +37,7 @@ def validate_file_size(value, limit_mb=10):
 
 def validate_image_type(value):
     """Validate uploaded file is an allowed image type."""
-    mime_type, _ = mimetypes.guess_type(value.name)
+    mime_type, _encoding = mimetypes.guess_type(value.name)
     if mime_type and mime_type not in ALLOWED_IMAGE_TYPES:
         raise ValidationError(
             _('不支持的文件类型：%(type)s。支持的图片格式：JPEG, PNG, GIF, WebP, BMP'),
@@ -47,7 +47,7 @@ def validate_image_type(value):
 
 def validate_attachment_type(value):
     """Validate uploaded file is an allowed attachment type."""
-    mime_type, _ = mimetypes.guess_type(value.name)
+    mime_type, _encoding = mimetypes.guess_type(value.name)
     if mime_type and mime_type not in ALLOWED_ATTACHMENT_TYPES:
         raise ValidationError(
             _('不支持的文件类型：%(type)s。支持图片、文档、视频和压缩包。'),

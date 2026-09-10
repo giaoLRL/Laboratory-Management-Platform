@@ -69,3 +69,7 @@ cbm_index.log
 netbox-main/contrib/openapi.json
 cookies.txt
 deploy_v53.py
+
+# ── QA 测试产物：保留脚本与报告，忽略体积大的截图与 DEBUG 错误页快照 ──
+reports/qa/errors/
+reports/qa/*.png

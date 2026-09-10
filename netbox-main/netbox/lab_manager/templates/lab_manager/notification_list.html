@@ -18,9 +18,12 @@
       </a>
     {% endif %}
     {% if unread_count %}
-      <a href="{% url 'plugins:lab_manager:notification_read_all' %}" class="btn btn-outline-primary">
-        <i class="mdi mdi-check-all"></i> {% trans "全部标为已读" %}
-      </a>
+      <form method="post" action="{% url 'plugins:lab_manager:notification_read_all' %}" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-primary">
+          <i class="mdi mdi-check-all"></i> {% trans "全部标为已读" %}
+        </button>
+      </form>
     {% endif %}
   </div>
 

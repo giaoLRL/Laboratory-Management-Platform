@@ -1,4 +1,5 @@
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -79,16 +80,53 @@ class HardwareBorrowRecord(NetBoxModel):
 
     @property
     def is_overdue(self):
-        from django.utils import timezone
-        if self.status != self.BorrowStatusChoices.BORROWED:
+        if self.status != BorrowStatusChoices.BORROWED:
             return False
         if self.expected_return_date:
+            from django.utils import timezone
             return timezone.now() > self.expected_return_date
         return False
 
+    def clean(self):
+        super().clean()
+        # 借出前校验可用库存（quantity 表示在库可用数量）
+        if self._state.adding and self.status == BorrowStatusChoices.BORROWED and self.hardware_id:
+            hardware = Hardware.objects.filter(pk=self.hardware_id).only('quantity').first()
+            if hardware is not None and hardware.quantity < 1:
+                raise ValidationError({'hardware': _('该硬件当前可用数量为 0，无法借出。')})
+
+    def save(self, *args, **kwargs):
+        """借出时扣减库存、归还时回补库存（行级锁 + 事务，避免并发超借）。"""
+        creating = self._state.adding
+        previous_status = None
+        if not creating and self.pk:
+            previous_status = (
+                HardwareBorrowRecord.objects.filter(pk=self.pk)
+                .values_list('status', flat=True).first()
+            )
+        becomes_borrowed = self.status == BorrowStatusChoices.BORROWED
+        was_borrowed = previous_status == BorrowStatusChoices.BORROWED
+
+        if becomes_borrowed and not was_borrowed:
+            delta = -1
+        elif was_borrowed and not becomes_borrowed:
+            delta = 1
+        else:
+            delta = 0
+
+        with transaction.atomic():
+            if delta:
+                hardware = Hardware.objects.select_for_update().get(pk=self.hardware_id)
+                new_quantity = hardware.quantity + delta
+                if new_quantity < 0:
+                    raise ValidationError(_('该硬件当前可用数量为 0，无法借出。'))
+                hardware.quantity = new_quantity
+                hardware.save(update_fields=['quantity', 'last_updated'])
+            super().save(*args, **kwargs)
+
     def mark_returned(self, notes=''):
         from django.utils import timezone
-        self.status = self.BorrowStatusChoices.RETURNED
+        self.status = BorrowStatusChoices.RETURNED
         self.actual_return_date = timezone.now()
         if notes:
             self.notes = notes

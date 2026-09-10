@@ -136,6 +136,26 @@ class HardwareBorrowRecordForm(NetBoxModelForm):
         }
 
 
+class HardwareBorrowRecordMemberForm(NetBoxModelForm):
+    """成员借出登记表单：不允许指定借用人（强制为本人）"""
+
+    expected_return_date = django_forms.DateTimeField(
+        widget=DateTimePicker(),
+        required=False,
+        label='预计归还日期',
+    )
+
+    class Meta:
+        model = HardwareBorrowRecord
+        fields = (
+            'hardware', 'expected_return_date', 'purpose', 'notes', 'tags',
+        )
+        widgets = {
+            'purpose': django_forms.Textarea(attrs={'rows': 2, 'placeholder': '说明借用该硬件的目的'}),
+            'notes': django_forms.Textarea(attrs={'rows': 2, 'placeholder': '备注信息'}),
+        }
+
+
 class LabProjectForm(NetBoxModelForm):
     """实验室项目管理表单"""
 

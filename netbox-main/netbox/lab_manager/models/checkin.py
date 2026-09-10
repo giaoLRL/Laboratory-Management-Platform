@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.models import NetBoxModel
 from users.models import User
 
-from ..validators import validate_file_size
+from ..validators import validate_file_size, validate_image_type
 
 
 class CheckInRecord(NetBoxModel):
@@ -21,7 +21,7 @@ class CheckInRecord(NetBoxModel):
     photo = models.ImageField(
         verbose_name=_('打卡照片'),
         upload_to='checkins/photos/',
-        validators=[validate_file_size],
+        validators=[validate_file_size, validate_image_type],
         help_text=_('打卡现场照片，最大 10MB'),
     )
     latitude = models.DecimalField(

@@ -18,6 +18,8 @@ from ..models import (
     TaskComment,
 )
 from . import serializers
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 
 class LabManagerRootView(APIRootView):
@@ -40,6 +42,7 @@ class TaskViewSet(NetBoxModelViewSet):
 class TaskCommentViewSet(NetBoxModelViewSet):
     queryset = TaskComment.objects.prefetch_related('tags')
     serializer_class = serializers.TaskCommentSerializer
+    filterset_class = filtersets.TaskCommentFilterSet
 
 
 class TaskAttachmentViewSet(NetBoxModelViewSet):
@@ -63,6 +66,7 @@ class MemberOpenRecordViewSet(NetBoxModelViewSet):
 class HardwareImportBatchViewSet(NetBoxModelViewSet):
     queryset = HardwareImportBatch.objects.prefetch_related('tags')
     serializer_class = serializers.HardwareImportBatchSerializer
+    filterset_class = filtersets.HardwareImportBatchFilterSet
 
 
 class AgentToolViewSet(NetBoxModelViewSet):
@@ -80,12 +84,26 @@ class HardwareBorrowRecordViewSet(NetBoxModelViewSet):
     queryset = HardwareBorrowRecord.objects.prefetch_related('tags')
     serializer_class = serializers.HardwareBorrowRecordSerializer
 
+    def perform_create(self, serializer):
+        try:
+            serializer.save()
+        except DjangoValidationError as e:
+            raise DRFValidationError(getattr(e, 'messages', [str(e)]))
+
+    def perform_update(self, serializer):
+        try:
+            serializer.save()
+        except DjangoValidationError as e:
+            raise DRFValidationError(getattr(e, 'messages', [str(e)]))
+
 
 class AgentConversationViewSet(NetBoxModelViewSet):
     queryset = AgentConversation.objects.prefetch_related('tags')
     serializer_class = serializers.AgentConversationSerializer
+    filterset_class = filtersets.AgentConversationFilterSet
 
 
 class AgentMessageViewSet(NetBoxModelViewSet):
     queryset = AgentMessage.objects.prefetch_related('tags')
     serializer_class = serializers.AgentMessageSerializer
+    filterset_class = filtersets.AgentMessageFilterSet

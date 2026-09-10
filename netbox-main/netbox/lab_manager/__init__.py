@@ -12,6 +12,8 @@ class LabManagerConfig(PluginConfig):
 
     def ready(self):
         super().ready()
+        # 插件不会自动发现 signals.py，必须显式导入才能注册接收器
+        from . import signals  # noqa: F401
 
 
 config = LabManagerConfig

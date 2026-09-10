@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.models import NetBoxModel
 from users.models import User
 
-from ..validators import validate_file_size
+from ..validators import validate_file_size, validate_image_type
 
 
 class MemberOpenRecord(NetBoxModel):
@@ -52,6 +52,7 @@ class MemberOpenRecord(NetBoxModel):
         upload_to='checkins/photos/',
         null=True,
         blank=True,
+        validators=[validate_file_size, validate_image_type],
     )
     latitude = models.DecimalField(
         verbose_name=_('纬度'),

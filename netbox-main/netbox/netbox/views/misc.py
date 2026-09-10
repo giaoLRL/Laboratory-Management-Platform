@@ -153,8 +153,43 @@ class MediaView(TokenConditionalLoginRequiredMixin, View):
                 raise Http404
         elif path.startswith('devicetype-images/'):
             pass  # DCIM removed — permission check skipped
+        elif path.startswith(('checkins/', 'task_attachments/', 'hardware/')):
+            # lab_manager 插件上传目录：必须登录，且按归属做对象级校验
+            self._check_plugin_upload_permission(request.user, path)
 
         response = serve(request, path, document_root=settings.MEDIA_ROOT)
         response['Content-Security-Policy'] = "sandbox; default-src 'none'"
         response['X-Content-Type-Options'] = "nosniff"
+        # 附件类文件强制下载，避免 SVG/HTML 之类被浏览器当作页面执行（存储型 XSS）
+        if path.startswith(('task_attachments/', 'hardware/invoice/')):
+            response['Content-Disposition'] = 'attachment'
         return response
+
+    @staticmethod
+    def _check_plugin_upload_permission(user, path):
+        """lab_manager 上传目录的对象级鉴权；任何异常一律按 404 处理（fail closed）。"""
+        if not user.is_authenticated:
+            raise Http404
+        if user.is_superuser:
+            return
+        try:
+            from lab_manager.models import CheckInRecord, Hardware, TaskAttachment
+            if path.startswith('checkins/'):
+                if not CheckInRecord.objects.filter(photo=path, user=user).exists():
+                    raise Http404
+            elif path.startswith('task_attachments/'):
+                if not TaskAttachment.objects.filter(file=path).filter(
+                    Q(task__created_by=user) | Q(task__assigned_to=user)
+                ).exists():
+                    raise Http404
+            else:  # hardware/
+                if not Hardware.objects.filter(
+                    Q(image=path) | Q(invoice_image=path)
+                ).filter(
+                    Q(submitted_by=user) | Q(custodian=user) | Q(approval_status='approved')
+                ).exists():
+                    raise Http404
+        except Http404:
+            raise
+        except Exception:
+            raise Http404

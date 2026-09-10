@@ -1,9 +1,11 @@
-from django.db.models.signals import post_save, pre_delete
+from django.db import transaction
+from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
 
 from .models import Hardware, HardwareBorrowRecord, Task, TaskAttachment, Notification
 from .models.notification import send_notification
 from .choices import HardwareApprovalStatusChoices
+from .models.borrow import BorrowStatusChoices
 
 
 @receiver(pre_delete, sender=TaskAttachment)
@@ -11,6 +13,24 @@ def cleanup_attachment_file(sender, instance, **kwargs):
     """删除 TaskAttachment 记录时同步删除物理文件。"""
     if instance.file:
         instance.file.delete(save=False)
+
+
+@receiver(post_delete, sender=HardwareBorrowRecord)
+def restore_hardware_stock(sender, instance, **kwargs):
+    """借出记录被删除时把占用的库存加回去。
+
+    必须用信号实现：QuerySet.delete() 不会调用 Model.delete()。
+    """
+    if instance.status != BorrowStatusChoices.BORROWED or not instance.hardware_id:
+        return
+    try:
+        with transaction.atomic():
+            hardware = Hardware.objects.select_for_update().get(pk=instance.hardware_id)
+            hardware.quantity += 1
+            hardware.save(update_fields=['quantity', 'last_updated'])
+    except Hardware.DoesNotExist:
+        # 硬件本身正在被删除（级联），无需回补
+        pass
 
 
 # ── 通知信号 ──
@@ -29,10 +49,12 @@ def notify_task_assigned(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=Hardware)
-def notify_hardware_approved(sender, instance, **kwargs):
-    """硬件审批状态变更时通知提交人。"""
-    from django.db import transaction
-    # 只在实际状态变更时通知
+def notify_hardware_approved(sender, instance, created=False, **kwargs):
+    """硬件审批状态**发生变化**时通知提交人（新建不通知，避免批量导入刷屏）。"""
+    previous = getattr(instance, '_previous_approval_status', None)
+    if created or previous == instance.approval_status:
+        return
+    instance._previous_approval_status = instance.approval_status
     if instance.approval_status == HardwareApprovalStatusChoices.APPROVED and instance.submitted_by:
         send_notification(
             user=instance.submitted_by,

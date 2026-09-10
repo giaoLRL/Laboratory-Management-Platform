@@ -8,16 +8,50 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Callable
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+
+from ..logging_config import logger
+
+# LLM 按 AgentTool.parameters_schema 传参时用的是 filters_json / fields_json /
+# record_id，而执行层读的是 filters / fields / id。这里统一归一化，
+# 否则过滤条件会被静默丢弃，模型会把全量数据当成筛选结果。
+_ARG_ALIASES = (('filters_json', 'filters'), ('fields_json', 'fields'), ('record_id', 'id'))
+
+
+def normalize_platform_args(args: dict) -> tuple[dict, str]:
+    """返回 (归一化后的参数, 错误信息)。"""
+    if not isinstance(args, dict):
+        return {}, '工具参数必须是对象'
+    normalized = dict(args)
+    for src_key, dst_key in _ARG_ALIASES:
+        if src_key not in normalized:
+            continue
+        value = normalized.pop(src_key)
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                continue
+            try:
+                value = json.loads(text)
+            except json.JSONDecodeError:
+                return {}, f'{src_key} 不是合法 JSON'
+        if dst_key not in normalized and value is not None:
+            normalized[dst_key] = value
+    return normalized, ''
+
 
 # ── 工具执行函数 ──────────────────────────────────────────────
 
 def _exec_platform_query(user, args: dict) -> str:
     """平台数据查询——最常用的通用工具"""
     from .platform_data_service import PlatformDataError, PlatformDataService
+    args, arg_error = normalize_platform_args(args)
+    if arg_error:
+        return json.dumps({'ok': False, 'error': arg_error}, ensure_ascii=False)
     platform = PlatformDataService()
     try:
         result = platform.execute(user=user, payload=args)
@@ -95,18 +129,19 @@ def _exec_image_search(user, args: dict) -> str:
 
 
 def _exec_find_members(user, args: dict) -> str:
-    """搜索平台成员"""
+    """搜索平台成员（只返回启用账号；邮箱仅管理员可见）"""
     keyword = str(args.get('keyword', '')).strip()
     User = get_user_model()
-    if not keyword:
-        members = list(User.objects.values('id', 'username', 'email', 'is_active', 'is_superuser')[:20])
-    else:
-        members = list(
-            User.objects.filter(
-                Q(username__icontains=keyword) | Q(email__icontains=keyword)
-            ).values('id', 'username', 'email', 'is_active', 'is_superuser')[:20]
+    queryset = User.objects.filter(is_active=True)
+    if keyword:
+        queryset = queryset.filter(
+            Q(username__icontains=keyword) | Q(email__icontains=keyword)
+            | Q(first_name__icontains=keyword) | Q(last_name__icontains=keyword)
         )
-    return json.dumps({'ok': True, 'members': members, 'total': len(members)}, ensure_ascii=False, default=str)
+    fields = ('id', 'username', 'email') if user.is_superuser else ('id', 'username')
+    members = list(queryset.values(*fields).order_by('username')[:20])
+    return json.dumps({'ok': True, 'members': members, 'total': len(members)},
+                      ensure_ascii=False, default=str)
 
 
 # ── 注册表 ────────────────────────────────────────────────────
@@ -123,6 +158,19 @@ TOOL_REGISTRY: dict[str, Callable] = {
 }
 
 
+def tool_requires_superuser(execution_key: str) -> bool:
+    """从数据库读取该执行标识是否要求超级管理员（LangChain 与降级路径统一生效）。"""
+    try:
+        from ..models import AgentTool
+        return bool(
+            AgentTool.objects.filter(is_enabled=True).filter(
+                Q(execution_key=execution_key) | Q(execution_key='', name=execution_key)
+            ).values_list('requires_superuser', flat=True).first()
+        )
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def execute_tool(execution_key: str, user, args: dict[str, Any]) -> str:
     """根据执行标识调用对应的工具处理函数。"""
     handler = TOOL_REGISTRY.get(execution_key)
@@ -131,9 +179,20 @@ def execute_tool(execution_key: str, user, args: dict[str, Any]) -> str:
             {'ok': False, 'error': f'未知工具执行标识: {execution_key}'},
             ensure_ascii=False,
         )
+    if tool_requires_superuser(execution_key) and not getattr(user, 'is_superuser', False):
+        return json.dumps(
+            {'ok': False, 'error': '该工具仅限管理员使用'},
+            ensure_ascii=False,
+        )
+    started = time.monotonic()
     try:
-        return handler(user, args)
+        result = handler(user, args)
+        elapsed = time.monotonic() - started
+        if elapsed > 10:
+            logger.warning('工具 %s 执行耗时 %.1fs', execution_key, elapsed)
+        return result
     except Exception as exc:
+        logger.exception('工具 %s 执行异常', execution_key)
         return json.dumps(
             {'ok': False, 'error': f'工具执行异常: {exc}'},
             ensure_ascii=False,

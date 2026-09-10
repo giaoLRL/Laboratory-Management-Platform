@@ -20,7 +20,7 @@ class HardwareSerializer(NetBoxModelSerializer):
     class Meta:
         model = Hardware
         fields = (
-            'id', 'display', 'name', 'category', 'model_number',
+            'url', 'id', 'display', 'name', 'category', 'model_number',
             'manufacturer', 'quantity', 'unit_price', 'purchase_date',
             'purchase_link', 'status', 'storage_location', 'custodian',
             'image', 'invoice_image', 'remarks', 'submitted_by',
@@ -28,13 +28,15 @@ class HardwareSerializer(NetBoxModelSerializer):
             'tags', 'custom_fields', 'created', 'last_updated',
         )
         brief_fields = ('id', 'display', 'name', 'category', 'status', 'approval_status')
+        # 审批结果只能通过审批视图/管理界面产生，禁止经 REST 自助审批
+        read_only_fields = ('approval_status', 'approved_by', 'approval_note', 'submitted_by')
 
 
 class TaskSerializer(NetBoxModelSerializer):
     class Meta:
         model = Task
         fields = (
-            'id', 'display', 'title', 'description', 'priority',
+            'url', 'id', 'display', 'title', 'description', 'priority',
             'status', 'created_by', 'assigned_to', 'deadline',
             'completed_at', 'completion_note',
             'tags', 'custom_fields', 'created', 'last_updated',
@@ -46,7 +48,7 @@ class TaskCommentSerializer(NetBoxModelSerializer):
     class Meta:
         model = TaskComment
         fields = (
-            'id', 'display', 'task', 'user', 'content',
+            'url', 'id', 'display', 'task', 'user', 'content',
             'tags', 'custom_fields', 'created', 'last_updated',
         )
         brief_fields = ('id', 'display', 'user', 'content')
@@ -56,7 +58,7 @@ class TaskAttachmentSerializer(NetBoxModelSerializer):
     class Meta:
         model = TaskAttachment
         fields = (
-            'id', 'display', 'task', 'file', 'uploaded_by', 'remark',
+            'url', 'id', 'display', 'task', 'file', 'uploaded_by', 'remark',
             'tags', 'custom_fields', 'created', 'last_updated',
         )
         brief_fields = ('id', 'display', 'file', 'uploaded_by')
@@ -66,7 +68,7 @@ class CheckInRecordSerializer(NetBoxModelSerializer):
     class Meta:
         model = CheckInRecord
         fields = (
-            'id', 'display', 'user', 'photo', 'latitude', 'longitude',
+            'url', 'id', 'display', 'user', 'photo', 'latitude', 'longitude',
             'accuracy', 'address', 'note',
             'tags', 'custom_fields', 'created', 'last_updated',
         )
@@ -77,7 +79,7 @@ class MemberOpenRecordSerializer(NetBoxModelSerializer):
     class Meta:
         model = MemberOpenRecord
         fields = (
-            'id', 'display', 'user', 'path', 'page_title',
+            'url', 'id', 'display', 'user', 'path', 'page_title',
             'target_type', 'target_id', 'user_agent', 'ip_address',
             'photo', 'latitude', 'longitude', 'accuracy', 'address', 'note',
             'tags', 'custom_fields', 'created', 'last_updated',
@@ -89,7 +91,7 @@ class HardwareImportBatchSerializer(NetBoxModelSerializer):
     class Meta:
         model = HardwareImportBatch
         fields = (
-            'id', 'display', 'batch_id', 'created_by',
+            'url', 'id', 'display', 'batch_id', 'created_by',
             'source_type', 'status', 'raw_payload', 'validated_payload',
             'result_summary', 'tags', 'custom_fields', 'created', 'last_updated',
         )
@@ -100,7 +102,7 @@ class AgentToolSerializer(NetBoxModelSerializer):
     class Meta:
         model = AgentTool
         fields = (
-            'id', 'display', 'name', 'display_name', 'description',
+            'url', 'id', 'display', 'name', 'display_name', 'description',
             'tool_type', 'category', 'is_enabled',
             'parameters_schema', 'execution_key', 'default_args',
             'requires_superuser', 'sort_order',
@@ -113,7 +115,7 @@ class LabProjectSerializer(NetBoxModelSerializer):
     class Meta:
         model = LabProject
         fields = (
-            'id', 'display', 'name', 'description', 'status',
+            'url', 'id', 'display', 'name', 'description', 'status',
             'leader', 'members', 'start_date', 'end_date',
             'tags', 'custom_fields', 'created', 'last_updated',
         )
@@ -124,7 +126,7 @@ class HardwareBorrowRecordSerializer(NetBoxModelSerializer):
     class Meta:
         model = HardwareBorrowRecord
         fields = (
-            'id', 'display', 'hardware', 'borrower',
+            'url', 'id', 'display', 'hardware', 'borrower',
             'borrow_date', 'expected_return_date', 'actual_return_date',
             'status', 'purpose', 'notes',
             'tags', 'custom_fields', 'created', 'last_updated',
@@ -136,7 +138,7 @@ class AgentConversationSerializer(NetBoxModelSerializer):
     class Meta:
         model = AgentConversation
         fields = (
-            'id', 'display', 'user', 'title', 'mode',
+            'url', 'id', 'display', 'user', 'title', 'mode',
             'workflow_alias', 'coze_conversation_id', 'last_message_preview',
             'tags', 'custom_fields', 'created', 'last_updated',
         )
@@ -147,7 +149,7 @@ class AgentMessageSerializer(NetBoxModelSerializer):
     class Meta:
         model = AgentMessage
         fields = (
-            'id', 'display', 'conversation', 'role', 'content',
+            'url', 'id', 'display', 'conversation', 'role', 'content',
             'raw_payload', 'coze_chat_id',
             'tags', 'custom_fields', 'created', 'last_updated',
         )

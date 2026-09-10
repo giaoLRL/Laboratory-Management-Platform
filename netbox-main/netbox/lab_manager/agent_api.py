@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import hmac
 import json
+from django.middleware.csrf import CsrfViewMiddleware
+
+from .logging_config import logger
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -118,35 +122,68 @@ class AgentAPIView(View):
     http_method_names = ['post']
 
     def dispatch(self, request, *args, **kwargs):
-        self.acting_user = self._resolve_user(request)
-        if isinstance(self.acting_user, JsonResponse):
-            return self.acting_user
+        resolved = self._resolve_user(request)
+        if isinstance(resolved, JsonResponse):
+            return resolved
+        self.acting_user, self.authenticated_by_token = resolved
+        # 本视图整体 csrf_exempt（网关调用无浏览器会话）。
+        # 但如果是靠浏览器会话鉴权的请求，必须补做 CSRF 校验，
+        # 否则恶意页面可以用 text/plain 跨站 POST 代替登录用户执行写操作。
+        if not self.authenticated_by_token:
+            failure = CsrfViewMiddleware(lambda r: None).process_view(request, None, (), {})
+            if failure is not None:
+                return self.error_response('CSRF 校验失败', code='40301', status=403)
         return super().dispatch(request, *args, **kwargs)
 
     def _resolve_user(self, request):
+        """返回 (user, authenticated_by_token) 或 JsonResponse（鉴权失败）。"""
         if request.user.is_authenticated:
-            return request.user
+            return request.user, False
 
         expected_token = get_plugin_config('lab_manager', 'agent_api_token', None)
-        provided_token = request.headers.get('X-Agent-Token')
-        if not expected_token or provided_token != expected_token:
+        provided_token = request.headers.get('X-Agent-Token') or ''
+        # 常量时间比较，避免计时侧信道
+        if not expected_token or not hmac.compare_digest(str(provided_token), str(expected_token)):
             return self.error_response('网关鉴权失败', code='40101', status=401)
+
+        allow_impersonation = get_plugin_config(
+            'lab_manager', 'agent_api_allow_user_impersonation', True
+        )
+        if not allow_impersonation:
+            return self.error_response('未启用网关代调用（X-User-ID）', code='40302', status=403)
 
         user_id = request.headers.get('X-User-ID')
         if not user_id:
             return self.error_response('缺少 X-User-ID', code='40002', status=400)
 
         try:
-            return User.objects.get(pk=user_id)
+            acting_user = User.objects.get(pk=user_id, is_active=True)
         except (User.DoesNotExist, ValueError):
             return self.error_response('用户不存在', code='40401', status=404)
+
+        # 默认不允许通过网关令牌取得超级管理员权限（避免令牌泄露即等于超管）
+        allow_superuser = get_plugin_config(
+            'lab_manager', 'agent_api_allow_superuser_impersonation', False
+        )
+        if acting_user.is_superuser and not allow_superuser:
+            return self.error_response(
+                '网关令牌不允许冒充超级管理员', code='40303', status=403
+            )
+        logger.warning(
+            'Agent API 网关代调用: token 持有者以用户 %s(id=%s) 身份请求 %s',
+            acting_user.username, acting_user.pk, request.path,
+        )
+        return acting_user, True
 
     def parse_json_body(self, request) -> dict[str, Any] | JsonResponse:
         try:
             raw_body = request.body.decode('utf-8') if request.body else '{}'
-            return json.loads(raw_body or '{}')
+            payload = json.loads(raw_body or '{}')
         except (UnicodeDecodeError, json.JSONDecodeError):
             return self.error_response('请求体不是合法 JSON', code='40001', status=400)
+        if not isinstance(payload, dict):
+            return self.error_response('请求体必须是 JSON 对象', code='40001', status=400)
+        return payload
 
     def success_response(self, data: dict[str, Any], message: str = 'ok', status: int = 200) -> JsonResponse:
         return JsonResponse(
@@ -295,6 +332,10 @@ class AnalyzeHardwareGapAPIView(AgentAPIView):
         missing = []
 
         for item in requirements:
+            if not isinstance(item, dict):
+                return self.error_response(
+                    'requirements 的元素必须是对象', code='40003', status=400
+                )
             name = str(item.get('name', '')).strip()
             required_quantity = _safe_int(item.get('required_quantity', 0), 0)
             if not name or required_quantity <= 0:
@@ -896,6 +937,46 @@ class ValidateHardwareImportAPIView(AgentAPIView):
         )
 
 
+class _ImportAborted(Exception):
+    """导入批次中存在非法数据，整批回滚。"""
+
+
+def _validate_import_item(item) -> str:
+    """校验单条导入数据，返回错误信息（合法时为空字符串）。"""
+    if not isinstance(item, dict):
+        return '数据项必须是对象'
+    name = str(item.get('name') or '').strip()
+    if not name:
+        return 'name 不能为空'
+    if len(name) > 200:
+        return 'name 超过 200 字符'
+    category_values = {c[0] for c in Hardware._meta.get_field('category').choices}
+    status_values = {c[0] for c in Hardware._meta.get_field('status').choices}
+    if item.get('category') not in category_values:
+        return f"category 不合法: {item.get('category')!r}"
+    status = item.get('status') or HardwareStatusChoices.IN_USE
+    if status not in status_values:
+        return f'status 不合法: {status!r}'
+    try:
+        quantity = int(item.get('quantity'))
+    except (TypeError, ValueError):
+        return f"quantity 必须是整数: {item.get('quantity')!r}"
+    if quantity < 0:
+        return 'quantity 不能为负数'
+    if len(str(item.get('purchase_link') or '')) > 500:
+        return 'purchase_link 超过 500 字符'
+    if len(str(item.get('storage_location') or '')) > 100:
+        return 'storage_location 超过 100 字符'
+    unit_price = item.get('unit_price')
+    if unit_price not in (None, ''):
+        try:
+            if abs(float(unit_price)) >= 10 ** 8:
+                return 'unit_price 超出可存储范围'
+        except (TypeError, ValueError):
+            return f'unit_price 不是数字: {unit_price!r}'
+    return ''
+
+
 class CommitHardwareImportAPIView(AgentAPIView):
     def post(self, request):
         admin_error = self.ensure_admin()
@@ -932,36 +1013,57 @@ class CommitHardwareImportAPIView(AgentAPIView):
             return self.error_response('批次没有可导入的数据', code='42201', status=422)
 
         created_ids = []
+        failed_items = []
         try:
             with transaction.atomic():
-                for item in valid_items:
+                # 行级锁 + 锁内重新校验状态：并发提交/重放不会再重复入库
+                batch = HardwareImportBatch.objects.select_for_update().get(pk=batch.pk)
+                if batch.status == 'imported':
+                    return self.error_response('批次已导入，禁止重复提交', code='40902', status=409)
+                if batch.status != 'validated':
+                    return self.error_response('预校验未通过，无法提交', code='42201', status=422)
+
+                for index, item in enumerate(valid_items):
+                    item_error = _validate_import_item(item)
+                    if item_error:
+                        failed_items.append({'row': index + 1, 'error': item_error})
+                        continue
                     unit_price = _safe_decimal(item.get('unit_price'))
                     hardware = Hardware.objects.create(
-                        name=item['name'],
+                        name=str(item['name']).strip(),
                         category=item['category'],
-                        model_number=item.get('model_number', ''),
-                        manufacturer=item.get('manufacturer', ''),
+                        model_number=str(item.get('model_number') or ''),
+                        manufacturer=str(item.get('manufacturer') or ''),
                         quantity=int(item['quantity']),
                         unit_price=unit_price,
                         status=item.get('status') or HardwareStatusChoices.IN_USE,
-                        storage_location=item.get('storage_location', ''),
-                        purchase_link=item.get('purchase_link', ''),
-                        remarks=item.get('remarks', ''),
+                        storage_location=str(item.get('storage_location') or ''),
+                        purchase_link=str(item.get('purchase_link') or ''),
+                        remarks=str(item.get('remarks') or ''),
                         submitted_by=self.acting_user,
                         approval_status=HardwareApprovalStatusChoices.APPROVED,
                         approved_by=self.acting_user,
                     )
                     created_ids.append(hardware.pk)
 
+                if failed_items:
+                    raise _ImportAborted()
+
                 batch.status = 'imported'
                 batch.result_summary = {
                     'total': len(valid_items),
                     'success_count': len(created_ids),
-                    'failed_count': 0,
+                    'failed_count': len(failed_items),
                     'created_ids': created_ids,
                 }
                 batch.save(update_fields=['status', 'result_summary', 'last_updated'])
+        except _ImportAborted:
+            return self.error_response(
+                f'导入数据校验未通过（{len(failed_items)} 条），已整批回滚',
+                code='42202', status=422,
+            )
         except Exception:
+            logger.exception('硬件批量导入提交失败 batch_id=%s', batch_id)
             return self.error_response('平台内部异常', code='50001', status=500)
 
         return self.success_response(
@@ -971,7 +1073,7 @@ class CommitHardwareImportAPIView(AgentAPIView):
                 'summary': {
                     'total': len(valid_items),
                     'success_count': len(created_ids),
-                    'failed_count': 0,
+                    'failed_count': len(failed_items),
                 },
                 'created_ids': created_ids,
             },

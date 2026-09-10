@@ -5,11 +5,23 @@ from netbox.models import NetBoxModel
 from users.models import User
 
 from ..choices import HardwareApprovalStatusChoices, HardwareCategoryChoices, HardwareStatusChoices
-from ..validators import validate_file_size
+from ..validators import validate_file_size, validate_image_type
 
 
 class Hardware(NetBoxModel):
     """硬件资源"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 记录加载时的审批状态，供 signals 判断状态是否真的发生变化
+        self._previous_approval_status = self.approval_status
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._previous_approval_status = instance.approval_status
+        return instance
+
     name = models.CharField(
         verbose_name=_('名称'),
         max_length=200,
@@ -93,7 +105,7 @@ class Hardware(NetBoxModel):
         upload_to='hardware/physical/',
         blank=True,
         null=True,
-        validators=[validate_file_size],
+        validators=[validate_file_size, validate_image_type],
         help_text=_('硬件实物照片，最大 10MB'),
     )
     invoice_image = models.ImageField(
@@ -101,7 +113,7 @@ class Hardware(NetBoxModel):
         upload_to='hardware/invoice/',
         blank=True,
         null=True,
-        validators=[validate_file_size],
+        validators=[validate_file_size, validate_image_type],
         help_text=_('购买发票照片，最大 10MB'),
     )
     remarks = models.TextField(

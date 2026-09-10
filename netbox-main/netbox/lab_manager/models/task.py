@@ -5,7 +5,7 @@ from netbox.models import NetBoxModel
 from users.models import User
 
 from ..choices import TaskPriorityChoices, TaskStatusChoices
-from ..validators import validate_file_size
+from ..validators import validate_file_size, validate_attachment_type
 
 
 class Task(NetBoxModel):
@@ -131,7 +131,7 @@ class TaskAttachment(NetBoxModel):
     file = models.FileField(
         verbose_name=_('文件'),
         upload_to='task_attachments/',
-        validators=[validate_file_size],
+        validators=[validate_file_size, validate_attachment_type],
         help_text=_('上传附件，最大 10MB'),
     )
     uploaded_by = models.ForeignKey(

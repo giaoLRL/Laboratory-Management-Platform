@@ -3,6 +3,9 @@ from netbox.configuration import *
 
 ALLOWED_HOSTS = ["*"]
 DEBUG = True
+
+# 关闭 Django Debug Toolbar：它会遮挡窄屏页面控件，且导致 manage.py test 无法运行
+ENABLE_DEBUG_TOOLBAR = False
 SECRET_KEY = "JI-wq1y%gBCSorighg9CIf!EGfKCtPOoMd4(Oq@2kanNo@KR1X"
 
 DATABASES = {
@@ -24,7 +27,12 @@ REDIS = {
 PLUGINS = ["lab_manager"]
 PLUGINS_CONFIG = {
     "lab_manager": {
-        "agent_api_token": "lab-manager-internal-token-change-me",
+        # 网关令牌：必须替换为随机值（仓库内不要保留示例值）
+        "agent_api_token": "labmgr_kCwTO11gxUU2sKUUbe2TX9bRJbrUN5pmfW7afQ4K-gU",
+        # 是否允许网关用 X-User-ID 代任意成员调用 Agent API
+        "agent_api_allow_user_impersonation": True,
+        # 是否允许网关冒充超级管理员（默认关闭）
+        "agent_api_allow_superuser_impersonation": False,
         # LangChain 智能体 (支持任意 OpenAI 兼容端点)
         "langchain_api_key": os.getenv("LAB_MANAGER_LANGCHAIN_API_KEY", ""),
         "langchain_base_url": os.getenv("LAB_MANAGER_LANGCHAIN_BASE_URL", ""),

@@ -1,7 +1,10 @@
-﻿"""
+"""
 轻量级网络搜索服务 - 基于 DuckDuckGo（免费，无需 API Key）
 """
-from ddgs import DDGS
+try:
+    from ddgs import DDGS
+except ImportError:  # 可选依赖：未安装时搜索功能自动降级，不影响插件加载
+    DDGS = None
 
 
 class WebSearchService:
@@ -11,6 +14,8 @@ class WebSearchService:
 
     def search(self, query: str, max_results: int = 5) -> str:
         """搜索网络并返回结果摘要"""
+        if DDGS is None:
+            return "（未安装可选依赖 ddgs，网络搜索不可用）"
         try:
             results = list(DDGS().text(query, max_results=max_results))
             if not results:
@@ -25,8 +30,39 @@ class WebSearchService:
         except Exception as e:
             return f"（搜索异常: {e}）"
 
+    @staticmethod
+    def is_safe_public_url(url: str) -> bool:
+        """只允许 http/https 且解析后为公网地址，避免 SSRF/内网探测。"""
+        import ipaddress
+        import socket
+        from urllib.parse import urlparse
+
+        try:
+            parsed = urlparse(url)
+        except ValueError:
+            return False
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            return False
+        try:
+            infos = socket.getaddrinfo(parsed.hostname, None)
+        except OSError:
+            return False
+        for info in infos:
+            try:
+                ip = ipaddress.ip_address(info[4][0])
+            except ValueError:
+                return False
+            if (ip.is_private or ip.is_loopback or ip.is_link_local
+                    or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
+                return False
+        return True
+
     def read_page(self, url: str) -> str:
-        """读取网页内容为纯文本"""
+        """读取网页内容为纯文本（仅允许公网 http/https）"""
+        if not self.is_safe_public_url(url):
+            import logging
+            logging.getLogger(__name__).warning("已拒绝非公网 URL: %s", url)
+            return ""
         try:
             import requests
             resp = requests.get(

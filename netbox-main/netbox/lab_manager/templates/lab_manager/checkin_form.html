@@ -56,6 +56,13 @@
                         {{ form.note }}
                         {% if form.note.errors %}<div class="text-danger small">{{ form.note.errors }}</div>{% endif %}
                     </div>
+                    {% if form.tags %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.tags.id_for_label }}">{% trans "标签" %}</label>
+                        {{ form.tags }}
+                        {% if form.tags.errors %}<div class="text-danger small">{{ form.tags.errors }}</div>{% endif %}
+                    </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-success" id="submit-button" disabled>
                         <i class="mdi mdi-check-bold"></i> {% trans "提交打卡" %}
                     </button>
@@ -98,8 +105,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const manualLatitude = document.getElementById('manual-latitude');
     const manualLongitude = document.getElementById('manual-longitude');
 
+    var photoInput = document.getElementById('id_photo');
+
     function enableSubmitIfReady() {
-        submitButton.disabled = !(latitude.value && longitude.value);
+        var hasPhoto = !!(photoInput && photoInput.files && photoInput.files.length);
+        submitButton.disabled = !(latitude.value && longitude.value) || !hasPhoto;
+    }
+
+    if (photoInput) {
+        photoInput.addEventListener('change', enableSubmitIfReady);
     }
 
     function syncManualLocation() {

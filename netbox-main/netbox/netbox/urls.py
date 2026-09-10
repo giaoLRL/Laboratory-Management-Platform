@@ -3,7 +3,7 @@ from django.conf.urls import include
 from django.urls import path
 
 from account.views import LoginView, LogoutView
-from netbox.plugins.urls import plugin_patterns
+from netbox.plugins.urls import plugin_api_patterns, plugin_patterns
 from netbox.views import HomeView, MediaView, SearchView, StaticMediaFailureView, htmx
 
 _patterns = [
@@ -36,6 +36,8 @@ _patterns = [
 
     # Plugins
     path('plugins/', include((plugin_patterns, 'plugins'))),
+    # 插件 REST API（plugins-api 命名空间）：插件的 url 自链接依赖它
+    path('api/plugins/', include((plugin_api_patterns, 'plugins-api'))),
 ]
 
 # django-debug-toolbar

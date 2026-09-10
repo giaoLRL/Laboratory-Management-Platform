@@ -6,7 +6,9 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.utils.translation import gettext as _
 
-from lab_manager.models import CheckInRecord, Hardware, Task
+from lab_manager.models import (
+    CheckInRecord, Hardware, HardwareBorrowRecord, LabProject, Task,
+)
 
 
 class Command(BaseCommand):
@@ -15,7 +17,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--model',
-            choices=['hardware', 'tasks', 'checkins'],
+            choices=['hardware', 'tasks', 'checkins', 'borrow_records', 'projects'],
             default='hardware',
             help=_('要导出的数据类型'),
         )
@@ -31,6 +33,10 @@ class Command(BaseCommand):
             self._export_tasks(filename)
         elif model_name == 'checkins':
             self._export_checkins(filename)
+        elif model_name == 'borrow_records':
+            self._export_borrow_records(filename)
+        elif model_name == 'projects':
+            self._export_projects(filename)
 
     def _export_hardware(self, filename):
         rows = Hardware.objects.select_related('custodian').all().values_list(
@@ -41,6 +47,23 @@ class Command(BaseCommand):
         headers = ['名称', '类别', '型号', '厂家', '数量', '状态', '存放位置', '保管人', '审批状态', '备注', '创建时间']
         self._write_csv(filename, headers, rows)
         self.stdout.write(self.style.SUCCESS(f'硬件数据已导出到 {filename}（{len(rows) if hasattr(rows,"__len__") else "N"} 条）'))
+
+    def _export_borrow_records(self, filename):
+        rows = HardwareBorrowRecord.objects.select_related('hardware', 'borrower').values_list(
+            'hardware__name', 'borrower__username', 'borrow_date', 'expected_return_date',
+            'actual_return_date', 'status', 'purpose', 'notes',
+        )
+        headers = ['硬件', '借用人', '借出时间', '预计归还', '实际归还', '状态', '用途', '备注']
+        self._write_csv(filename, headers, rows)
+        self.stdout.write(self.style.SUCCESS(f'借出记录已导出到 {filename}'))
+
+    def _export_projects(self, filename):
+        rows = LabProject.objects.select_related('leader').values_list(
+            'name', 'status', 'leader__username', 'start_date', 'end_date', 'description',
+        )
+        headers = ['项目名称', '状态', '负责人', '开始日期', '结束日期', '描述']
+        self._write_csv(filename, headers, rows)
+        self.stdout.write(self.style.SUCCESS(f'项目数据已导出到 {filename}'))
 
     def _export_tasks(self, filename):
         rows = Task.objects.select_related('assigned_to', 'created_by').all().values_list(

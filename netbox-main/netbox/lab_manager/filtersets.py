@@ -1,4 +1,5 @@
 import django_filters
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from netbox.filtersets import NetBoxModelFilterSet
@@ -15,8 +16,9 @@ from .choices import (
 )
 from .models.borrow import BorrowStatusChoices
 from .models import (
-    AgentTool, CheckInRecord, Hardware, HardwareBorrowRecord,
-    LabProject, MemberOpenRecord, Task, TaskAttachment,
+    AgentConversation, AgentMessage, AgentTool, CheckInRecord, Hardware,
+    HardwareBorrowRecord, HardwareImportBatch, LabProject, MemberOpenRecord,
+    Notification, Task, TaskAttachment, TaskComment,
 )
 from .models.project import ProjectStatusChoices
 
@@ -148,3 +150,58 @@ class LabProjectFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = LabProject
         fields = ('name', 'leader_id', 'status')
+
+
+class TaskCommentFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(method='search', label=_('搜索'))
+
+    class Meta:
+        model = TaskComment
+        fields = ('id', 'task', 'user')
+
+    def search(self, queryset, name, value):
+        return queryset.filter(Q(content__icontains=value))
+
+
+class NotificationFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(method='search', label=_('搜索'))
+
+    class Meta:
+        model = Notification
+        fields = ('id', 'user', 'is_read', 'notification_type')
+
+    def search(self, queryset, name, value):
+        return queryset.filter(Q(title__icontains=value) | Q(message__icontains=value))
+
+
+class HardwareImportBatchFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(method='search', label=_('搜索'))
+
+    class Meta:
+        model = HardwareImportBatch
+        fields = ('id', 'batch_id', 'status', 'source_type')
+
+    def search(self, queryset, name, value):
+        return queryset.filter(Q(batch_id__icontains=value))
+
+
+class AgentConversationFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(method='search', label=_('搜索'))
+
+    class Meta:
+        model = AgentConversation
+        fields = ('id', 'user', 'mode')
+
+    def search(self, queryset, name, value):
+        return queryset.filter(Q(title__icontains=value))
+
+
+class AgentMessageFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(method='search', label=_('搜索'))
+
+    class Meta:
+        model = AgentMessage
+        fields = ('id', 'conversation', 'role')
+
+    def search(self, queryset, name, value):
+        return queryset.filter(Q(content__icontains=value))

@@ -444,11 +444,18 @@ class PlatformDataService:
                 queryset = queryset.exclude(user_query) if lookup == 'ne' else queryset.filter(user_query)
                 continue
 
-            coerced = self._coerce_filter_value(value, field.kind, lookup)
-            if lookup == 'ne':
-                queryset = queryset.exclude(**{path: coerced})
-            else:
-                queryset = queryset.filter(**{f'{path}{lookup_suffix}': coerced})
+            try:
+                coerced = self._coerce_filter_value(value, field.kind, lookup)
+                if lookup == 'ne':
+                    queryset = queryset.exclude(**{path: coerced})
+                else:
+                    queryset = queryset.filter(**{f'{path}{lookup_suffix}': coerced})
+            except PlatformDataError:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                # Django 的 ValidationError/FieldError 在这里统一转成业务异常，
+                # 否则非法日期/数字会让接口直接 500
+                raise PlatformDataError(f'过滤条件不合法: {raw_key}={value!r}') from exc
 
         return queryset
 
@@ -651,7 +658,10 @@ class PlatformDataService:
         if kind in {'number'}:
             return self._safe_int(value, 0)
         if kind in {'date', 'datetime'} and isinstance(value, str):
-            return parse_datetime(value) or parse_date(value) or value
+            parsed = parse_datetime(value) or parse_date(value)
+            if parsed is None:
+                raise PlatformDataError(f'日期格式不合法: {value!r}')
+            return parsed
         if lookup == 'isnull':
             return bool(value)
         return value

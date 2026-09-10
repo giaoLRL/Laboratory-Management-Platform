@@ -17,7 +17,7 @@
     <div class="col-md-2">
         <div class="card text-bg-primary tp-stat-animate-in">
             <div class="card-body text-center py-3">
-                <h3 class="mb-0 tp-count-up" data-target="{{ hardware_total }}">0</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ hardware_total }}">{{ hardware_total }}</h3>
                 <small>{% trans "硬件总数" %}</small>
             </div>
         </div>
@@ -25,7 +25,7 @@
     <div class="col-md-2">
         <div class="card text-bg-success tp-stat-animate-in">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 tp-count-up" data-target="{{ hardware_in_use }}">0</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ hardware_in_use }}">{{ hardware_in_use }}</h3>
                 <small>{% trans "使用中" %}</small>
             </div>
         </div>
@@ -33,7 +33,7 @@
     <div class="col-md-2">
         <div class="card text-bg-warning tp-stat-animate-in">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 tp-count-up" data-target="{{ hardware_idle }}">0</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ hardware_idle }}">{{ hardware_idle }}</h3>
                 <small>{% trans "闲置" %}</small>
             </div>
         </div>
@@ -41,7 +41,7 @@
     <div class="col-md-2">
         <div class="card text-bg-info tp-stat-animate-in">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 tp-count-up" data-target="{{ task_total }}">0</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ task_total }}">{{ task_total }}</h3>
                 <small>{% trans "任务总数" %}</small>
             </div>
         </div>
@@ -49,7 +49,7 @@
     <div class="col-md-2">
         <div class="card text-bg-dark tp-stat-animate-in">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 tp-count-up" data-target="{{ task_in_progress }}">0</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ task_in_progress }}">{{ task_in_progress }}</h3>
                 <small>{% trans "进行中" %}</small>
             </div>
         </div>
@@ -57,7 +57,7 @@
     <div class="col-md-2">
         <div class="card text-bg-secondary tp-stat-animate-in">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 tp-count-up" data-target="{{ checkin_today }}">0</h3>
+                <h3 class="mb-0 tp-count-up" data-target="{{ checkin_today }}">{{ checkin_today }}</h3>
                 <small>{% trans "今日打卡" %}</small>
             </div>
         </div>
@@ -69,7 +69,7 @@
     <div class="col-md-2">
         <div class="card border-danger">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 text-danger tp-count-up" data-target="{{ pending_approval_count }}">0</h3>
+                <h3 class="mb-0 text-danger tp-count-up" data-target="{{ pending_approval_count }}">{{ pending_approval_count }}</h3>
                 <small class="text-muted">{% trans "待审批硬件" %}</small>
             </div>
         </div>
@@ -77,7 +77,7 @@
     <div class="col-md-2">
         <div class="card border-warning">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 text-warning tp-count-up" data-target="{{ overdue_tasks }}">0</h3>
+                <h3 class="mb-0 text-warning tp-count-up" data-target="{{ overdue_tasks }}">{{ overdue_tasks }}</h3>
                 <small class="text-muted">{% trans "逾期任务" %}</small>
             </div>
         </div>
@@ -85,7 +85,7 @@
     <div class="col-md-2">
         <div class="card border-info">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 text-info tp-count-up" data-target="{{ borrowed_count }}">0</h3>
+                <h3 class="mb-0 text-info tp-count-up" data-target="{{ borrowed_count }}">{{ borrowed_count }}</h3>
                 <small class="text-muted">{% trans "当前借出" %}</small>
             </div>
         </div>
@@ -93,7 +93,7 @@
     <div class="col-md-2">
         <div class="card border-success">
             <div class="card-body text-center py-2">
-                <h3 class="mb-0 text-success tp-count-up" data-target="{{ task_completed }}">0</h3>
+                <h3 class="mb-0 text-success tp-count-up" data-target="{{ task_completed }}">{{ task_completed }}</h3>
                 <small class="text-muted">{% trans "已完成任务" %}</small>
             </div>
         </div>

@@ -26,6 +26,8 @@ urlpatterns = [
     # Agent Console
     path('agent/', views.AgentAssistantView.as_view(), name='agent_console'),
     path('agent/chat/', views.AgentChatProxyView.as_view(), name='agent_chat_proxy'),
+    path('agent-conversation/<int:pk>/delete/',
+         views.AgentConversationDeleteView.as_view(), name='agent_conversation_delete'),
 
     # 硬件
     path('hardware/', include(get_model_urls('lab_manager', 'hardware', detail=False))),
