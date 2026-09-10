@@ -214,7 +214,43 @@
     });
   }
 
+  /* ── 7. 悬停预取：鼠标移到链接上就预取目标页，点击后命中缓存（导航更跟手） ── */
+  function initPrefetch() {
+    if (!('prefetch' in document.createElement('link'))) return;
+    var seen = Object.create(null);
+    document.addEventListener('mouseover', function (e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (!href || href.charAt(0) !== '/' || a.target === '_blank' || seen[href]) return;
+      if (a.hasAttribute('data-bs-toggle') || href.indexOf('#') === 0) return;
+      seen[href] = 1;
+      var link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = href;
+      document.head.appendChild(link);
+    }, { passive: true });
+  }
+
+  /* ── 8. 特效开关（默认关闭全屏无限动画） ── */
+  function initEffects() {
+    var KEY = 'lm_effects';
+    var on = false;
+    try { on = localStorage.getItem(KEY) === '1'; } catch (e) { /* ignore */ }
+    document.documentElement.classList.toggle('lm-effects', on);
+    qsa('[data-lm-effects-toggle]').forEach(function (btn) {
+      btn.textContent = on ? '关闭特效' : '开启特效';
+      btn.addEventListener('click', function () {
+        on = !document.documentElement.classList.contains('lm-effects');
+        document.documentElement.classList.toggle('lm-effects', on);
+        try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
+        btn.textContent = on ? '关闭特效' : '开启特效';
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initDensity(); initPalette(); initCopilot(); initKanban(); initProjector(); initRowLinks();
+    initPrefetch(); initEffects();
   });
 })();

@@ -15,9 +15,17 @@
   // 移动端使用更短动画时长以减少 GPU 负担
   var isMobile = window.innerWidth < 768;
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var DURATION = prefersReduced ? 0 : (isMobile ? 400 : 800);
+  // 入场动画只在本次会话的首次页面加载播放：翻页/返回时立即呈现内容，避免"每次都等动画"
+  var firstVisit = false;
+  try {
+    firstVisit = !sessionStorage.getItem('lm_anim_played');
+    sessionStorage.setItem('lm_anim_played', '1');
+  } catch (e) { firstVisit = true; }
+  var SKIP = prefersReduced || !firstVisit;
+  // 时长从 800ms 收紧到 260ms（移动 200ms），错峰同步收紧
+  var DURATION = SKIP ? 0 : (isMobile ? 200 : 260);
   var FRAME_RATE = 16;      // ~60fps
-  var BAR_DELAY = prefersReduced ? 0 : (isMobile ? 15 : 30);  // 移动端交错延迟减半
+  var BAR_DELAY = SKIP ? 0 : (isMobile ? 6 : 10);
 
   // ── 缓动函数 (easeOutCubic) ──
   function easeOutCubic(t) {
@@ -184,8 +192,8 @@
 
         card.style.opacity = '0';
         card.style.transform = 'translateY(16px)';
-        card.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
-        card.style.transitionDelay = (index * 60) + 'ms';
+        card.style.transition = 'opacity 0.22s ease-out, transform 0.22s ease-out';
+        card.style.transitionDelay = (index * 18) + 'ms';
 
         requestAnimationFrame(function () {
           card.style.opacity = '1';

@@ -371,3 +371,38 @@ body.lm-projector .lm-kpi__value { font-size: 34px; }
 .tp-page .htmx-container table tbody tr:hover td { background: var(--lm-surface-2); }
 body.lm-density--compact .tp-page .htmx-container table th,
 body.lm-density--compact .tp-page .htmx-container table td { padding: 2px var(--lm-space-2); font-size: var(--lm-font-12); }
+
+/* ═══════════════════════════════════════════════════════════════
+   手感与性能层
+   问题：主题的扫描线（1.5s 无限循环）与粒子（22s/28s 无限）都是全屏动画，
+   页面会持续重绘；滚动与低端设备上表现为"发滞、手感怪"。
+   策略：默认静止（保留静态质感），用户可在命令面板开启「特效」找回动效。
+   ═══════════════════════════════════════════════════════════════ */
+html:not(.lm-effects) .tp-scanlines,
+html:not(.lm-effects) .tp-particles::before,
+html:not(.lm-effects) .tp-particles::after,
+html:not(.lm-effects) .tp-countdown-card,
+html:not(.lm-effects) .tp-countdown-icon {
+  animation: none !important;
+}
+/* 尊重系统设置：任何情况下都不播无限动画 */
+@media (prefers-reduced-motion: reduce) {
+  .tp-scanlines, .tp-particles::before, .tp-particles::after,
+  .tp-countdown-card, .tp-countdown-icon { animation: none !important; }
+}
+
+/* 大面毛玻璃（侧栏/顶栏）在滚动时开销高 → 默认改为实底 */
+html:not(.lm-effects) .tp-page .navbar-vertical,
+html:not(.lm-effects) .tp-page .navbar.sticky-top,
+html:not(.lm-effects) .tp-page .tp-sidebar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 页面切换淡入：只做 opacity，避免合成层与布局抖动 */
+@keyframes lm-page-in { from { opacity: 0; } to { opacity: 1; } }
+.tp-page .page-wrapper { animation: lm-page-in 140ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .tp-page .page-wrapper { animation: none; }
+}
+html.lm-effects .tp-page .page-wrapper { animation-duration: 260ms; }

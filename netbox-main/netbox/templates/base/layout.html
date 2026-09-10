@@ -29,7 +29,15 @@ Blocks:
 {% block layout %}
 
   {# ── 像素主题 DOM 层 v6.0 ── #}
-  <script>document.body&&document.body.classList.add('tp-body')</script>
+  <script>
+    document.body && document.body.classList.add('tp-body');
+    // 尽早应用"特效"开关（默认关闭全屏无限动画，保证滚动与翻页跟手）
+    try {
+      if (localStorage.getItem('lm_effects') === '1') {
+        document.documentElement.classList.add('lm-effects');
+      }
+    } catch (e) { /* localStorage 不可用时保持默认 */ }
+  </script>
   <div class="tp-particles"></div>
   <div class="tp-vignette"></div>
   <div class="tp-scanlines"></div>

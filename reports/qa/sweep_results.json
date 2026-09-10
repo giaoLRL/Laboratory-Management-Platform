@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-11 01:13:21",
+ "generated": "2026-09-11 01:21:34",
  "admin_status_counts": {
   "200": 143,
   "404": 12,
@@ -17,8 +17,8 @@
    "url": "/plugins/lab-manager/",
    "label": "admin",
    "status": 200,
-   "len": 64879,
-   "ms": 90,
+   "len": 65177,
+   "ms": 85,
    "sig": "",
    "loc": ""
   },
@@ -26,8 +26,8 @@
    "url": "/plugins/lab-manager/agent-tools/",
    "label": "admin",
    "status": 200,
-   "len": 82372,
-   "ms": 147,
+   "len": 82832,
+   "ms": 152,
    "sig": "",
    "loc": ""
   },
@@ -35,8 +35,8 @@
    "url": "/plugins/lab-manager/agent-tools/1/",
    "label": "admin",
    "status": 200,
-   "len": 61085,
-   "ms": 76,
+   "len": 61392,
+   "ms": 72,
    "sig": "",
    "loc": ""
   },
@@ -45,7 +45,7 @@
    "label": "admin",
    "status": 404,
    "len": 34354,
-   "ms": 45,
+   "ms": 39,
    "sig": "",
    "loc": ""
   },
@@ -54,7 +54,7 @@
    "label": "admin",
    "status": 404,
    "len": 34348,
-   "ms": 52,
+   "ms": 34,
    "sig": "",
    "loc": ""
   },
@@ -62,8 +62,8 @@
    "url": "/plugins/lab-manager/agent-tools/1/changelog/",
    "label": "admin",
    "status": 200,
-   "len": 57716,
-   "ms": 88,
+   "len": 58023,
+   "ms": 84,
    "sig": "",
    "loc": ""
   },
@@ -71,8 +71,8 @@
    "url": "/plugins/lab-manager/agent-tools/1/delete/",
    "label": "admin",
    "status": 200,
-   "len": 57702,
-   "ms": 75,
+   "len": 58009,
+   "ms": 97,
    "sig": "",
    "loc": ""
   },
@@ -80,8 +80,8 @@
    "url": "/plugins/lab-manager/agent-tools/1/edit/",
    "label": "admin",
    "status": 200,
-   "len": 66769,
-   "ms": 88,
+   "len": 67075,
+   "ms": 96,
    "sig": "",
    "loc": ""
   },
@@ -89,8 +89,8 @@
    "url": "/plugins/lab-manager/agent-tools/1/journal/",
    "label": "admin",
    "status": 200,
-   "len": 62364,
-   "ms": 87,
+   "len": 62672,
+   "ms": 85,
    "sig": "",
    "loc": ""
   },
@@ -98,8 +98,8 @@
    "url": "/plugins/lab-manager/agent-tools/add/",
    "label": "admin",
    "status": 200,
-   "len": 66035,
-   "ms": 89,
+   "len": 66343,
+   "ms": 73,
    "sig": "",
    "loc": ""
   },
@@ -107,8 +107,8 @@
    "url": "/plugins/lab-manager/agent/",
    "label": "admin",
    "status": 200,
-   "len": 95086,
-   "ms": 77,
+   "len": 95393,
+   "ms": 67,
    "sig": "",
    "loc": ""
   },
@@ -126,7 +126,7 @@
    "label": "admin",
    "status": 200,
    "len": 925,
-   "ms": 29,
+   "ms": 33,
    "sig": "",
    "loc": ""
   },
@@ -135,7 +135,7 @@
    "label": "admin",
    "status": 200,
    "len": 6440,
-   "ms": 81,
+   "ms": 78,
    "sig": "",
    "loc": ""
   },
@@ -144,7 +144,7 @@
    "label": "admin",
    "status": 200,
    "len": 1086,
-   "ms": 82,
+   "ms": 63,
    "sig": "",
    "loc": ""
   },
@@ -153,7 +153,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 32,
+   "ms": 27,
    "sig": "",
    "loc": ""
   },
@@ -162,7 +162,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 27,
+   "ms": 25,
    "sig": "",
    "loc": ""
   },
@@ -171,7 +171,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 27,
+   "ms": 25,
    "sig": "",
    "loc": ""
   },
@@ -180,7 +180,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 34,
+   "ms": 28,
    "sig": "",
    "loc": ""
   },
@@ -189,7 +189,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 25,
+   "ms": 23,
    "sig": "",
    "loc": ""
   },
@@ -198,7 +198,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 38,
+   "ms": 27,
    "sig": "",
    "loc": ""
   },
@@ -207,7 +207,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 24,
+   "ms": 27,
    "sig": "",
    "loc": ""
   },
@@ -216,7 +216,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 26,
+   "ms": 23,
    "sig": "",
    "loc": ""
   },
@@ -225,7 +225,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 25,
+   "ms": 35,
    "sig": "",
    "loc": ""
   },
@@ -234,7 +234,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 29,
+   "ms": 24,
    "sig": "",
    "loc": ""
   },
@@ -243,7 +243,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 30,
+   "ms": 25,
    "sig": "",
    "loc": ""
   },
@@ -252,7 +252,7 @@
    "label": "admin",
    "status": 200,
    "len": 52,
-   "ms": 38,
+   "ms": 37,
    "sig": "",
    "loc": ""
   },
@@ -261,7 +261,7 @@
    "label": "admin",
    "status": 404,
    "len": 61,
-   "ms": 45,
+   "ms": 41,
    "sig": "",
    "loc": ""
   },
@@ -270,7 +270,7 @@
    "label": "admin",
    "status": 200,
    "len": 1361,
-   "ms": 61,
+   "ms": 60,
    "sig": "",
    "loc": ""
   },
@@ -279,7 +279,7 @@
    "label": "admin",
    "status": 200,
    "len": 440,
-   "ms": 67,
+   "ms": 62,
    "sig": "",
    "loc": ""
   },
@@ -288,7 +288,7 @@
    "label": "admin",
    "status": 200,
    "len": 27710,
-   "ms": 122,
+   "ms": 89,
    "sig": "",
    "loc": ""
   },
@@ -297,7 +297,7 @@
    "label": "admin",
    "status": 200,
    "len": 605,
-   "ms": 81,
+   "ms": 78,
    "sig": "",
    "loc": ""
   },
@@ -306,7 +306,7 @@
    "label": "admin",
    "status": 200,
    "len": 1906,
-   "ms": 82,
+   "ms": 74,
    "sig": "",
    "loc": ""
   },
@@ -315,7 +315,7 @@
    "label": "admin",
    "status": 200,
    "len": 748,
-   "ms": 78,
+   "ms": 67,
    "sig": "",
    "loc": ""
   },
@@ -324,7 +324,7 @@
    "label": "admin",
    "status": 200,
    "len": 52,
-   "ms": 72,
+   "ms": 55,
    "sig": "",
    "loc": ""
   },
@@ -341,8 +341,8 @@
    "url": "/plugins/lab-manager/api/member-open-records/",
    "label": "admin",
    "status": 200,
-   "len": 28774,
-   "ms": 94,
+   "len": 27492,
+   "ms": 90,
    "sig": "",
    "loc": ""
   },
@@ -351,7 +351,7 @@
    "label": "admin",
    "status": 200,
    "len": 497,
-   "ms": 63,
+   "ms": 60,
    "sig": "",
    "loc": ""
   },
@@ -360,7 +360,7 @@
    "label": "admin",
    "status": 200,
    "len": 31478,
-   "ms": 99,
+   "ms": 87,
    "sig": "",
    "loc": ""
   },
@@ -369,7 +369,7 @@
    "label": "admin",
    "status": 200,
    "len": 324,
-   "ms": 60,
+   "ms": 83,
    "sig": "",
    "loc": ""
   },
@@ -378,7 +378,7 @@
    "label": "admin",
    "status": 200,
    "len": 386,
-   "ms": 51,
+   "ms": 48,
    "sig": "",
    "loc": ""
   },
@@ -387,7 +387,7 @@
    "label": "admin",
    "status": 200,
    "len": 334,
-   "ms": 46,
+   "ms": 49,
    "sig": "",
    "loc": ""
   },
@@ -396,7 +396,7 @@
    "label": "admin",
    "status": 200,
    "len": 742,
-   "ms": 58,
+   "ms": 60,
    "sig": "",
    "loc": ""
   },
@@ -405,7 +405,7 @@
    "label": "admin",
    "status": 200,
    "len": 358,
-   "ms": 56,
+   "ms": 62,
    "sig": "",
    "loc": ""
   },
@@ -414,7 +414,7 @@
    "label": "admin",
    "status": 200,
    "len": 52,
-   "ms": 44,
+   "ms": 46,
    "sig": "",
    "loc": ""
   },
@@ -423,7 +423,7 @@
    "label": "admin",
    "status": 404,
    "len": 52,
-   "ms": 43,
+   "ms": 47,
    "sig": "",
    "loc": ""
   },
@@ -432,7 +432,7 @@
    "label": "admin",
    "status": 200,
    "len": 4713,
-   "ms": 88,
+   "ms": 71,
    "sig": "",
    "loc": ""
   },
@@ -441,7 +441,7 @@
    "label": "admin",
    "status": 200,
    "len": 409,
-   "ms": 80,
+   "ms": 62,
    "sig": "",
    "loc": ""
   },
@@ -449,8 +449,8 @@
    "url": "/plugins/lab-manager/attachments/1/delete/",
    "label": "admin",
    "status": 200,
-   "len": 57502,
-   "ms": 73,
+   "len": 57809,
+   "ms": 61,
    "sig": "",
    "loc": ""
   },
@@ -458,8 +458,8 @@
    "url": "/plugins/lab-manager/borrow-records/",
    "label": "admin",
    "status": 200,
-   "len": 68051,
-   "ms": 106,
+   "len": 68511,
+   "ms": 104,
    "sig": "",
    "loc": ""
   },
@@ -468,7 +468,7 @@
    "label": "admin",
    "status": 404,
    "len": 24568,
-   "ms": 39,
+   "ms": 35,
    "sig": "",
    "loc": ""
   },
@@ -477,7 +477,7 @@
    "label": "admin",
    "status": 404,
    "len": 24028,
-   "ms": 52,
+   "ms": 39,
    "sig": "",
    "loc": ""
   },
@@ -486,7 +486,7 @@
    "label": "admin",
    "status": 404,
    "len": 25783,
-   "ms": 41,
+   "ms": 40,
    "sig": "",
    "loc": ""
   },
@@ -495,7 +495,7 @@
    "label": "admin",
    "status": 404,
    "len": 25179,
-   "ms": 54,
+   "ms": 37,
    "sig": "",
    "loc": ""
   },
@@ -504,7 +504,7 @@
    "label": "admin",
    "status": 404,
    "len": 23418,
-   "ms": 39,
+   "ms": 41,
    "sig": "",
    "loc": ""
   },
@@ -513,7 +513,7 @@
    "label": "admin",
    "status": 404,
    "len": 26269,
-   "ms": 55,
+   "ms": 42,
    "sig": "",
    "loc": ""
   },
@@ -521,8 +521,8 @@
    "url": "/plugins/lab-manager/borrow-records/add/",
    "label": "admin",
    "status": 200,
-   "len": 62031,
-   "ms": 97,
+   "len": 62339,
+   "ms": 98,
    "sig": "",
    "loc": ""
   },
@@ -530,8 +530,8 @@
    "url": "/plugins/lab-manager/calendar/",
    "label": "admin",
    "status": 200,
-   "len": 69075,
-   "ms": 52,
+   "len": 69382,
+   "ms": 72,
    "sig": "",
    "loc": ""
   },
@@ -539,8 +539,8 @@
    "url": "/plugins/lab-manager/checkins/",
    "label": "admin",
    "status": 200,
-   "len": 61023,
-   "ms": 85,
+   "len": 61331,
+   "ms": 94,
    "sig": "",
    "loc": ""
   },
@@ -548,8 +548,8 @@
    "url": "/plugins/lab-manager/checkins/1/",
    "label": "admin",
    "status": 200,
-   "len": 58056,
-   "ms": 79,
+   "len": 58363,
+   "ms": 84,
    "sig": "",
    "loc": ""
   },
@@ -557,8 +557,8 @@
    "url": "/plugins/lab-manager/checkins/new/",
    "label": "admin",
    "status": 200,
-   "len": 64805,
-   "ms": 96,
+   "len": 65112,
+   "ms": 86,
    "sig": "",
    "loc": ""
   },
@@ -566,7 +566,7 @@
    "url": "/plugins/lab-manager/export/",
    "label": "admin",
    "status": 200,
-   "len": 59081,
+   "len": 59388,
    "ms": 49,
    "sig": "",
    "loc": ""
@@ -575,8 +575,8 @@
    "url": "/plugins/lab-manager/hardware/",
    "label": "admin",
    "status": 200,
-   "len": 74342,
-   "ms": 127,
+   "len": 74802,
+   "ms": 120,
    "sig": "",
    "loc": ""
   },
@@ -584,8 +584,8 @@
    "url": "/plugins/lab-manager/hardware/1/",
    "label": "admin",
    "status": 200,
-   "len": 59750,
-   "ms": 51,
+   "len": 60057,
+   "ms": 62,
    "sig": "",
    "loc": ""
   },
@@ -593,8 +593,8 @@
    "url": "/plugins/lab-manager/hardware/1/approval/",
    "label": "admin",
    "status": 200,
-   "len": 58251,
-   "ms": 48,
+   "len": 58558,
+   "ms": 56,
    "sig": "",
    "loc": ""
   },
@@ -602,8 +602,8 @@
    "url": "/plugins/lab-manager/hardware/1/changelog/",
    "label": "admin",
    "status": 200,
-   "len": 59688,
-   "ms": 77,
+   "len": 59995,
+   "ms": 88,
    "sig": "",
    "loc": ""
   },
@@ -611,8 +611,8 @@
    "url": "/plugins/lab-manager/hardware/1/delete/",
    "label": "admin",
    "status": 200,
-   "len": 57692,
-   "ms": 78,
+   "len": 57999,
+   "ms": 72,
    "sig": "",
    "loc": ""
   },
@@ -620,8 +620,8 @@
    "url": "/plugins/lab-manager/hardware/1/edit/",
    "label": "admin",
    "status": 200,
-   "len": 69300,
-   "ms": 90,
+   "len": 69606,
+   "ms": 107,
    "sig": "",
    "loc": ""
   },
@@ -629,8 +629,8 @@
    "url": "/plugins/lab-manager/hardware/1/journal/",
    "label": "admin",
    "status": 200,
-   "len": 62369,
-   "ms": 77,
+   "len": 62675,
+   "ms": 81,
    "sig": "",
    "loc": ""
   },
@@ -638,8 +638,8 @@
    "url": "/plugins/lab-manager/hardware/add/",
    "label": "admin",
    "status": 200,
-   "len": 68942,
-   "ms": 85,
+   "len": 69249,
+   "ms": 88,
    "sig": "",
    "loc": ""
   },
@@ -647,8 +647,8 @@
    "url": "/plugins/lab-manager/member-open-records/",
    "label": "admin",
    "status": 200,
-   "len": 82241,
-   "ms": 111,
+   "len": 82541,
+   "ms": 120,
    "sig": "",
    "loc": ""
   },
@@ -656,8 +656,8 @@
    "url": "/plugins/lab-manager/member-open-records/1/",
    "label": "admin",
    "status": 200,
-   "len": 58094,
-   "ms": 46,
+   "len": 58401,
+   "ms": 69,
    "sig": "",
    "loc": ""
   },
@@ -665,8 +665,8 @@
    "url": "/plugins/lab-manager/members/",
    "label": "admin",
    "status": 200,
-   "len": 63286,
-   "ms": 83,
+   "len": 63594,
+   "ms": 110,
    "sig": "",
    "loc": ""
   },
@@ -674,8 +674,8 @@
    "url": "/plugins/lab-manager/members/1/",
    "label": "admin",
    "status": 200,
-   "len": 94855,
-   "ms": 96,
+   "len": 95155,
+   "ms": 123,
    "sig": "",
    "loc": ""
   },
@@ -683,8 +683,8 @@
    "url": "/plugins/lab-manager/my-tasks/",
    "label": "admin",
    "status": 200,
-   "len": 58859,
-   "ms": 53,
+   "len": 59166,
+   "ms": 76,
    "sig": "",
    "loc": ""
   },
@@ -692,8 +692,8 @@
    "url": "/plugins/lab-manager/notifications/",
    "label": "admin",
    "status": 200,
-   "len": 57059,
-   "ms": 49,
+   "len": 57952,
+   "ms": 69,
    "sig": "",
    "loc": ""
   },
@@ -702,7 +702,7 @@
    "label": "admin",
    "status": 404,
    "len": 27726,
-   "ms": 34,
+   "ms": 47,
    "sig": "",
    "loc": ""
   },
@@ -711,7 +711,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 23,
+   "ms": 43,
    "sig": "",
    "loc": ""
   },
@@ -719,8 +719,8 @@
    "url": "/plugins/lab-manager/notifications/send/",
    "label": "admin",
    "status": 200,
-   "len": 60525,
-   "ms": 48,
+   "len": 60832,
+   "ms": 62,
    "sig": "",
    "loc": ""
   },
@@ -728,8 +728,8 @@
    "url": "/plugins/lab-manager/projects/",
    "label": "admin",
    "status": 200,
-   "len": 70531,
-   "ms": 101,
+   "len": 70991,
+   "ms": 114,
    "sig": "",
    "loc": ""
   },
@@ -737,8 +737,8 @@
    "url": "/plugins/lab-manager/projects/1/",
    "label": "admin",
    "status": 200,
-   "len": 58301,
-   "ms": 70,
+   "len": 58608,
+   "ms": 63,
    "sig": "",
    "loc": ""
   },
@@ -746,8 +746,8 @@
    "url": "/plugins/lab-manager/projects/1/changelog/",
    "label": "admin",
    "status": 200,
-   "len": 60169,
-   "ms": 78,
+   "len": 60476,
+   "ms": 98,
    "sig": "",
    "loc": ""
   },
@@ -755,8 +755,8 @@
    "url": "/plugins/lab-manager/projects/1/delete/",
    "label": "admin",
    "status": 200,
-   "len": 57700,
-   "ms": 69,
+   "len": 58007,
+   "ms": 61,
    "sig": "",
    "loc": ""
   },
@@ -764,8 +764,8 @@
    "url": "/plugins/lab-manager/projects/1/edit/",
    "label": "admin",
    "status": 200,
-   "len": 62605,
-   "ms": 93,
+   "len": 62911,
+   "ms": 85,
    "sig": "",
    "loc": ""
   },
@@ -773,8 +773,8 @@
    "url": "/plugins/lab-manager/projects/1/journal/",
    "label": "admin",
    "status": 200,
-   "len": 62371,
-   "ms": 82,
+   "len": 62678,
+   "ms": 79,
    "sig": "",
    "loc": ""
   },
@@ -782,8 +782,8 @@
    "url": "/plugins/lab-manager/projects/add/",
    "label": "admin",
    "status": 200,
-   "len": 62816,
-   "ms": 79,
+   "len": 63124,
+   "ms": 76,
    "sig": "",
    "loc": ""
   },
@@ -791,8 +791,8 @@
    "url": "/plugins/lab-manager/tasks/",
    "label": "admin",
    "status": 200,
-   "len": 85620,
-   "ms": 146,
+   "len": 86080,
+   "ms": 138,
    "sig": "",
    "loc": ""
   },
@@ -800,8 +800,8 @@
    "url": "/plugins/lab-manager/tasks/1/",
    "label": "admin",
    "status": 200,
-   "len": 60151,
-   "ms": 74,
+   "len": 60458,
+   "ms": 79,
    "sig": "",
    "loc": ""
   },
@@ -809,8 +809,8 @@
    "url": "/plugins/lab-manager/tasks/1/changelog/",
    "label": "admin",
    "status": 200,
-   "len": 60585,
-   "ms": 83,
+   "len": 60892,
+   "ms": 84,
    "sig": "",
    "loc": ""
   },
@@ -819,7 +819,7 @@
    "label": "admin",
    "status": 405,
    "len": 0,
-   "ms": 27,
+   "ms": 24,
    "sig": "",
    "loc": ""
   },
@@ -827,8 +827,8 @@
    "url": "/plugins/lab-manager/tasks/1/complete/",
    "label": "admin",
    "status": 200,
-   "len": 57758,
-   "ms": 62,
+   "len": 58065,
+   "ms": 56,
    "sig": "",
    "loc": ""
   },
@@ -836,8 +836,8 @@
    "url": "/plugins/lab-manager/tasks/1/delete/",
    "label": "admin",
    "status": 200,
-   "len": 57685,
-   "ms": 75,
+   "len": 57992,
+   "ms": 86,
    "sig": "",
    "loc": ""
   },
@@ -846,7 +846,7 @@
    "label": "admin",
    "status": 302,
    "len": 0,
-   "ms": 28,
+   "ms": 56,
    "sig": "",
    "loc": "/plugins/lab-manager/tasks/1/"
   },
@@ -854,8 +854,8 @@
    "url": "/plugins/lab-manager/tasks/1/journal/",
    "label": "admin",
    "status": 200,
-   "len": 62773,
-   "ms": 79,
+   "len": 63080,
+   "ms": 80,
    "sig": "",
    "loc": ""
   },
@@ -864,7 +864,7 @@
    "label": "admin",
    "status": 302,
    "len": 0,
-   "ms": 32,
+   "ms": 29,
    "sig": "",
    "loc": "/plugins/lab-manager/tasks/1/"
   },
@@ -872,8 +872,8 @@
    "url": "/plugins/lab-manager/tasks/add/",
    "label": "admin",
    "status": 200,
-   "len": 63608,
-   "ms": 85,
+   "len": 63915,
+   "ms": 73,
    "sig": "",
    "loc": ""
   },
@@ -882,7 +882,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 7,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/"
   },
@@ -891,7 +891,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent-tools/"
   },
@@ -900,7 +900,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/"
   },
@@ -918,7 +918,7 @@
    "label": "anon",
    "status": 404,
    "len": 34348,
-   "ms": 13,
+   "ms": 14,
    "sig": "",
    "loc": ""
   },
@@ -927,7 +927,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/changelog/"
   },
@@ -936,7 +936,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/delete/"
   },
@@ -954,7 +954,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent-tools/1/journal/"
   },
@@ -963,7 +963,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent-tools/add/"
   },
@@ -972,7 +972,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent/"
   },
@@ -981,7 +981,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 3,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/agent/chat/"
   },
@@ -990,7 +990,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 7,
    "sig": "",
    "loc": ""
   },
@@ -999,7 +999,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": ""
   },
@@ -1008,7 +1008,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1017,7 +1017,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": ""
   },
@@ -1035,7 +1035,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 3,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1044,7 +1044,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 6,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1053,7 +1053,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 4,
+   "ms": 5,
    "sig": "",
    "loc": ""
   },
@@ -1062,7 +1062,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 3,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1080,7 +1080,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": ""
   },
@@ -1107,7 +1107,7 @@
    "label": "anon",
    "status": 401,
    "len": 125,
-   "ms": 7,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1143,7 +1143,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 3,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1152,7 +1152,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 6,
+   "ms": 7,
    "sig": "",
    "loc": ""
   },
@@ -1170,7 +1170,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1179,7 +1179,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 6,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1197,7 +1197,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1206,7 +1206,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1215,7 +1215,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1242,7 +1242,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1251,7 +1251,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 7,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1260,7 +1260,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": ""
   },
@@ -1278,7 +1278,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1296,7 +1296,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 7,
+   "ms": 6,
    "sig": "",
    "loc": ""
   },
@@ -1305,7 +1305,7 @@
    "label": "anon",
    "status": 403,
    "len": 58,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": ""
   },
@@ -1314,7 +1314,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 31,
+   "ms": 30,
    "sig": "",
    "loc": "/plugins/lab-manager/tasks/1/"
   },
@@ -1323,7 +1323,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 8,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/borrow-records/"
   },
@@ -1332,7 +1332,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/"
   },
@@ -1341,7 +1341,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/changelog/"
   },
@@ -1368,7 +1368,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/borrow-records/1/journal/"
   },
@@ -1386,7 +1386,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/borrow-records/add/"
   },
@@ -1413,7 +1413,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 49,
+   "ms": 35,
    "sig": "",
    "loc": "/plugins/lab-manager/checkins/"
   },
@@ -1440,7 +1440,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/hardware/"
   },
@@ -1449,7 +1449,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/hardware/1/"
   },
@@ -1458,7 +1458,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 22,
+   "ms": 28,
    "sig": "",
    "loc": "/plugins/lab-manager/hardware/1/"
   },
@@ -1485,7 +1485,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/hardware/1/edit/"
   },
@@ -1503,7 +1503,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/hardware/add/"
   },
@@ -1512,7 +1512,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/member-open-records/"
   },
@@ -1530,7 +1530,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/members/"
   },
@@ -1548,7 +1548,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/my-tasks/"
   },
@@ -1557,7 +1557,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/notifications/"
   },
@@ -1566,7 +1566,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/notifications/1/read/"
   },
@@ -1584,7 +1584,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 7,
+   "ms": 6,
    "sig": "",
    "loc": "/plugins/lab-manager/notifications/"
   },
@@ -1593,7 +1593,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/projects/"
   },
@@ -1602,7 +1602,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 7,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/projects/1/"
   },
@@ -1611,7 +1611,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/projects/1/changelog/"
   },
@@ -1629,7 +1629,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/projects/1/edit/"
   },
@@ -1638,7 +1638,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/projects/1/journal/"
   },
@@ -1674,7 +1674,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 5,
+   "ms": 4,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/tasks/1/changelog/"
   },
@@ -1683,7 +1683,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/tasks/1/comment/"
   },
@@ -1692,7 +1692,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 21,
+   "ms": 25,
    "sig": "",
    "loc": "/plugins/lab-manager/tasks/1/"
   },
@@ -1701,7 +1701,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 6,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/tasks/1/delete/"
   },
@@ -1710,7 +1710,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/tasks/1/edit/"
   },
@@ -1719,7 +1719,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 7,
+   "ms": 5,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/tasks/1/journal/"
   },
@@ -1728,7 +1728,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 27,
+   "ms": 26,
    "sig": "",
    "loc": "/plugins/lab-manager/tasks/1/"
   },
@@ -1737,7 +1737,7 @@
    "label": "anon",
    "status": 302,
    "len": 0,
-   "ms": 4,
+   "ms": 6,
    "sig": "",
    "loc": "/login/?next=/plugins/lab-manager/tasks/add/"
   },
@@ -1745,8 +1745,8 @@
    "url": "/plugins/lab-manager/agent-tools/2/",
    "label": "crawl",
    "status": 200,
-   "len": 60567,
-   "ms": 47,
+   "len": 60874,
+   "ms": 52,
    "sig": "",
    "loc": ""
   },
@@ -1754,8 +1754,8 @@
    "url": "/plugins/lab-manager/agent-tools/3/",
    "label": "crawl",
    "status": 200,
-   "len": 60720,
-   "ms": 46,
+   "len": 61027,
+   "ms": 58,
    "sig": "",
    "loc": ""
   },
@@ -1763,8 +1763,8 @@
    "url": "/plugins/lab-manager/agent-tools/4/",
    "label": "crawl",
    "status": 200,
-   "len": 60784,
-   "ms": 47,
+   "len": 61091,
+   "ms": 48,
    "sig": "",
    "loc": ""
   },
@@ -1772,8 +1772,8 @@
    "url": "/plugins/lab-manager/agent-tools/5/",
    "label": "crawl",
    "status": 200,
-   "len": 59848,
-   "ms": 48,
+   "len": 60155,
+   "ms": 49,
    "sig": "",
    "loc": ""
   },
@@ -1781,8 +1781,8 @@
    "url": "/plugins/lab-manager/agent-tools/6/",
    "label": "crawl",
    "status": 200,
-   "len": 60334,
-   "ms": 66,
+   "len": 60641,
+   "ms": 63,
    "sig": "",
    "loc": ""
   },
@@ -1790,8 +1790,8 @@
    "url": "/plugins/lab-manager/agent-tools/7/",
    "label": "crawl",
    "status": 200,
-   "len": 60389,
-   "ms": 60,
+   "len": 60696,
+   "ms": 64,
    "sig": "",
    "loc": ""
   },
@@ -1799,8 +1799,8 @@
    "url": "/plugins/lab-manager/agent-tools/8/",
    "label": "crawl",
    "status": 200,
-   "len": 61006,
-   "ms": 46,
+   "len": 61313,
+   "ms": 49,
    "sig": "",
    "loc": ""
   },
@@ -1808,8 +1808,8 @@
    "url": "/plugins/lab-manager/checkins/2/",
    "label": "crawl",
    "status": 200,
-   "len": 58076,
-   "ms": 74,
+   "len": 58383,
+   "ms": 98,
    "sig": "",
    "loc": ""
   },
@@ -1817,8 +1817,8 @@
    "url": "/plugins/lab-manager/checkins/3/",
    "label": "crawl",
    "status": 200,
-   "len": 58025,
-   "ms": 76,
+   "len": 58332,
+   "ms": 105,
    "sig": "",
    "loc": ""
   },
@@ -1826,8 +1826,8 @@
    "url": "/plugins/lab-manager/design-system/",
    "label": "crawl",
    "status": 200,
-   "len": 62718,
-   "ms": 46,
+   "len": 63025,
+   "ms": 63,
    "sig": "",
    "loc": ""
   },
@@ -1835,8 +1835,8 @@
    "url": "/plugins/lab-manager/hardware/2/",
    "label": "crawl",
    "status": 200,
-   "len": 59488,
-   "ms": 66,
+   "len": 59795,
+   "ms": 59,
    "sig": "",
    "loc": ""
   },
@@ -1844,152 +1844,8 @@
    "url": "/plugins/lab-manager/hardware/3/",
    "label": "crawl",
    "status": 200,
-   "len": 59580,
-   "ms": 50,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/180/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58186,
-   "ms": 69,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/181/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58188,
-   "ms": 48,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/182/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58192,
-   "ms": 56,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/183/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58198,
-   "ms": 53,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/184/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58198,
-   "ms": 49,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/185/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58198,
-   "ms": 49,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/186/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58186,
-   "ms": 45,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/187/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58089,
-   "ms": 49,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/188/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58100,
-   "ms": 47,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/189/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58138,
-   "ms": 66,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/190/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58186,
-   "ms": 48,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/191/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58089,
-   "ms": 50,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/192/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58091,
-   "ms": 55,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/193/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58095,
-   "ms": 59,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/194/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58089,
-   "ms": 51,
-   "sig": "",
-   "loc": ""
-  },
-  {
-   "url": "/plugins/lab-manager/member-open-records/195/",
-   "label": "crawl",
-   "status": 200,
-   "len": 58091,
-   "ms": 51,
+   "len": 59887,
+   "ms": 71,
    "sig": "",
    "loc": ""
   },
@@ -1997,8 +1853,8 @@
    "url": "/plugins/lab-manager/member-open-records/196/",
    "label": "crawl",
    "status": 200,
-   "len": 58095,
-   "ms": 51,
+   "len": 58402,
+   "ms": 53,
    "sig": "",
    "loc": ""
   },
@@ -2006,8 +1862,8 @@
    "url": "/plugins/lab-manager/member-open-records/197/",
    "label": "crawl",
    "status": 200,
-   "len": 58091,
-   "ms": 47,
+   "len": 58398,
+   "ms": 110,
    "sig": "",
    "loc": ""
   },
@@ -2015,8 +1871,8 @@
    "url": "/plugins/lab-manager/member-open-records/198/",
    "label": "crawl",
    "status": 200,
-   "len": 58091,
-   "ms": 47,
+   "len": 58398,
+   "ms": 48,
    "sig": "",
    "loc": ""
   },
@@ -2024,8 +1880,8 @@
    "url": "/plugins/lab-manager/member-open-records/199/",
    "label": "crawl",
    "status": 200,
-   "len": 58089,
-   "ms": 59,
+   "len": 58396,
+   "ms": 51,
    "sig": "",
    "loc": ""
   },
@@ -2033,8 +1889,8 @@
    "url": "/plugins/lab-manager/member-open-records/200/",
    "label": "crawl",
    "status": 200,
-   "len": 58091,
-   "ms": 47,
+   "len": 58398,
+   "ms": 50,
    "sig": "",
    "loc": ""
   },
@@ -2042,8 +1898,8 @@
    "url": "/plugins/lab-manager/member-open-records/201/",
    "label": "crawl",
    "status": 200,
-   "len": 58095,
-   "ms": 46,
+   "len": 58402,
+   "ms": 48,
    "sig": "",
    "loc": ""
   },
@@ -2051,8 +1907,8 @@
    "url": "/plugins/lab-manager/member-open-records/202/",
    "label": "crawl",
    "status": 200,
-   "len": 58089,
-   "ms": 49,
+   "len": 58396,
+   "ms": 56,
    "sig": "",
    "loc": ""
   },
@@ -2060,8 +1916,8 @@
    "url": "/plugins/lab-manager/member-open-records/203/",
    "label": "crawl",
    "status": 200,
-   "len": 58091,
-   "ms": 46,
+   "len": 58398,
+   "ms": 52,
    "sig": "",
    "loc": ""
   },
@@ -2069,8 +1925,152 @@
    "url": "/plugins/lab-manager/member-open-records/204/",
    "label": "crawl",
    "status": 200,
-   "len": 58095,
-   "ms": 47,
+   "len": 58402,
+   "ms": 56,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/205/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58398,
+   "ms": 49,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/206/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58398,
+   "ms": 57,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/207/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 67,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/208/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 55,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/209/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 51,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/210/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 68,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/211/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58493,
+   "ms": 58,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/212/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 54,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/213/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58499,
+   "ms": 50,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/214/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58499,
+   "ms": 50,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/215/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 59,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/216/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58398,
+   "ms": 53,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/217/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58402,
+   "ms": 53,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/218/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58396,
+   "ms": 51,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/219/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58398,
+   "ms": 53,
+   "sig": "",
+   "loc": ""
+  },
+  {
+   "url": "/plugins/lab-manager/member-open-records/220/",
+   "label": "crawl",
+   "status": 200,
+   "len": 58402,
+   "ms": 52,
    "sig": "",
    "loc": ""
   },
@@ -2078,8 +2078,8 @@
    "url": "/plugins/lab-manager/mission-control/",
    "label": "crawl",
    "status": 200,
-   "len": 94142,
-   "ms": 112,
+   "len": 94451,
+   "ms": 131,
    "sig": "",
    "loc": ""
   },
@@ -2087,8 +2087,8 @@
    "url": "/plugins/lab-manager/tasks/10/",
    "label": "crawl",
    "status": 200,
-   "len": 59505,
-   "ms": 63,
+   "len": 59812,
+   "ms": 81,
    "sig": "",
    "loc": ""
   },
@@ -2096,8 +2096,8 @@
    "url": "/plugins/lab-manager/tasks/11/",
    "label": "crawl",
    "status": 200,
-   "len": 59603,
-   "ms": 70,
+   "len": 59910,
+   "ms": 104,
    "sig": "",
    "loc": ""
   },
@@ -2105,8 +2105,8 @@
    "url": "/plugins/lab-manager/tasks/12/",
    "label": "crawl",
    "status": 200,
-   "len": 59502,
-   "ms": 68,
+   "len": 59809,
+   "ms": 91,
    "sig": "",
    "loc": ""
   },
@@ -2114,8 +2114,8 @@
    "url": "/plugins/lab-manager/tasks/18/",
    "label": "crawl",
    "status": 200,
-   "len": 59449,
-   "ms": 77,
+   "len": 59756,
+   "ms": 74,
    "sig": "",
    "loc": ""
   },
@@ -2123,8 +2123,8 @@
    "url": "/plugins/lab-manager/tasks/3/",
    "label": "crawl",
    "status": 200,
-   "len": 60301,
-   "ms": 84,
+   "len": 60608,
+   "ms": 81,
    "sig": "",
    "loc": ""
   },
@@ -2132,8 +2132,8 @@
    "url": "/plugins/lab-manager/tasks/3/upload/",
    "label": "crawl",
    "status": 200,
-   "len": 60271,
-   "ms": 58,
+   "len": 60578,
+   "ms": 61,
    "sig": "",
    "loc": ""
   },
@@ -2141,8 +2141,8 @@
    "url": "/plugins/lab-manager/tasks/4/",
    "label": "crawl",
    "status": 200,
-   "len": 59623,
-   "ms": 74,
+   "len": 59930,
+   "ms": 76,
    "sig": "",
    "loc": ""
   },
@@ -2150,8 +2150,8 @@
    "url": "/plugins/lab-manager/tasks/5/",
    "label": "crawl",
    "status": 200,
-   "len": 59614,
-   "ms": 71,
+   "len": 59921,
+   "ms": 68,
    "sig": "",
    "loc": ""
   },
@@ -2159,8 +2159,8 @@
    "url": "/plugins/lab-manager/tasks/6/",
    "label": "crawl",
    "status": 200,
-   "len": 59492,
-   "ms": 66,
+   "len": 59799,
+   "ms": 76,
    "sig": "",
    "loc": ""
   },
@@ -2168,8 +2168,8 @@
    "url": "/plugins/lab-manager/tasks/7/",
    "label": "crawl",
    "status": 200,
-   "len": 59621,
-   "ms": 63,
+   "len": 59928,
+   "ms": 79,
    "sig": "",
    "loc": ""
   },
@@ -2177,8 +2177,8 @@
    "url": "/plugins/lab-manager/tasks/8/",
    "label": "crawl",
    "status": 200,
-   "len": 59493,
-   "ms": 66,
+   "len": 59800,
+   "ms": 76,
    "sig": "",
    "loc": ""
   },
@@ -2186,8 +2186,8 @@
    "url": "/plugins/lab-manager/tasks/9/",
    "label": "crawl",
    "status": 200,
-   "len": 59612,
-   "ms": 73,
+   "len": 59919,
+   "ms": 80,
    "sig": "",
    "loc": ""
   },
@@ -2195,8 +2195,8 @@
    "url": "/plugins/lab-manager/tasks/board/",
    "label": "crawl",
    "status": 200,
-   "len": 63787,
-   "ms": 69,
+   "len": 64094,
+   "ms": 63,
    "sig": "",
    "loc": ""
   },
@@ -2204,8 +2204,8 @@
    "url": "/user/api-tokens/",
    "label": "crawl",
    "status": 200,
-   "len": 59341,
-   "ms": 73,
+   "len": 59648,
+   "ms": 85,
    "sig": "",
    "loc": ""
   },
@@ -2213,8 +2213,8 @@
    "url": "/user/bookmarks/",
    "label": "crawl",
    "status": 200,
-   "len": 60119,
-   "ms": 82,
+   "len": 60426,
+   "ms": 71,
    "sig": "",
    "loc": ""
   },
@@ -2222,8 +2222,8 @@
    "url": "/user/preferences/",
    "label": "crawl",
    "status": 200,
-   "len": 66191,
-   "ms": 56,
+   "len": 66498,
+   "ms": 57,
    "sig": "",
    "loc": ""
   },
@@ -2231,8 +2231,8 @@
    "url": "/user/profile/",
    "label": "crawl",
    "status": 200,
-   "len": 70118,
-   "ms": 129,
+   "len": 70449,
+   "ms": 137,
    "sig": "",
    "loc": ""
   },
@@ -2240,8 +2240,8 @@
    "url": "/user/subscriptions/",
    "label": "crawl",
    "status": 200,
-   "len": 60143,
-   "ms": 64,
+   "len": 60450,
+   "ms": 68,
    "sig": "",
    "loc": ""
   },
@@ -2249,8 +2249,8 @@
    "url": "/users/groups/",
    "label": "crawl",
    "status": 200,
-   "len": 72382,
-   "ms": 102,
+   "len": 72689,
+   "ms": 115,
    "sig": "",
    "loc": ""
   },
@@ -2258,8 +2258,8 @@
    "url": "/users/groups/add/",
    "label": "crawl",
    "status": 200,
-   "len": 61073,
-   "ms": 51,
+   "len": 61380,
+   "ms": 58,
    "sig": "",
    "loc": ""
   },
@@ -2267,8 +2267,8 @@
    "url": "/users/groups/import/",
    "label": "crawl",
    "status": 200,
-   "len": 70768,
-   "ms": 81,
+   "len": 71075,
+   "ms": 65,
    "sig": "",
    "loc": ""
   },
@@ -2276,8 +2276,8 @@
    "url": "/users/owner-groups/",
    "label": "crawl",
    "status": 200,
-   "len": 68374,
-   "ms": 86,
+   "len": 68681,
+   "ms": 94,
    "sig": "",
    "loc": ""
   },
@@ -2285,8 +2285,8 @@
    "url": "/users/owner-groups/add/",
    "label": "crawl",
    "status": 200,
-   "len": 59859,
-   "ms": 46,
+   "len": 60166,
+   "ms": 59,
    "sig": "",
    "loc": ""
   },
@@ -2294,8 +2294,8 @@
    "url": "/users/owner-groups/import/",
    "label": "crawl",
    "status": 200,
-   "len": 70803,
-   "ms": 59,
+   "len": 71110,
+   "ms": 81,
    "sig": "",
    "loc": ""
   },
@@ -2303,8 +2303,8 @@
    "url": "/users/owners/",
    "label": "crawl",
    "status": 200,
-   "len": 71718,
-   "ms": 95,
+   "len": 72025,
+   "ms": 123,
    "sig": "",
    "loc": ""
   },
@@ -2312,8 +2312,8 @@
    "url": "/users/owners/add/",
    "label": "crawl",
    "status": 200,
-   "len": 62516,
-   "ms": 57,
+   "len": 62823,
+   "ms": 76,
    "sig": "",
    "loc": ""
   },
@@ -2321,8 +2321,8 @@
    "url": "/users/owners/import/",
    "label": "crawl",
    "status": 200,
-   "len": 72194,
-   "ms": 59,
+   "len": 72501,
+   "ms": 66,
    "sig": "",
    "loc": ""
   },
@@ -2330,8 +2330,8 @@
    "url": "/users/permissions/",
    "label": "crawl",
    "status": 200,
-   "len": 91912,
-   "ms": 132,
+   "len": 92219,
+   "ms": 148,
    "sig": "",
    "loc": ""
   },
@@ -2339,8 +2339,8 @@
    "url": "/users/permissions/add/",
    "label": "crawl",
    "status": 200,
-   "len": 70280,
-   "ms": 78,
+   "len": 70587,
+   "ms": 86,
    "sig": "",
    "loc": ""
   },
@@ -2348,8 +2348,8 @@
    "url": "/users/tokens/",
    "label": "crawl",
    "status": 200,
-   "len": 73244,
-   "ms": 96,
+   "len": 73551,
+   "ms": 110,
    "sig": "",
    "loc": ""
   },
@@ -2357,8 +2357,8 @@
    "url": "/users/tokens/add/",
    "label": "crawl",
    "status": 200,
-   "len": 63220,
-   "ms": 53,
+   "len": 63527,
+   "ms": 66,
    "sig": "",
    "loc": ""
   },
@@ -2366,8 +2366,8 @@
    "url": "/users/tokens/import/",
    "label": "crawl",
    "status": 200,
-   "len": 73825,
-   "ms": 59,
+   "len": 74132,
+   "ms": 73,
    "sig": "",
    "loc": ""
   },
@@ -2375,8 +2375,8 @@
    "url": "/users/users/",
    "label": "crawl",
    "status": 200,
-   "len": 75211,
-   "ms": 115,
+   "len": 75518,
+   "ms": 130,
    "sig": "",
    "loc": ""
   },
@@ -2384,8 +2384,8 @@
    "url": "/users/users/1/",
    "label": "crawl",
    "status": 200,
-   "len": 72921,
-   "ms": 119,
+   "len": 73252,
+   "ms": 159,
    "sig": "",
    "loc": ""
   },
@@ -2393,8 +2393,8 @@
    "url": "/users/users/3/",
    "label": "crawl",
    "status": 200,
-   "len": 63573,
-   "ms": 82,
+   "len": 63880,
+   "ms": 118,
    "sig": "",
    "loc": ""
   },
@@ -2402,8 +2402,8 @@
    "url": "/users/users/add/",
    "label": "crawl",
    "status": 200,
-   "len": 64771,
-   "ms": 53,
+   "len": 65078,
+   "ms": 71,
    "sig": "",
    "loc": ""
   },
@@ -2411,8 +2411,8 @@
    "url": "/users/users/import/",
    "label": "crawl",
    "status": 200,
-   "len": 73919,
-   "ms": 62,
+   "len": 74226,
+   "ms": 74,
    "sig": "",
    "loc": ""
   }
@@ -2430,22 +2430,6 @@
   "/plugins/lab-manager/design-system/",
   "/plugins/lab-manager/hardware/2/",
   "/plugins/lab-manager/hardware/3/",
-  "/plugins/lab-manager/member-open-records/180/",
-  "/plugins/lab-manager/member-open-records/181/",
-  "/plugins/lab-manager/member-open-records/182/",
-  "/plugins/lab-manager/member-open-records/183/",
-  "/plugins/lab-manager/member-open-records/184/",
-  "/plugins/lab-manager/member-open-records/185/",
-  "/plugins/lab-manager/member-open-records/186/",
-  "/plugins/lab-manager/member-open-records/187/",
-  "/plugins/lab-manager/member-open-records/188/",
-  "/plugins/lab-manager/member-open-records/189/",
-  "/plugins/lab-manager/member-open-records/190/",
-  "/plugins/lab-manager/member-open-records/191/",
-  "/plugins/lab-manager/member-open-records/192/",
-  "/plugins/lab-manager/member-open-records/193/",
-  "/plugins/lab-manager/member-open-records/194/",
-  "/plugins/lab-manager/member-open-records/195/",
   "/plugins/lab-manager/member-open-records/196/",
   "/plugins/lab-manager/member-open-records/197/",
   "/plugins/lab-manager/member-open-records/198/",
@@ -2455,6 +2439,22 @@
   "/plugins/lab-manager/member-open-records/202/",
   "/plugins/lab-manager/member-open-records/203/",
   "/plugins/lab-manager/member-open-records/204/",
+  "/plugins/lab-manager/member-open-records/205/",
+  "/plugins/lab-manager/member-open-records/206/",
+  "/plugins/lab-manager/member-open-records/207/",
+  "/plugins/lab-manager/member-open-records/208/",
+  "/plugins/lab-manager/member-open-records/209/",
+  "/plugins/lab-manager/member-open-records/210/",
+  "/plugins/lab-manager/member-open-records/211/",
+  "/plugins/lab-manager/member-open-records/212/",
+  "/plugins/lab-manager/member-open-records/213/",
+  "/plugins/lab-manager/member-open-records/214/",
+  "/plugins/lab-manager/member-open-records/215/",
+  "/plugins/lab-manager/member-open-records/216/",
+  "/plugins/lab-manager/member-open-records/217/",
+  "/plugins/lab-manager/member-open-records/218/",
+  "/plugins/lab-manager/member-open-records/219/",
+  "/plugins/lab-manager/member-open-records/220/",
   "/plugins/lab-manager/mission-control/",
   "/plugins/lab-manager/tasks/10/",
   "/plugins/lab-manager/tasks/11/",
