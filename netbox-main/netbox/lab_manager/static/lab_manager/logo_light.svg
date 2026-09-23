@@ -20,7 +20,7 @@
     <rect x="13" y="43" width="18" height="3" fill="#00e5ff"/>
     <rect x="15" y="46" width="14" height="3" fill="#00e5ff" opacity="0.4"/>
   </g>
-  <text x="68" y="38" font-family="Courier New, monospace" font-size="22" font-weight="900" fill="#e5e7eb" letter-spacing="4">YANJIU</text>
-  <text x="68" y="58" font-family="Courier New, monospace" font-size="22" font-weight="900" fill="#00e5ff" letter-spacing="4">SHIYANSHI</text>
+  <text x="68" y="38" font-family="Courier New, monospace" font-size="22" font-weight="900" fill="#e5e7eb" letter-spacing="4">JUSHEN</text>
+  <text x="68" y="58" font-family="Courier New, monospace" font-size="22" font-weight="900" fill="#00e5ff" letter-spacing="4">ZHINENG</text>
   <text x="68" y="76" font-family="Courier New, monospace" font-size="10" fill="#6b7280" letter-spacing="5">[ LAB v2.0 ]</text>
 </svg>

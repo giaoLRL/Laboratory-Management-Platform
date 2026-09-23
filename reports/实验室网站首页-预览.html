@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>具身智能实验室 · 湖南科技学院</title>
+<meta name="description" content="湖南科技学院具身智能实验室官方主页——以赛促学、软硬结合，深耕物联网、电子设计与无人机智能导航三大赛道。">
+<meta name="keywords" content="具身智能实验室,湖南科技学院,电子设计竞赛,物联网竞赛,智能导航大赛,无人机,嵌入式">
+<meta property="og:title" content="具身智能实验室 · 湖南科技学院">
+<meta property="og:description" content="以赛促学、软硬结合，深耕物联网、电子设计与无人机智能导航三大赛道。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wuyuan.me/">
+<meta property="og:image" content="https://wuyuan.me/assets/img/hero.webp">
+<meta name="theme-color" content="#0a0c12">
+<link rel="icon" type="image/png" href="./assets/img/school-badge.png">
+<link rel="preload" as="image" href="./assets/img/hero.webp">
+<style>
+  /* ══════════ 设计令牌（对齐 Seedance 2.0 渲染后真实样式） ══════════ */
+  :root {
+    --bg: #F8F8F8;
+    --card: #FFFFFF;
+    --text: #212121;
+    --text-dim: rgba(33, 33, 33, 0.8);
+    --text-faint: #62636C;
+    --text-soft: #1E1F24;
+    --border: rgba(33, 33, 33, 0.08);
+    --content-width: calc(100vw - 32px);
+    --content-margin: 16px;
+    --nav-pad-x: clamp(20px, 5.73vw, 44px);
+  }
+  @media (min-width: 768px) {
+    :root { --content-width: calc(100vw - 88px); --content-margin: 44px; }
+  }
+  @media (min-width: 1280px) {
+    :root { --content-width: 1200px; --content-margin: calc(50vw - 600px); }
+  }
+  @media (min-width: 1680px) {
+    :root { --content-width: 1400px; --content-margin: calc(50vw - 700px); }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "PingFang SC", "PingFang TC", "HarmonyOS Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  ::selection { background: rgba(33,33,33,.12); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(33,33,33,.18); border-radius: 99px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+
+  /* ══════════ Hero 骨架（flex column + 底部标题块） ══════════ */
+  .hero {
+    position: relative; min-height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  /* 固定全屏媒体层（对齐原站 carousel: position fixed, 100vh, z-index -2） */
+  /* 注意：黑底必须放在本层——若放在 .hero 上，会盖住 z-index 为负的固定视频层 */
+  .hero-media { position: fixed; inset: 0; height: 100vh; z-index: -2; background: #000; }
+  .hero-media img.bg, .hero-media video.bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: .6;
+  }
+  .hero .overlay {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,0) 30%),
+      linear-gradient(0deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 45%);
+  }
+
+  /* ── 顶部导航（透明、in-flow、pt-40px、居中链接） ── */
+  .top-bar {
+    position: relative; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; flex-shrink: 0;
+    padding: 40px var(--nav-pad-x) 0;
+    letter-spacing: -0.01em;
+    color: #FCFCFD;
+  }
+  @media (min-width: 1280px) {
+    .top-bar { width: var(--content-width); margin: 0 auto; padding: 40px 0 0; }
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: #FCFCFD;
+    font-weight: 600; font-size: 16px; letter-spacing: .01em;
+    line-height: 30px; height: 30px;
+  }
+  /* 学校官方组合标（白色版，提取自 huse.edu.cn），深色导航直接使用 */
+  .school-logo {
+    height: 30px; width: auto; display: block;
+    filter: drop-shadow(0 1px 6px rgba(0,0,0,.4));
+  }
+  .brand .divider {
+    width: 1px; height: 16px; margin: 0 2px; flex-shrink: 0;
+    background: rgba(255,255,255,.3);
+  }
+  .nav-links {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 20px; font-size: 16px;
+  }
+  .nav-links a {
+    position: relative; overflow: hidden; white-space: pre;
+    border-radius: 16px; padding: 0 26px; line-height: 32px;
+    color: rgba(255,255,255,0.7); text-decoration: none;
+    transition: background .2s, color .2s;
+  }
+  .nav-links a:hover { color: #FCFCFD; background: rgba(255,255,255,0.1); }
+  .nav-right { display: flex; align-items: center; gap: 20px; }
+  .nav-pill {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 30px; padding: 0 16px; border: 0; border-radius: 80px;
+    background: rgba(249,249,251,0.14); color: #FCFCFD;
+    font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0.02em;
+    font-family: inherit; text-decoration: none; cursor: pointer;
+    transition: background .2s;
+  }
+  .nav-pill:hover { background: rgba(249,249,251,0.24); }
+  .nav-pill svg { width: 8px; height: 5px; transition: transform .3s; }
+  .nav-burger {
+    display: none; width: 28px; height: 24px; border: 0; border-radius: 8px;
+    background: rgba(249,249,251,0.14); cursor: pointer;
+    align-items: center; justify-content: center;
+  }
+  .nav-burger svg { width: 28px; height: 24px; }
+  .mobile-menu {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 39;
+    background: linear-gradient(180deg, #171719 0%, rgba(23,23,25,.6) 100%);
+    padding: 30px var(--nav-pad-x) 40px;
+  }
+  .mobile-menu a {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-radius: 8px;
+    font-size: 14px; font-weight: 400; line-height: 24px; letter-spacing: .02em;
+    color: #FCFCFD; text-decoration: none;
+  }
+  .mobile-menu a svg { width: 20px; height: 20px; }
+  .mobile-menu.open { display: block; }
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-burger { display: flex; }
+  }
+
+  /* ── Hero 中部空隙（flex-1，视频区） ── */
+  .hero-spacer { flex: 1 1 0%; width: 100%; }
+
+  /* ── Hero 标题块（底部对齐，100px 大标题） ── */
+  .hero-content { padding: 56px 0; width: 100%; user-select: none; }
+  .hero-inner { width: var(--content-width); margin: 0 auto; }
+  .hero-text { max-width: 694px; }
+  .hero h1 {
+    color: #FFF; font-weight: 600; line-height: 100%;
+    margin: 0 0 12px; word-break: break-word;
+    letter-spacing: -2px; white-space: nowrap;
+    font-size: 100px;
+    font-family: "Stack Sans Headline", "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+  }
+  @media (max-width: 1279px) {
+    .hero h1 { font-size: 56px; letter-spacing: -1px; white-space: normal; }
+    .hero-content { padding: 40px 0 88px; }
+  }
+  .hero .description {
+    color: #FFF; font-size: 16px; font-weight: 400;
+    line-height: 22px; margin-bottom: 32px;
+  }
+  .hero .button-group { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0;
+    padding: 13px 20px; border-radius: 999px;
+    border: 1px solid hsla(0,0%,100%,.25);
+    font-size: 16px; font-weight: 500; line-height: 1.2; text-decoration: none;
+    backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+    background: linear-gradient(120deg, hsla(0,0%,100%,.24), hsla(0,0%,100%,.12));
+    color: #fff;
+    transition: all .3s ease;
+  }
+  .btn:hover { background: linear-gradient(120deg, hsla(0,0%,100%,.34), hsla(0,0%,100%,.2)); transform: translateY(-1px); }
+  .btn svg { width: 16px; height: 16px; margin-left: 6px; }
+
+  /* 轮播关键词 */
+  .rotator { display: inline-block; height: 1.55em; overflow: hidden; vertical-align: bottom; }
+  .rotator i {
+    display: block; font-style: normal; height: 1.55em; line-height: 1.55em;
+    font-weight: 700; letter-spacing: .02em;
+    background: linear-gradient(120deg, #6FA0FF, #3DE0FF);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: rotWords 10s cubic-bezier(.7,0,.3,1) infinite;
+  }
+  @keyframes rotWords {
+    0%, 18%   { transform: translateY(0); }
+    25%, 43%  { transform: translateY(-1.55em); }
+    50%, 68%  { transform: translateY(-3.1em); }
+    75%, 93%  { transform: translateY(-4.65em); }
+    100%      { transform: translateY(-6.2em); }
+  }
+
+  /* ══════════ 主内容容器（浅灰底，盖过固定视频层） ══════════ */
+  .main-container {
+    background-color: #F8F8F8;
+    position: relative; z-index: 1;
+  }
+
+  /* ── 通用 Section ── */
+  section { padding: 120px var(--content-margin); position: relative; }
+  .container { width: var(--content-width); margin: 0 auto; }
+  .sec-head {
+    display: flex; align-items: end; justify-content: space-between;
+    margin-bottom: 32px; gap: 24px; flex-wrap: wrap;
+    width: var(--content-width); margin-left: auto; margin-right: auto;
+  }
+  .sec-head h2 {
+    font-size: 32px; font-weight: 500; line-height: 44px;
+    color: #212121; letter-spacing: -.01em; margin-bottom: 8px;
+  }
+  .sec-head p {
+    color: var(--text-dim); font-size: 16px; line-height: 28px;
+    max-width: 720px;
+  }
+  .sec-head .arrow-group { display: flex; gap: 8px; flex-shrink: 0; }
+  .arrow-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--border); background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #212121;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .arrow-btn:hover { background: #212121; color: #fff; border-color: #212121; }
+  .arrow-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .arrow-btn:disabled:hover { background: #fff; color: #212121; border-color: var(--border); }
+  .arrow-btn svg { width: 16px; height: 16px; }
+
+  /* 渐入动效（全站统一：轻位移 + 微缩放，克制不浮夸） */
+  .reveal { opacity: 0; transform: translateY(26px) scale(.988); transition: opacity .7s ease, transform .7s cubic-bezier(.22,.61,.36,1); }
+  .reveal.visible { opacity: 1; transform: none; }
+  /* 板块标题入场（对齐原站 text-animation：translateY(44px) → 0） */
+  .sec-head.reveal, .bench-header.reveal, .bench-title-block.reveal { transform: translateY(44px); }
+  .sec-head.reveal.visible, .bench-header.reveal.visible, .bench-title-block.reveal.visible { transform: none; }
+  /* 横向轮播卡片：从右侧滑入，呼应轮播方向 */
+  .showcase-track .showcase-card.reveal { transform: translateX(48px); }
+  .showcase-track .showcase-card.reveal.visible { transform: none; }
+  /* 瀑布流卡片：稍大幅度上浮 */
+  .gallery-masonry .g-item.reveal { transform: translateY(34px) scale(.97); }
+  /* 标题下划线：随板块入场展开 */
+  .sec-head, .bench-header { position: relative; }
+  .sec-head::after, .bench-header::after {
+    content: ""; position: absolute; left: 0; bottom: -14px; height: 2px; width: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4D7DFF, #3DE0FF);
+    transition: width .8s cubic-bezier(.66,0,.34,1) .2s;
+  }
+  .sec-head.visible::after, .bench-header.visible::after { width: 72px; }
+
+  /* ══════════ 展示区（横向轮播 + 混合宽度视频卡，600px 高） ══════════ */
+  .showcase { overflow: hidden; }
+  .showcase-track {
+    display: flex; gap: 20px;
+    transition: transform .6s cubic-bezier(.66,0,.34,1);
+    will-change: transform;
+  }
+  .showcase-card {
+    flex-shrink: 0; position: relative;
+    border-radius: 20px; overflow: hidden;
+    background: #000;
+  }
+  .showcase-card img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    opacity: .92; transition: opacity .3s, transform .6s;
+  }
+  .showcase-card:hover img { opacity: 1; transform: scale(1.03); }
+  .showcase-card .v-mask {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.05) 60%, rgba(0,0,0,.5) 100%);
+    pointer-events: none;
+  }
+  .showcase-card .v-tag {
+    position: absolute; left: 18px; bottom: 16px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #fff;
+    background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.2);
+    padding: 6px 14px; border-radius: 999px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .showcase-card .v-tag::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: #3DE0FF;
+  }
+  .showcase-card .v-play {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.4);
+    background: rgba(0,0,0,.4); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0; transition: opacity .3s, transform .3s, background .3s;
+  }
+  .showcase-card:hover .v-play { opacity: 1; }
+  .showcase-card .v-play:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(77,125,255,.5);
+  }
+  .showcase-card .v-play svg { width: 22px; height: 22px; fill: #fff; margin-left: 3px; }
+
+  /* ══════════ 行业前景（3 张白卡横向滚动，gap 12px） ══════════ */
+  .bench-section { padding-bottom: 80px; }
+  .bench-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 80px; width: var(--content-width); margin-left: auto; margin-right: auto;
+  }
+  .bench-header h2 { font-size: 32px; font-weight: 500; line-height: 44px; color: #212121; margin-bottom: 8px; }
+  .bench-header p { color: var(--text-dim); font-size: 16px; line-height: 28px; }
+  .bench-title-block { width: var(--content-width); margin: 0 auto 20px; }
+  .bench-title-block h3 {
+    font-size: 24px; font-weight: 600; line-height: 32px;
+    color: #1E1F24; margin-bottom: 8px;
+  }
+  .bench-title-block p { color: #62636C; font-size: 16px; line-height: 28px; }
+  .charts-row {
+    display: flex; gap: 12px; overflow-x: auto;
+    padding: 0 var(--content-margin) 20px;
+    scrollbar-width: thin;
+  }
+  .charts-row::-webkit-scrollbar { height: 6px; }
+  .chart-card {
+    flex: 1 1 0; min-width: 320px;
+    background: #fff; border-radius: 16px; padding: 28px;
+    box-sizing: border-box;
+  }
+  .chart-card h4 {
+    font-size: 16px; font-weight: 600; line-height: 20px;
+    color: #1E1F24; margin-bottom: 18px;
+  }
+  .chart-card .chart-desc {
+    font-size: 12.5px; color: var(--text-faint); margin-top: 16px; line-height: 20px;
+  }
+
+  /* 横向条形图（人才缺口） */
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .bar-row:last-of-type { margin-bottom: 0; }
+  .bar-row .bar-label {
+    width: 92px; flex-shrink: 0; text-align: right;
+    font-size: 12.5px; line-height: 1.4; color: #62636C;
+  }
+  .bar-row .bar-track {
+    flex: 1; height: 24px; border-radius: 7px;
+    background: rgba(33,33,33,.05); overflow: hidden;
+  }
+  .bar-row .bar-fill {
+    height: 100%; width: 0; border-radius: 7px;
+    background: linear-gradient(90deg, #4D7DFF, #3DE0FF);
+    transition: width 1.1s cubic-bezier(.66,0,.34,1) .15s;
+  }
+  .bar-row .bar-val {
+    width: 52px; flex-shrink: 0;
+    font-size: 13px; font-weight: 600; color: #1E1F24;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 折线图（市场规模） */
+  .line-wrap svg { width: 100%; height: 220px; display: block; }
+  .line-wrap .line-path {
+    fill: none; stroke: #4D7DFF; stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .line-wrap .line-area { opacity: .9; }
+  .line-wrap .line-dot {
+    fill: #fff; stroke: #4D7DFF; stroke-width: 2.5;
+    opacity: 0; transition: opacity .4s ease;
+  }
+  .line-wrap.animate .line-dot { opacity: 1; }
+  .line-wrap .year-labels { display: flex; justify-content: space-between; margin-top: 8px; }
+  .line-wrap .year-labels span { font-size: 11px; color: #9B9CA3; font-variant-numeric: tabular-nums; }
+
+  /* 就业去向列表 */
+  .career-list { list-style: none; }
+  .career-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0; border-bottom: 1px dashed var(--border);
+    font-size: 14px; color: #1E1F24; line-height: 24px;
+  }
+  .career-list li:last-child { border-bottom: 0; }
+  .career-list li::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    margin-top: 9px;
+    background: linear-gradient(135deg, #4D7DFF, #3DE0FF);
+  }
+  .career-list li small { display: block; font-size: 12px; color: #9B9CA3; }
+
+  /* ══════════ 作品集（3 列瀑布流，列宽~458px，gap 12px） ══════════ */
+  .gallery-section { padding-top: 0; }
+  .gallery-masonry { position: relative; width: 100%; column-count: 3; column-gap: 12px; }
+  @media (max-width: 900px) { .gallery-masonry { column-count: 2; } }
+  @media (max-width: 600px) { .gallery-masonry { column-count: 1; } }
+  .g-item {
+    position: relative; break-inside: avoid;
+    margin-bottom: 12px; border-radius: 20px; overflow: hidden;
+    background: #000;
+  }
+  .g-item img {
+    width: 100%; height: auto; display: block;
+    opacity: .92; transition: opacity .35s, transform .6s;
+  }
+  .g-item:hover img { opacity: 1; transform: scale(1.04); }
+  .g-item .v-mask {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.05) 60%, rgba(0,0,0,.55) 100%);
+    pointer-events: none;
+  }
+  .g-item .v-cap {
+    position: absolute; left: 14px; bottom: 12px; right: 14px;
+    display: flex; align-items: end; justify-content: space-between; gap: 10px;
+  }
+  .g-item .v-cap .name {
+    font-size: 13.5px; font-weight: 600; color: #fff;
+    text-shadow: 0 1px 8px rgba(0,0,0,.6);
+  }
+  .g-item .v-cap .idx {
+    font-size: 11px; color: rgba(255,255,255,.7);
+    letter-spacing: .1em; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  /* ══════════ 技术方向（白卡网格） ══════════ */
+  .research-grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .r-card {
+    background: #fff; border-radius: 16px; padding: 28px;
+    transition: transform .2s, box-shadow .2s;
+    position: relative; overflow: hidden;
+  }
+  .r-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(33,33,33,.08); }
+  .r-card .icon {
+    width: 48px; height: 48px; border-radius: 12px; margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(77,125,255,.1), rgba(61,224,255,.1));
+  }
+  .r-card .icon svg { width: 24px; height: 24px; stroke: #4D7DFF; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .r-card h3 { font-size: 17px; font-weight: 600; color: #1E1F24; margin-bottom: 8px; }
+  .r-card h3 small { color: #62636C; font-weight: 400; font-size: 12px; margin-left: 8px; }
+  .r-card p { font-size: 14px; color: var(--text-dim); line-height: 24px; }
+
+  /* ── 最新动态 ── */
+  .news-wrap { max-width: 820px; margin: 0 auto; position: relative; }
+  .news-wrap::before {
+    content: ""; position: absolute; left: 92px; top: 12px; bottom: 12px;
+    width: 1px; background: linear-gradient(180deg, #4D7DFF, rgba(77,125,255,.08));
+  }
+  .news-item { display: flex; gap: 26px; margin-bottom: 32px; align-items: flex-start; }
+  .news-item:last-child { margin-bottom: 0; }
+  .news-date {
+    width: 76px; flex-shrink: 0; text-align: right;
+    color: #9B9CA3; font-size: 13px; padding-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .news-item .dot {
+    width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
+    background: var(--bg); border: 2px solid #4D7DFF;
+    margin-top: 7px; position: relative; z-index: 2;
+  }
+  .news-item:first-child .dot { background: #4D7DFF; box-shadow: 0 0 12px rgba(77,125,255,.6); }
+  .news-body {
+    flex: 1; background: #fff; border-radius: 14px; padding: 18px 22px;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .news-body:hover { box-shadow: 0 8px 28px rgba(33,33,33,.07); transform: translateX(4px); }
+  .news-body .meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .news-body .n-tag { font-size: 11.5px; padding: 2px 12px; border-radius: 999px; letter-spacing: .06em; }
+  .n-award  { background: rgba(77,125,255,.1);  color: #4D7DFF; }
+  .n-comp   { background: rgba(61,224,255,.1);  color: #1AA8C7; }
+  .n-news   { background: rgba(139,92,246,.1);  color: #7B5CD9; }
+  .n-join   { background: rgba(255,166,87,.1);  color: #C97A2E; }
+  .news-body h4 { font-size: 15.5px; font-weight: 600; color: #212121; margin-bottom: 4px; }
+  .news-body p { font-size: 13.5px; color: var(--text-dim); }
+  /* 动态配图 */
+  .news-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .news-photos img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; display: block; }
+
+  /* ── 团队 ── */
+  .leader-card {
+    display: flex; gap: 36px; align-items: center;
+    background: #fff; border-radius: 16px; padding: clamp(26px, 4vw, 44px);
+    margin-bottom: 40px; flex-wrap: wrap;
+  }
+  .avatar {
+    width: 104px; height: 104px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #4D7DFF, #3DE0FF);
+  }
+  .leader-info h3 { font-size: 20px; font-weight: 600; color: #212121; margin-bottom: 2px; }
+  .leader-info .title { color: #4D7DFF; font-size: 13.5px; letter-spacing: .06em; margin-bottom: 12px; }
+  .leader-info p { color: var(--text-dim); font-size: 14.5px; max-width: 620px; margin-bottom: 10px; }
+  .leader-info .mail { color: #4D7DFF; font-size: 13.5px; text-decoration: none; }
+  .team-grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  .member {
+    background: #fff; border-radius: 16px; padding: 26px 18px; text-align: center;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .member:hover { transform: translateY(-4px); box-shadow: 0 10px 32px rgba(33,33,33,.07); }
+  .member .avatar { width: 60px; height: 60px; font-size: 22px; margin: 0 auto 14px; }
+  .member h4 { font-size: 15px; font-weight: 600; color: #212121; margin-bottom: 4px; }
+  .member .role { font-size: 12px; color: #9B9CA3; letter-spacing: .04em; }
+
+  /* ── 加入我们 ── */
+  .join-flex { display: flex; gap: clamp(30px, 5vw, 70px); align-items: center; flex-wrap: wrap; }
+  .join-text { flex: 1.2; min-width: 300px; }
+  .join-text p { color: var(--text-dim); font-size: 15px; margin-bottom: 18px; }
+  .join-text ul { list-style: none; margin-bottom: 26px; }
+  .join-text li { color: var(--text-dim); font-size: 14.5px; margin-bottom: 10px; padding-left: 24px; position: relative; }
+  .join-text li::before { content: "▸"; position: absolute; left: 4px; color: #4D7DFF; }
+  .join-img { flex: 1; min-width: 280px; }
+  .join-img img { width: 100%; border-radius: 20px; display: block; }
+  .btn-solid {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 28px; border-radius: 999px;
+    background: #212121; color: #fff; text-decoration: none;
+    font-size: 15px; font-weight: 500;
+    transition: background .2s, transform .2s;
+  }
+  .btn-solid:hover { background: #000; transform: translateY(-2px); }
+
+  /* ══════════ Footer（480px 径向渐变 + 左品牌 + 右链接列） ══════════ */
+  .site-footer {
+    position: relative; height: 480px; overflow: hidden;
+    background: #F8F8F8; color: #212121;
+  }
+  .site-footer::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(134.01% 77.59% at 50% 20.04%, rgba(200,221,233,0) 51.85%, rgba(165,197,230,.57) 100%);
+  }
+  .footer-inner {
+    position: relative; top: 43px; z-index: 1;
+    width: var(--content-width); margin: 0 auto;
+    height: 400px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .footer-top { display: flex; align-items: stretch; justify-content: space-between; flex-wrap: wrap; gap: 32px; }
+  .footer-brand-col { display: flex; flex-direction: column; justify-content: space-between; height: 250px; flex-shrink: 0; }
+  .footer-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 17px; color: #212121;
+  }
+  .footer-brand .school-logo {
+    height: 26px; width: auto; display: block;
+    filter: invert(1); opacity: .88; /* 白色组合标在浅色背景上反色为深色 */
+  }
+  .footer-brand .divider {
+    width: 1px; height: 14px; margin: 0 2px; flex-shrink: 0;
+    background: rgba(33,33,33,.25);
+  }
+  .footer-slogan {
+    width: 345px; white-space: pre-line; text-align: left;
+    font-size: 16px; line-height: 24px; font-weight: 400; color: rgba(33,33,33,.8);
+  }
+  .footer-qr { display: flex; flex-direction: column; gap: 14px; width: 164px; }
+  .footer-qr .qr-box {
+    width: 100px; height: 100px; flex-shrink: 0;
+    border-radius: 8px; background: #fff; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .footer-qr .qr-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .footer-qr .qr-note {
+    white-space: nowrap; text-align: left;
+    font-size: 14px; line-height: 32px; letter-spacing: .02em; font-weight: 400; color: rgba(33,33,33,.5);
+  }
+  .footer-nav { display: flex; justify-content: space-between; width: 400px; flex-shrink: 0; }
+  .footer-col { display: flex; flex-direction: column; gap: 16px; width: 180px; flex-shrink: 0; }
+  .footer-col .col-title {
+    height: 20px; font-size: 16px; line-height: 28px; letter-spacing: .02em;
+    font-weight: 500; color: #212121;
+  }
+  .footer-col .col-links { font-size: 14px; line-height: 32px; letter-spacing: .02em; font-weight: 400; }
+  .footer-col .col-links a {
+    display: block; white-space: nowrap; text-decoration: none;
+    color: #212121; opacity: .5; transition: opacity .3s ease-in-out;
+  }
+  .footer-col .col-links a:hover { opacity: .8; }
+  .footer-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 14px; line-height: 32px; letter-spacing: .02em;
+    color: rgba(33,33,33,.5); flex-wrap: wrap; gap: 8px;
+  }
+  .footer-bottom a { color: rgba(33,33,33,.5); text-decoration: none; }
+  .footer-bottom a:hover { color: rgba(33,33,33,.8); }
+  @media (max-width: 900px) {
+    .site-footer { height: auto; padding: 60px 20px 30px; }
+    .footer-inner { top: 0; height: auto; gap: 40px; }
+    .footer-nav { width: 100%; }
+    .footer-slogan { width: auto; }
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 34px; left: 50%;
+    transform: translateX(-50%) translateY(16px); z-index: 200;
+    padding: 12px 22px; border-radius: 12px;
+    background: rgba(33,33,33,.95); color: #fff;
+    font-size: 13.5px; box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s, transform .3s;
+    max-width: min(86vw, 560px); text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── 背景音乐开关（右下角悬浮） ── */
+  .bgm-btn {
+    position: fixed; right: 18px; bottom: 18px; z-index: 150;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.25); cursor: pointer;
+    background: rgba(20,22,30,.72); color: #fff;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 26px rgba(0,0,0,.35);
+    transition: transform .2s, background .2s;
+  }
+  .bgm-btn:hover { transform: translateY(-2px); background: rgba(40,44,58,.82); }
+  .bgm-btn svg { width: 20px; height: 20px; }
+  .bgm-btn.playing {
+    color: #3DE0FF; border-color: rgba(61,224,255,.5);
+    animation: bgmPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes bgmPulse {
+    0%, 100% { box-shadow: 0 8px 26px rgba(61,224,255,.18); }
+    50%      { box-shadow: 0 8px 32px rgba(61,224,255,.45); }
+  }
+
+  /* ── 背景音乐启动卡（按键型磨砂玻璃，点击解除静音后消失） ── */
+  .bgm-gate {
+    position: absolute; left: 50%; top: 50%; z-index: 5;
+    transform: translate(-50%, -50%);
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .bgm-gate.hide {
+    opacity: 0; pointer-events: none;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+  .bgm-gate-row {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 15px 30px 15px 18px; border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: linear-gradient(120deg, hsla(0,0%,100%,.09), hsla(0,0%,100%,.03));
+    backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%);
+    box-shadow: 0 14px 44px rgba(0,0,0,.2);
+    transition: transform .25s ease, background .25s ease;
+    /* 呼吸辉光必须挂在带圆角的这一层，否则会出现方形光晕穿帮 */
+    animation: gateBreath 3s ease-in-out infinite;
+  }
+  .bgm-gate:hover .bgm-gate-row {
+    transform: translateY(-2px);
+    background: linear-gradient(120deg, hsla(0,0%,100%,.16), hsla(0,0%,100%,.06));
+  }
+  .bgm-gate-row .ic {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  }
+  .bgm-gate-row .ic svg { width: 15px; height: 15px; fill: #fff; margin-left: 2px; }
+  .bgm-gate-row .tx {
+    font-size: 15px; font-weight: 600; letter-spacing: .18em; text-indent: .18em;
+    color: rgba(255,255,255,.92);
+  }
+  @keyframes gateBreath {
+    0%, 100% { box-shadow: 0 14px 44px rgba(0,0,0,.2); }
+    50%      { box-shadow: 0 14px 44px rgba(0,0,0,.2), 0 0 30px rgba(61,224,255,.13); }
+  }
+
+  /* ── Hero 入场（对齐原站 text-animation：translateY(44px) → 0） ── */
+  /* fill: both —— 延迟期间保持 from 态（隐藏），结束后保持 to 态（显示）；
+     基础样式不写 opacity:0，否则 JS 摘除动画后元素会隐身 */
+  .hero-text, .hero .button-group {
+    animation: heroIn 1s cubic-bezier(.66,0,.34,1) both;
+  }
+  .hero-text { animation-delay: .1s; }
+  .hero .button-group { animation-delay: .3s; }
+  @keyframes heroIn {
+    from { opacity: 0; transform: translateY(44px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ── 响应式 ── */
+  @media (max-width: 720px) {
+    section { padding: 80px var(--content-margin); }
+    .news-wrap::before { left: 12px; }
+    .news-date { display: none; }
+    .news-item .dot { position: absolute; margin-left: 8px; }
+    .news-item { position: relative; padding-left: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .sec-head::after, .bench-header::after { width: 72px; transition: none; }
+    .rotator i { animation: none; }
+    .bar-row .bar-fill { transition: none; }
+    .hero-text, .hero .button-group { animation: none !important; opacity: 1 !important; transform: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+<noscript>
+  <style>
+    /* JS 不可用时的兜底：确保内容可见 */
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .hero-text, .hero .button-group { opacity: 1 !important; transform: none !important; animation: none !important; }
+    .line-path { stroke-dashoffset: 0 !important; }
+    .line-dot { opacity: 1 !important; }
+    .bar-fill { width: 100% !important; }
+  </style>
+</noscript>
+</head>
+<body>
+<!--
+  ═══════════ 部署素材清单（放到本文件同目录的 assets/ 下） ═══════════
+  assets/img/
+    hero.webp            视频海报帧        1918×1080 114KB（已生成）
+    school-logo.png      学校官方组合标（白色版）327×78（已提取自学校官网）
+    school-badge.png     圆形校徽裁剪           78×78（已生成，用作 favicon）
+    demo-drone-nav.webp  展示区A主图/视频封面   1920×1080 ≤200KB
+    demo-flight-ctrl.webp 展示区A竖图      720×1280  ≤150KB
+    demo-iot.webp        物联网系统        1920×1080 ≤200KB
+    demo-edc.webp        电赛工作台        1920×1080 ≤200KB
+    demo-car.webp        智能小车竖图      720×1280  ≤150KB
+    uav-nav.webp         展示区B           1920×1080 ≤200KB
+    build.webp           展示区C           1920×1080 ≤200KB
+    work-01.webp … work-08.webp  作品集     原比例    ≤200KB
+    join.webp            加入我们配图      1200×900  ≤200KB
+    qrcode.png           招新群二维码      480×480（已替换为真实群码）
+  assets/video/
+    hero.mp4             Hero 背景视频     1.3MB（已接入：1080p/8s/无声/≤2Mbps/faststart）
+    其余视频位            ≤2Mbps / 8-15s / 1080p，接入后替换对应 <img>
+  assets/audio/
+    bgm.mp3              背景音乐（科幻氛围乐 16s 循环 251KB，已生成；可替换为授权曲目 ≤128kbps）
+  压缩建议：Squoosh.app 或 cwebp -q 80；3Mbps 带宽下首屏总重控制在 500KB 内
+  ═════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════ Hero（固定全屏媒体 + 顶部透明导航 + 底部标题块） ═══════════ -->
+<header class="hero" id="top">
+  <!-- Hero 背景视频（已接入）：静音自动循环；更换素材时保持 muted + playsinline，码率 ≤2Mbps -->
+  <div class="hero-media">
+    <video class="bg" src="./assets/video/hero.mp4" poster="./assets/img/hero.webp"
+           autoplay muted loop playsinline preload="auto"></video>
+    <div class="overlay"></div>
+  </div>
+
+  <!-- 顶部导航（透明，随页滚动） -->
+  <div class="top-bar">
+    <a class="brand" href="#top">
+      <!-- 学校官方组合标（白色版，提取自学校官网），深色导航上直接使用 -->
+      <img class="school-logo" src="./assets/img/school-logo.png" alt="湖南科技学院">
+      <span class="divider"></span>
+      具身智能实验室
+    </a>
+    <nav class="nav-links">
+      <a href="#top">首页</a>
+      <a href="#demo">作品展示</a>
+      <a href="#research">技术方向</a>
+      <a href="#bench">行业前景</a>
+      <a href="#join">加入我们</a>
+    </nav>
+    <div class="nav-right">
+      <a class="nav-pill" href="/login/">进入管理系统
+        <svg viewBox="0 0 8 5" fill="none"><path d="M1 1L4 4L7 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <button class="nav-burger" id="navBurger" aria-label="打开菜单">
+        <svg viewBox="0 0 28 24" fill="none"><path d="M14 16C14.5523 16 15 16.4477 15 17C15 17.5523 14.5523 18 14 18H9C8.44772 18 8 17.5523 8 17C8 16.4477 8 16 9 16H14ZM19 11C19.5523 11 20 11.4477 20 12C20 12.5523 19.5523 13 19 13H9C8.44772 13 8 12.5523 8 12C8 11.4477 8 11 9 11H19ZM19 6C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H9C8.44772 8 8 7.55228 8 7C8 6.44772 8 6 9 6H19Z" fill="currentColor" fill-opacity="0.8"/></svg>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#top">首页 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#demo">作品展示 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#research">技术方向 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#bench">行业前景 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#join">加入我们 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </div>
+
+  <!-- 中部空隙（露出固定视频） -->
+  <div class="hero-spacer"></div>
+
+  <!-- 底部标题块 -->
+  <div class="hero-content">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1>具身智能实验室</h1>
+        <div class="description">围绕全国大学生电子设计竞赛、物联网设计竞赛与智能导航大赛，以赛促学、以赛代练，在真实工程问题中打磨硬技术。<br>我们深耕<span class="rotator"><i>物联网</i><i>无人机</i><i>嵌入式</i><i>智能导航</i><i>物联网</i></span></div>
+      </div>
+      <div class="button-group">
+        <a class="btn" href="#demo">作品展示<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+        <a class="btn" href="#research">技术方向<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+        <a class="btn" href="#bench">行业前景<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+        <a class="btn" href="#join">加入我们<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 背景音乐启动卡（按键型磨砂玻璃，点击解除静音后消失） -->
+  <div class="bgm-gate" id="bgmGate" role="button" tabindex="0" aria-label="解除静音，开启背景音乐">
+    <div class="bgm-gate-row">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+      <span class="tx">解除静音</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════ 主内容（浅灰底，盖过固定视频层） ═══════════ -->
+<main class="main-container">
+
+<!-- ─── 展示区 A：三大赛道（横向轮播） ─── -->
+<section id="demo" class="showcase">
+  <div class="sec-head reveal">
+    <div>
+      <h2>从电路板到蓝天</h2>
+      <p>三大赛道，一个实验室：物联网系统、电子设计、无人机自主导航——所有作品都由成员从零打磨，在赛场上接受检验。</p>
+    </div>
+    <div class="arrow-group">
+      <button class="arrow-btn" id="sc-prev" disabled aria-label="上一个"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.7071 4.29289C13.0976 4.68342 13.0976 5.31658 12.7071 5.70711L7.41421 11H19C19.5523 11 20 11.4477 20 12C20 12.5523 19.5523 13 19 13H7.41421L12.7071 18.2929C13.0976 18.6834 13.0976 19.3166 12.7071 19.7071C12.3166 20.0976 11.6834 20.0976 11.2929 19.7071L4.29289 12.7071C3.90237 12.3166 3.90237 11.6834 4.29289 11.2929L11.2929 4.29289C11.6834 3.90237 12.3166 3.90237 12.7071 4.29289Z"/></svg></button>
+      <button class="arrow-btn" id="sc-next" aria-label="下一个"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.2929 4.29289C11.6834 3.90237 12.3166 3.90237 12.7071 4.29289L19.7071 11.2929C20.0976 11.6834 20.0976 12.3166 19.7071 12.7071L12.7071 19.7071C12.3166 20.0976 11.6834 20.0976 11.2929 19.7071C10.9024 19.3166 10.9024 18.6834 11.2929 18.2929L16.5858 13H5C4.44772 13 4 12.5523 4 12C4 11.4477 4.44772 11 5 11H16.5858L11.2929 5.70711C10.9024 5.31658 10.9024 4.68342 11.2929 4.29289Z"/></svg></button>
+    </div>
+  </div>
+  <div class="showcase-track" id="sc-track" style="padding: 0 var(--content-margin);">
+    <!-- 视频位：替换为 <video src="..." autoplay muted loop playsinline></video> -->
+    <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
+      <img src="./assets/img/demo-drone-nav.webp" alt="无人机自主导航">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">主演示 · 无人机自主导航</div>
+    </div>
+    <div class="showcase-card reveal" style="width: 337.5px; height: 600px;">
+      <img src="./assets/img/demo-flight-ctrl.webp" alt="飞控调试">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">视频位</div>
+    </div>
+    <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
+      <img src="./assets/img/demo-iot.webp" alt="物联网系统">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">视频位 · 物联网系统</div>
+    </div>
+    <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
+      <img src="./assets/img/demo-edc.webp" alt="电赛作品">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">视频位 · 电赛作品</div>
+    </div>
+    <div class="showcase-card reveal" style="width: 337.5px; height: 600px;">
+      <img src="./assets/img/demo-car.webp" alt="智能小车">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">视频位</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 展示区 B：无人机自主导航 ─── -->
+<section id="vla" style="padding-top: 0;">
+  <div class="sec-head reveal">
+    <div>
+      <h2>智启导航：让无人机自主飞行</h2>
+      <p>飞控调参、SLAM 建图、路径规划、视觉避障——智能导航大赛（无人机赛道）核心技术，从室内定点巡航到复杂任务的全自主飞行。</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="showcase-card reveal" style="width: 100%; height: 500px;">
+      <img src="./assets/img/uav-nav.webp" alt="无人机导航演示">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">视频位 · 自主避障演示</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 展示区 C：从想法到实物 ─── -->
+<section id="sim2real" style="padding-top: 0;">
+  <div class="sec-head reveal">
+    <div>
+      <h2>从想法到实物</h2>
+      <p>方案设计、电路搭建、固件开发、联调测试——每一件参赛作品都要走完完整的工程链路，这也是竞赛教给我们最重要的事。</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="showcase-card reveal" style="width: 100%; height: 500px;">
+      <img src="./assets/img/build.webp" alt="从设计到实物">
+      <div class="v-mask"></div>
+      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <div class="v-tag">视频位 · 作品诞生记</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 行业前景 ═══════════ -->
+<section id="bench" class="bench-section">
+  <div class="bench-header reveal">
+    <div>
+      <h2>行业前景</h2>
+      <p>具身智能与物联网产业高速发展，人才需求持续攀升——现在加入，正是站上风口。</p>
+    </div>
+  </div>
+  <div class="bench-title-block reveal">
+    <h3>人才缺口与产业趋势</h3>
+    <p>你在这里练就的嵌入式、物联网与无人机导航技术，正是产业最紧缺的技能。</p>
+  </div>
+  <div class="charts-row" id="chartsRow">
+    <div class="chart-card reveal">
+      <h4>相关领域人才缺口（万人）</h4>
+      <div class="chart-bars">
+        <div class="bar-row">
+          <div class="bar-label">物联网</div>
+          <div class="bar-track"><div class="bar-fill" data-w="100"></div></div>
+          <div class="bar-val">1600</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">机器人与智能制造</div>
+          <div class="bar-track"><div class="bar-fill" data-w="28"></div></div>
+          <div class="bar-val">450</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">无人机应用</div>
+          <div class="bar-track"><div class="bar-fill" data-w="7"></div></div>
+          <div class="bar-val">100</div>
+        </div>
+      </div>
+      <p class="chart-desc">* 数据综合自人社部等公开行业报告口径，发布前请核实并标注来源</p>
+    </div>
+    <div class="chart-card reveal">
+      <h4>具身智能市场规模预测（十亿美元 · 示例曲线）</h4>
+      <div class="line-wrap" id="marketLine">
+        <svg viewBox="0 0 320 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(77,125,255,.28)"/>
+              <stop offset="100%" stop-color="rgba(77,125,255,0)"/>
+            </linearGradient>
+          </defs>
+          <path class="line-area" fill="url(#areaGrad)" d="M10,168 L60,150 L110,124 L160,94 L210,62 L260,34 L310,12 L310,200 L10,200 Z"/>
+          <path class="line-path" pathLength="1" style="stroke-dasharray:1; stroke-dashoffset:1;" d="M10,168 L60,150 L110,124 L160,94 L210,62 L260,34 L310,12"/>
+          <circle class="line-dot" cx="310" cy="12" r="5"/>
+        </svg>
+        <div class="year-labels">
+          <span>2024</span><span>2025</span><span>2026</span><span>2027</span><span>2028</span><span>2029</span><span>2030</span>
+        </div>
+      </div>
+      <p class="chart-desc">* 示意曲线，请替换为权威机构预测数据并标注来源</p>
+    </div>
+    <div class="chart-card reveal">
+      <h4>毕业去向与岗位</h4>
+      <ul class="career-list">
+        <li>嵌入式软件工程师<small>STM32 / RTOS / 驱动开发，电赛经历的直接对口岗位</small></li>
+        <li>物联网系统工程师<small>传感器网络 / 云平台 / 边缘网关</small></li>
+        <li>无人机飞控与导航算法<small>飞控调参 / SLAM / 路径规划，行业高薪稀缺岗</small></li>
+        <li>硬件电路工程师<small>原理图 / PCB / 电源设计</small></li>
+        <li>升学深造<small>机器人、人工智能、电子信息等方向考研加分项</small></li>
+      </ul>
+      <p class="chart-desc">竞赛获奖经历是这些岗位简历上的硬通货</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 作品集（瀑布流） ═══════════ -->
+<section id="gallery" class="gallery-section">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2>我们的作品</h2>
+        <p>历年参赛与训练作品（示例占位图，请替换为作品实拍）。</p>
+      </div>
+    </div>
+    <div class="gallery-masonry">
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-01.webp" alt="四轴自主导航无人机">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">四轴自主导航无人机</span><span class="idx">智能导航大赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-02.webp" alt="智能循迹小车">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">智能循迹小车</span><span class="idx">电赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-03.webp" alt="智慧家居系统">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">智慧家居物联网系统</span><span class="idx">物联网竞赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-04.webp" alt="环境监测站">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">远程环境监测站</span><span class="idx">物联网竞赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-05.webp" alt="信号处理装置">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">信号与系统实验装置</span><span class="idx">电赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-06.webp" alt="巡线机器人">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">巡线机器人</span><span class="idx">校内选拔</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-07.webp" alt="穿越机">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">FPV 穿越机</span><span class="idx">智能导航大赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/work-08.webp" alt="焊接调试">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">焊接调试工位</span><span class="idx">日常备赛</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 技术方向 ═══════════ -->
+<section id="research">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2>技术方向</h2>
+        <p>围绕"感知 — 决策 — 行动"技术链，覆盖三大赛道的核心技能栈</p>
+      </div>
+    </div>
+    <div class="research-grid">
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/><circle cx="12" cy="6" r="2"/></svg></div>
+        <h3>物联网系统<small>IoT Systems</small></h3>
+        <p>传感器网络、MQTT 与云平台、低功耗组网——做一套真正能落地的智慧系统。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2M9 9h6v6H9z"/></svg></div>
+        <h3>嵌入式开发<small>Embedded</small></h3>
+        <p>STM32 / TI MCU、RTOS、外设驱动与 PCB 设计，电赛的看家本领。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l3 4h-6l3-4zM4 13l4-5v6l-4-1zM20 13l-4-5v6l4-1zM12 12v6M12 18l-2 3h4l-2-3z"/></svg></div>
+        <h3>无人机导航<small>UAV Navigation</small></h3>
+        <p>飞控调参与航迹规划、SLAM 建图与自主避障，智能导航大赛的核心。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg></div>
+        <h3>智能感知<small>Perception</small></h3>
+        <p>视觉识别、多传感器融合，让机器看得懂环境、跟得上目标。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>
+        <h3>电路与电源<small>Circuit &amp; Power</small></h3>
+        <p>模拟/数字电路、电源设计与信号处理，电赛硬件题的硬功夫。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c1.7 1 3 3 3 5a6 6 0 01-4 5.7V19a3 3 0 01-6 0v-2.3A6 6 0 015 11c0-2 1.3-4 3-5a4 4 0 014-4z"/><path d="M12 8v4"/></svg></div>
+        <h3>边缘智能<small>Edge AI</small></h3>
+        <p>目标检测与自主决策跑在边缘设备上，为作品装上"大脑"。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 最新动态 ═══════════ -->
+<section id="news">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2>最新动态</h2>
+        <p>获奖、招新与备赛资讯</p>
+      </div>
+    </div>
+    <div class="news-wrap">
+      <div class="news-item reveal">
+        <div class="news-date">2026-09</div><div class="dot"></div>
+        <div class="news-body">
+          <div class="meta"><span class="n-tag n-award">获奖</span></div>
+          <h4>第十届湖南省大学生物联网应用创新设计竞赛 · 技能赛斩获两项省级一等奖</h4>
+          <p>实验室两支队伍在技能赛中均获省级一等奖。从方案设计、电路搭建到联调测试，队员们在真实赛场上完成了完整工程链路的检验。</p>
+          <div class="news-photos">
+            <img loading="lazy" decoding="async" src="./assets/img/news-1.webp" alt="队伍一在竞赛背景板前合影">
+            <img loading="lazy" decoding="async" src="./assets/img/news-2.webp" alt="队伍二在竞赛背景板前合影">
+            <img loading="lazy" decoding="async" src="./assets/img/news-3.webp" alt="实验室全体成员与指导老师在竞赛现场合影">
+          </div>
+        </div>
+      </div>
+      <div class="news-item reveal">
+        <div class="news-date">2026-09</div><div class="dot"></div>
+        <div class="news-body">
+          <div class="meta"><span class="n-tag n-join">招新</span></div>
+          <h4>实验室 2026 级招新正式启动</h4>
+          <p>物联网、电子设计、智能导航三个方向同步开放报名，面向全校大一大二同学，老带新培训，欢迎加入。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 团队 ═══════════ -->
+<section id="team">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2>团队</h2>
+        <p>以老带新，共同成长（示例名单，请替换为真实成员信息）</p>
+      </div>
+    </div>
+    <div class="leader-card reveal">
+      <div class="avatar">张</div>
+      <div class="leader-info">
+        <h3>张 老师（示例，请替换）</h3>
+        <div class="title">指导老师 · 实验室负责人</div>
+        <p>长期指导大学生电子设计竞赛、物联网设计竞赛与智能导航大赛，主持多项教改与科研项目，累计指导获奖数十项。</p>
+        <a class="mail" href="mailto:lab@example.edu.cn">lab@example.edu.cn</a>
+      </div>
+    </div>
+    <div class="team-grid">
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#4D7DFF,#3DE0FF)">李</div><h4>李 同学</h4><div class="role">队长 · 物联网方向</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#3DE0FF,#4D7DFF)">王</div><h4>王 同学</h4><div class="role">队长 · 电子设计</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#7B5CD9,#4D7DFF)">赵</div><h4>赵 同学</h4><div class="role">队长 · 无人机导航</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#C97A2E,#FFA657)">陈</div><h4>陈 同学</h4><div class="role">队员 · 硬件电路</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#3DE0FF,#7B5CD9)">刘</div><h4>刘 同学</h4><div class="role">队员 · 导航算法</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#4D7DFF,#C97A2E)">杨</div><h4>杨 同学</h4><div class="role">队员 · 嵌入式软件</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 加入我们 ═══════════ -->
+<section id="join">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2>加入我们</h2>
+        <p>从零基础到国赛领奖台，这条路我们已经走过很多遍</p>
+      </div>
+    </div>
+    <div class="join-flex">
+      <div class="join-text reveal">
+        <p>实验室每年面向<b style="color:var(--text)">全校大一大二同学</b>招新，不限专业——只要你肯动手、愿坚持。老队员一对一带你，从第一块面包板到省赛、国赛赛场。</p>
+        <ul>
+          <li>培养路径：基础培训（C 语言 / 电路 / 焊接）→ 校内选拔 → 省赛 → 国赛</li>
+          <li>不设门槛：零基础可加入，兴趣驱动比起点更重要</li>
+          <li>方向自选：物联网 / 电子设计 / 无人机导航，随兴趣自由选择</li>
+        </ul>
+        <a class="btn-solid" href="mailto:lab@example.edu.cn">联系我们：lab@example.edu.cn</a>
+      </div>
+      <div class="join-img reveal">
+        <img loading="lazy" decoding="async" src="./assets/img/join.webp" alt="实验室日常">
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<!-- ═══════════ Footer ═══════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand-col">
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="footer-brand">
+            <!-- 学校官方组合标：浅色背景用 invert 反色为深色 -->
+            <img class="school-logo inv" src="./assets/img/school-logo.png" alt="湖南科技学院">
+            <span class="divider"></span>
+            具身智能实验室
+          </div>
+          <div class="footer-slogan">以赛促学
+知行合一</div>
+        </div>
+        <div class="footer-qr">
+          <div class="qr-box"><img src="./assets/img/qrcode.png" alt="招新群二维码"></div>
+          <div class="qr-note">扫码加入实验室招新群</div>
+        </div>
+      </div>
+      <nav class="footer-nav">
+        <div class="footer-col">
+          <div class="col-title">三大赛道</div>
+          <div class="col-links">
+            <a href="#demo">作品展示</a>
+            <a href="#vla">无人机导航</a>
+            <a href="#research">技术方向</a>
+            <a href="#gallery">作品集</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <div class="col-title">了解更多</div>
+          <div class="col-links">
+            <a href="#bench">行业前景</a>
+            <a href="#news">最新动态</a>
+            <a href="#join">加入我们</a>
+            <a href="/login/">管理系统</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 具身智能实验室 · 湖南科技学院</span>
+      <span>湖南科技学院 · 地址待补充 &nbsp;|&nbsp; <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">X ICP备2026XXXXXX号（请替换）</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- 背景音乐开关（浏览器禁止带声自动播放，需用户点击开启） -->
+<button id="bgmBtn" class="bgm-btn" title="背景音乐" aria-label="背景音乐开关">
+  <svg class="ic-on" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/><path d="M4.5 13.5c1-1.5 1-3.5 0-5M7.5 15.5c1.8-2.3 1.8-6.7 0-9" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+  <svg class="ic-off" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+</button>
+<audio id="bgm" src="./assets/audio/bgm.mp3?v=3" loop preload="none"></audio>
+
+<div id="toast" role="status"></div>
+
+<script>
+  // ═══ Toast ═══
+  const toast = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+  document.querySelectorAll('.v-play').forEach(btn => {
+    btn.addEventListener('click', () => showToast('视频位待接入素材：替换 <img> 为 <video autoplay muted loop playsinline> 即可'));
+  });
+
+  // ═══ 移动端菜单 ═══
+  const burger = document.getElementById('navBurger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (burger && mobileMenu) {
+    burger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
+  }
+
+  // ═══ Hero 背景视频兜底：个别环境拦截 autoplay，首次交互后重试播放 ═══
+  document.querySelectorAll('.hero-media video.bg').forEach(v => {
+    const p = v.play();
+    if (p) p.catch(() => {
+      const resume = () => { v.play().catch(() => {}); };
+      document.addEventListener('pointerdown', resume, { once: true });
+      document.addEventListener('wheel', resume, { once: true, passive: true });
+      document.addEventListener('keydown', resume, { once: true });
+    });
+  });
+
+  // ═══ 关键：入场动画结束后摘除动画 ═══
+  // 带 transform/opacity 动画（fill: forwards）的元素在 Chrome 中会成为渲染隔离层，
+  // 导致内部按钮的 backdrop-filter 采样不到背后视频，玻璃效果失效。
+  // animationend 后清除动画，让按钮恢复对视频层的磨砂采样。
+  ['.hero-text', '.hero .button-group'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    // 摘除动画的同时，用内联样式钉住"已入场"状态，双保险防隐身
+    const clear = () => {
+      el.style.animation = 'none';
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) clear();
+    else el.addEventListener('animationend', clear, { once: true });
+  });
+
+  // ═══ 背景音乐：每次进入页面都显示中央启动卡，点击播放后消失；右下角按钮负责暂停/恢复 ═══
+  (function () {
+    const btn = document.getElementById('bgmBtn');
+    const audio = document.getElementById('bgm');
+    const gate = document.getElementById('bgmGate');
+    if (!btn || !audio) return;
+    audio.volume = 0.5;
+    const icOn = btn.querySelector('.ic-on'), icOff = btn.querySelector('.ic-off');
+    function setUI(playing) {
+      btn.classList.toggle('playing', playing);
+      icOn.style.display = playing ? '' : 'none';
+      icOff.style.display = playing ? 'none' : '';
+    }
+    function hideGate() {
+      if (!gate || gate.classList.contains('hide')) return;
+      gate.classList.add('hide');
+      setTimeout(() => gate.remove(), 600);
+    }
+    function startMusic() {
+      audio.play().then(() => {
+        setUI(true); hideGate();
+      }).catch(() => showToast('背景音乐加载失败：请确认 assets/audio/bgm.mp3 已上传'));
+    }
+    btn.addEventListener('click', () => {
+      if (audio.paused) startMusic();
+      else { audio.pause(); setUI(false); }
+    });
+    audio.addEventListener('error', () => {
+      btn.style.display = 'none'; hideGate();
+      showToast('背景音乐文件缺失：请上传 assets/audio/bgm.mp3');
+    });
+    if (gate) {
+      gate.addEventListener('click', startMusic);
+      gate.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startMusic(); }
+      });
+    }
+  })();
+
+  // ═══ 滚动渐入（进入视口 15% 且过底部 6% 缓冲才触发，动效更可见） ═══
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+  // 动态配图逐张错峰浮现
+  document.querySelectorAll('.news-photos').forEach(g => {
+    [...g.querySelectorAll('img')].forEach((el, i) => {
+      el.classList.add('reveal');
+      el.style.transitionDelay = i * 0.12 + 's';
+    });
+  });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ═══ 板块内容错峰渐入 ═══
+  document.querySelectorAll('.research-grid, .team-grid, .gallery-masonry, .charts-row, .showcase-track').forEach(grid => {
+    [...grid.querySelectorAll('.reveal')].forEach((el, i) => {
+      el.style.transitionDelay = (i % 6) * 0.08 + 's';
+    });
+  });
+
+  // ═══ 数字滚动（≥10 自动带 + 号） ═══
+  const cio = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return; cio.unobserve(e.target);
+      const target = +e.target.dataset.count, t0 = performance.now(), dur = 1200;
+      (function tick(t) {
+        const p = Math.min((t - t0) / dur, 1), ease = 1 - Math.pow(1 - p, 3);
+        e.target.textContent = Math.round(target * ease) + (p < 1 ? '' : (target >= 10 ? '+' : ''));
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  }, { threshold: 0.6 });
+  document.querySelectorAll('[data-count]').forEach(el => cio.observe(el));
+
+  // ═══ 展示区横向轮播 ═══
+  (function () {
+    const track = document.getElementById('sc-track');
+    const prev = document.getElementById('sc-prev');
+    const next = document.getElementById('sc-next');
+    if (!track) return;
+    let offset = 0;
+    function maxOffset() { return Math.max(0, track.scrollWidth - track.clientWidth); }
+    function stepSize() {
+      const cards = track.querySelectorAll('.showcase-card');
+      if (cards.length < 2) return 340;
+      return cards[0].offsetWidth + 20;
+    }
+    function update() {
+      track.style.transform = 'translateX(' + (-offset) + 'px)';
+      prev.disabled = offset <= 0;
+      next.disabled = offset >= maxOffset() - 2;
+    }
+    prev.addEventListener('click', () => { offset = Math.max(0, offset - stepSize()); update(); });
+    next.addEventListener('click', () => { offset = Math.min(maxOffset(), offset + stepSize()); update(); });
+    addEventListener('resize', update);
+    // 触屏手势：手机上直接左右拖动轮播
+    let sx = 0, so = 0, dragging = false;
+    track.addEventListener('touchstart', e => {
+      sx = e.touches[0].clientX; so = offset; dragging = true;
+      track.style.transition = 'none'; // 拖动期间关闭过渡，跟手
+    }, { passive: true });
+    track.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      const dx = sx - e.touches[0].clientX;
+      const v = Math.max(-60, Math.min(maxOffset() + 60, so + dx));
+      track.style.transform = 'translateX(' + (-v) + 'px)';
+    }, { passive: true });
+    track.addEventListener('touchend', e => {
+      if (!dragging) return;
+      dragging = false;
+      track.style.transition = '';
+      const dx = sx - e.changedTouches[0].clientX;
+      if (Math.abs(dx) > 40) offset = Math.max(0, Math.min(maxOffset(), so + dx));
+      update();
+    });
+    update();
+  })();
+
+  // ═══ 行业前景图表（条形图生长 + 折线绘制，进入视口触发） ═══
+  (function () {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const row = document.getElementById('chartsRow');
+    if (!row) return;
+
+    function playBars() {
+      row.querySelectorAll('.bar-fill').forEach((bar, i) => {
+        setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, i * 120);
+      });
+    }
+    function playLine() {
+      const wrap = document.getElementById('marketLine');
+      if (!wrap) return;
+      const path = wrap.querySelector('.line-path');
+      if (reduced) {
+        path.style.strokeDashoffset = '0';
+        wrap.classList.add('animate');
+        return;
+      }
+      path.style.transition = 'stroke-dashoffset 1.3s cubic-bezier(.66,0,.34,1) .2s';
+      requestAnimationFrame(() => {
+        path.style.strokeDashoffset = '0';
+        setTimeout(() => wrap.classList.add('animate'), 1300);
+      });
+    }
+
+    if (reduced) {
+      row.querySelectorAll('.bar-fill').forEach(bar => { bar.style.width = bar.dataset.w + '%'; });
+      const path = document.querySelector('#marketLine .line-path');
+      if (path) path.style.strokeDashoffset = '0';
+      const wrap = document.getElementById('marketLine');
+      if (wrap) wrap.classList.add('animate');
+      return;
+    }
+
+    const gio = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        gio.unobserve(e.target);
+        playBars();
+        playLine();
+      });
+    }, { threshold: 0.25 });
+    gio.observe(row);
+  })();
+
+  // ══════════ 首屏强制翻页（仅第一页⇄第二页整屏翻动，其余自由滚动） ══════════
+  (function () {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouch = matchMedia('(hover: none)').matches; // 触屏设备保留原生滚动
+    if (reduced || isTouch) return;
+
+    // 动画期间禁用 CSS 平滑滚动（避免与 rAF 动画叠加打架）
+    document.documentElement.style.scrollBehavior = 'auto';
+
+    const hero = document.querySelector('.hero');
+    let boundary = 0;
+    function measure() {
+      // 用 getBoundingClientRect 取文档绝对位置（offsetTop 会受 position:relative 父级影响算错）
+      boundary = hero.getBoundingClientRect().top + scrollY + hero.offsetHeight;
+    }
+    measure();
+    addEventListener('resize', measure);
+    addEventListener('load', measure);
+
+    const DUR = 500; // 翻页时长
+    let animating = false, cooldownUntil = 0;
+    function easeInOut(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function animateScroll(to) {
+      const from = scrollY, delta = to - from;
+      if (Math.abs(delta) < 2) return;
+      animating = true;
+      const t0 = performance.now();
+      (function tick(t) {
+        const p = Math.min((t - t0) / DUR, 1);
+        scrollTo(0, from + delta * easeInOut(p));
+        if (p < 1) requestAnimationFrame(tick);
+        else { animating = false; cooldownUntil = performance.now() + 150; }
+      })(t0);
+    }
+
+    // 滚轮：第一页向下 → 强制翻到第二页；第二页顶部/已进入第一页范围向上 → 强制翻回第一页；其余自由滚动
+    addEventListener('wheel', e => {
+      const cur = scrollY;
+      // 第二页内部：完全自由滚动，绝不拦截（冷却期也不拦截，避免自由区卡顿）
+      if (cur > boundary + 4) {
+        if (animating) e.preventDefault();
+        return;
+      }
+      if (animating || performance.now() < cooldownUntil) { e.preventDefault(); return; }
+      // 上翻：位于第二页顶部，或已滚入第一页范围 → 整屏翻回第一页顶部
+      if (e.deltaY < 0) {
+        if (cur > 4) { e.preventDefault(); animateScroll(0); }
+        return;
+      }
+      // 下翻：仍在第一页 → 强制翻到第二页
+      if (e.deltaY > 0 && cur < boundary - 4) {
+        e.preventDefault();
+        animateScroll(boundary);
+      }
+    }, { passive: false });
+
+    // 键盘：上/下方向键与翻页键在首屏边界处同样走强制翻页
+    addEventListener('keydown', e => {
+      const down = ['ArrowDown', 'PageDown', ' '].includes(e.key);
+      const up = e.key === 'ArrowUp' || e.key === 'PageUp';
+      if (!down && !up) return;
+      const cur = scrollY;
+      if (up && cur <= boundary + 4 && cur > 4) {
+        e.preventDefault();
+        if (!animating) animateScroll(0);
+      } else if (down && cur < boundary - 4) {
+        e.preventDefault();
+        if (!animating) animateScroll(boundary);
+      }
+    });
+
+    // 导航 / 按钮锚点 → 跨首屏边界走翻页动画，其余平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href').slice(1);
+        const el = id ? document.getElementById(id) : null;
+        if (!el) return;
+        e.preventDefault();
+        if (!animating) {
+          const to = el.getBoundingClientRect().top + scrollY;
+          const crossing = scrollY < boundary - 4 && to >= boundary - 4;
+          if (crossing) animateScroll(to);
+          else el.scrollIntoView({ behavior: 'smooth' });
+        }
+        const mm = document.getElementById('mobileMenu');
+        if (mm) mm.classList.remove('open');
+      });
+    });
+  })();
+</script>
+</body>
+</html>
