@@ -2,7 +2,9 @@
 # 服务器本地执行：清理残留 → 重建镜像（无 apt）→ 起容器 → ETL → 冒烟 → 部署 SPA → 切 nginx
 set -euo pipefail
 LAB=/opt/lab
-NGINX=$(command -v nginx || echo /www/server/nginx/sbin/nginx)
+# 服务器上跑的是 BT 面板 nginx；command -v 会找到系统 nginx（reload 会失败）
+NGINX=/www/server/nginx/sbin/nginx
+[ -x "$NGINX" ] || NGINX=$(command -v nginx)
 
 echo "=== [1/9] 清理上次卡死的 build 残留 ==="
 pkill -9 -f 'apt-get|dpkg' 2>/dev/null || true
@@ -99,6 +101,9 @@ echo ""
 echo "=== [8/9] 部署 SPA 静态 ==="
 mkdir -p $LAB/spa
 cp -a $LAB/lab-platform-web/. $LAB/spa/
+# scp 上传的目录权限是 700，nginx worker（www）读不了会 500，必须放开
+find $LAB/spa -type d -exec chmod 755 {} +
+find $LAB/spa -type f -exec chmod 644 {} +
 ls -la $LAB/spa/index.html
 
 echo ""
