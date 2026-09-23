@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     'apps.tasksapp',
     'apps.checkins',
     'apps.agent',
-    'apps.notify',
 ]
 
 MIDDLEWARE = [
