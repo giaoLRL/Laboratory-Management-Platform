@@ -126,12 +126,15 @@ def chat(conversation, user_message):
         raise RuntimeError('未配置 LAB_LLM_API_KEY')
 
     from apps.agent.models import AgentMessage
+    # QuerySet 不支持负数切片，取最后 20 条需先物化
+    msgs = list(conversation.messages.exclude(role='tool').order_by('created'))
     history = [
         {'role': m.role, 'content': m.content}
-        for m in conversation.messages.exclude(role='tool').order_by('created')[-20:]
+        for m in msgs[-20:]
     ]
-    messages = [{'role': 'system', 'content': SYSTEM_PROMPT}] + history + \
-        [{'role': 'user', 'content': user_message}]
+    # 注意：视图在调用 chat() 前已把本轮用户消息写入 conversation，
+    # 因此 history 已含当前消息，无需再 append 一次（否则会发两遍）
+    messages = [{'role': 'system', 'content': SYSTEM_PROMPT}] + history
 
     reply = ''
     for _ in range(4):

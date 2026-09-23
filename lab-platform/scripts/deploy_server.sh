@@ -49,6 +49,9 @@ docker run -d --name lab-lab-1 \
   -e LAB_DB_PORT=5432 \
   -e LAB_DB_USER=netbox \
   -e LAB_DB_PASSWORD=netbox123 \
+  -e LAB_LLM_API_KEY=sk-e734158e9b3f43f89e4c5605912a0d19 \
+  -e LAB_LLM_BASE_URL=https://api.deepseek.com/v1 \
+  -e LAB_LLM_MODEL=deepseek-chat \
   -v $LAB/data/media:/app/media \
   lab-platform:latest
 

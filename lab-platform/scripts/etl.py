@@ -246,4 +246,13 @@ messages:  {msg_count}
 NetBox borrow/task/checkin ALL EMPTY — skipped.
 {('DRY RUN, no writes made' if DRY_RUN else 'ACTUAL DATA WRITTEN')}
 """)
+
+# ── 修正 auth_user 序列：显式指定 pk 插入不会推进 Postgres sequence，
+#    不修的话新建用户会撞主键（sqlite 无此问题）──
+from django.db import connection
+if 'postgres' in connection.settings_dict['ENGINE'] and not DRY_RUN:
+    with connection.cursor() as c:
+        c.execute("SELECT setval('auth_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM auth_user))")
+    print("auth_user_id_seq: fixed (set to MAX(id))")
+
 src.close()
