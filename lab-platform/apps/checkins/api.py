@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 from apps.checkins.models import CheckInRecord
-from apps.common.permissions import is_staff
+from apps.common.rbac import require
 from apps.common.response import ok, fail
 
 
@@ -28,6 +28,8 @@ def workspace_slice(profile, staff):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def checkins_create(request):
+    if (err := require(request.user, 'action:checkin.create', '没有打卡的权限')):
+        return err
     photo = request.FILES.get('photo')
     if not photo:
         return fail('打卡必须上传现场照片')
@@ -47,4 +49,10 @@ def checkins_create(request):
         return fail('今天已经打卡过了，明天再来', 409)
 
     rec = CheckInRecord.objects.create(user=request.user, photo=photo, latitude=lat, longitude=lng)
+    # 每日打卡积分（重复打卡已被上面拦截，流水防重兜底）
+    from apps.points.service import award
+    awarded = award(request.user, 'checkin_daily', ref_type='checkin', ref_id=str(rec.pk), reason='实验室打卡')
+    if awarded:
+        from apps.accounts.models import OperationLog
+        OperationLog.objects.create(actor=request.user, text=f'打卡发放积分 +{awarded.points}')
     return ok({'id': rec.pk, 'created': rec.created, 'photo': rec.photo.url})

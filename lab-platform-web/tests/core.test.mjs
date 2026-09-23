@@ -186,10 +186,10 @@ test('API 模式未连接时明确失败，不回退到模拟数据', async () =
   run("CONFIG.mode='api'");
   await assert.rejects(run('API.load()'), /服务器尚未连接/);
 });
-test('HTML 只引用项目本地资源，六个脚本均可解析', () => {
-  assert.equal(scripts.length, 6);
-  assert.ok(scripts.every(path => /^src\/[a-z]+\.js$/.test(path)));
-  assert.ok(html.includes('href="src/styles.css"'));
+test('HTML 只引用项目本地资源，所有脚本均可解析', () => {
+  assert.equal(scripts.length, 17);
+  assert.ok(scripts.every(path => /^\/src\/[a-z]+\.js$/.test(path)));
+  assert.ok(html.includes('href="/src/styles.css"'));
   assert.ok(!/<script(?! defer src=)[^>]*>/.test(html));
   source.forEach(script => new vm.Script(script));
 });
@@ -415,7 +415,7 @@ test('同步读取失败保留当前表单和已有数据', async () => {
 });
 
 test('测试直接读取首页脚本顺序，源码没有遗漏或重复加载', () => {
-  assert.deepEqual([...scripts].sort(), readdirSync(new URL('../src',import.meta.url)).filter(name=>name.endsWith('.js')).map(name=>'src/'+name).sort());
+  assert.deepEqual([...scripts].sort(), readdirSync(new URL('../src',import.meta.url)).filter(name=>name.endsWith('.js')).map(name=>'/src/'+name).sort());
   new vm.Script(app);
 });
 test('保存失败回滚保留编辑对象引用，原表单重试可真正持久化', async () => {

@@ -12,9 +12,9 @@ def get_member(user):
 
 
 def is_staff(user):
-    """管理角色：指导老师或负责人。"""
-    m = get_member(user)
-    return bool(m and m.role in ('teacher', 'manager'))
+    """管理能力：指导老师或负责人，或 superadmin。委托 RBAC can_manage（懒加载避免循环导入）。"""
+    from apps.common.rbac import can_manage
+    return can_manage(user)
 
 
 class IsAuthenticatedMember(BasePermission):

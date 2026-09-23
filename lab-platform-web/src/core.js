@@ -4,21 +4,39 @@ const CONFIG = { mode: 'api', API_BASE_URL: '/api', timeout: 10000 };
 const DB_KEY = 'xinzhan.lab.demo.v1',
   SESSION_KEY = 'xinzhan.lab.session.v1';
 const ROLE = { teacher: '指导老师', manager: '负责人', member: '普通成员' };
-const MANAGEMENT_PERMISSIONS = ['manageCompetitions', 'manageAssets', 'manageMembers', 'approve'];
-const PAGE_SIZE = 8;
-const NAV = [
-  ['dashboard', 'grid', '工作台'],
-  ['members', 'users', '成员管理'],
-  ['leaves', 'calendar', '请假管理'],
-  ['assets', 'chip', '模块管理'],
-  ['loans', 'swap', '借用与归还'],
-  ['competitions', 'trophy', '比赛管理'],
-  ['tasks', 'task', '任务看板'],
-  ['checkins', 'pin', '实验室打卡'],
-  ['agent', 'chat', '智能体助手'],
-  ['logs', 'history', '操作记录'],
-  ['profile', 'user', '个人中心'],
+const PAGE_SIZE = typeof window !== 'undefined' && window.innerHeight
+  ? window.innerHeight < 720 ? 4 : window.innerHeight < 860 ? 5 : window.innerHeight < 1000 ? 6 : 7
+  : 6;
+// 动态导航：API 模式下由后端 workspace.nav 下发（已按当前用户权限过滤）；mock 用默认兜底
+// 每个页面模块的渲染函数通过 registerRenderer(id, fn) 注册，前端不硬编码菜单。
+let NAV = [];
+const DEFAULT_NAV = [
+  { id: 'dashboard', label: '工作台', icon: 'grid', permission: 'page:workbench', param: '' },
+  { id: 'members', label: '成员管理', icon: 'users', permission: 'page:members', param: '' },
+  { id: 'leaves', label: '请假管理', icon: 'calendar', permission: 'page:leaves', param: '' },
+  { id: 'assets', label: '模块管理', icon: 'chip', permission: 'page:assets', param: '' },
+  { id: 'loans', label: '借用与归还', icon: 'swap', permission: 'page:loans', param: '' },
+  { id: 'competitions', label: '比赛管理', icon: 'trophy', permission: 'page:competitions', param: '' },
+  { id: 'tasks', label: '任务看板', icon: 'task', permission: 'page:tasks', param: '' },
+  { id: 'checkins', label: '实验室打卡', icon: 'pin', permission: 'page:checkins', param: '' },
+  { id: 'leaderboard', label: '积分排行', icon: 'trophy', permission: 'page:leaderboard', param: '' },
+  { id: 'agent', label: '智能体助手', icon: 'chat', permission: 'page:agent', param: '' },
+  { id: 'logs', label: '操作记录', icon: 'history', permission: 'page:logs', param: '' },
+  { id: 'profile', label: '个人中心', icon: 'user', permission: 'page:profile', param: '' },
+  { id: 'notifications', label: '通知中心', icon: 'bell', permission: 'page:notifications', param: '' },
+  { id: 'permissions', label: '权限矩阵', icon: 'shield', permission: 'page:permissions', param: '' },
+  { id: 'announcements', label: '公告管理', icon: 'bell', permission: 'page:announcements', param: '' },
+  { id: 'news', label: '实时动态', icon: 'wifi', permission: 'page:news', param: '' },
+  { id: 'email', label: '邮件通知', icon: 'mail', permission: 'page:email', param: '' },
+  { id: 'groups', label: '小组管理', icon: 'users', permission: 'page:groups', param: '' },
+  { id: 'login-logs', label: '登录日志', icon: 'history', permission: 'page:loginlogs', param: '' },
+  { id: 'member', label: '成员详情', icon: '', permission: 'page:member.detail', param: 'm' },
+  { id: 'task', label: '任务详情', icon: '', permission: 'page:tasks', param: 'TASK' },
 ];
+const PAGE_RENDERERS = {};
+function registerRenderer(id, renderer) {
+  PAGE_RENDERERS[id] = renderer;
+}
 const CATEGORIES = ['开发板', '单板计算机', '传感器', '通信模块', '执行器', '调试工具', '其他'];
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -42,6 +60,11 @@ const inputDate = (v) => {
 };
 function uid(prefix) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+// 服务器时间校准：workspace 的 server_time 与本地时钟差（毫秒）；mock/未下发时为 0（回退本地时间）
+let serverOffset = 0;
+function serverNow() {
+  return new Date(Date.now() + serverOffset);
 }
 function requirePermission(test, message = '当前身份没有此操作权限') {
   if (!test) throw new Error(message);
@@ -71,6 +94,7 @@ function isHttpURL(value) {
 let db,
   sessionId = null,
   view = 'dashboard',
+  routeParam = '',
   search = '',
   filter = '',
   groupFilter = '',
@@ -166,11 +190,56 @@ const API = {
 function me() {
   return db?.members.find((m) => m.id === sessionId && m.active);
 }
+// mock 演示数据用的角色→权限映射（API 模式以后端 workspace.permissions 为准，不进此分支）
+const MOCK_MEMBER_PERMS = [
+  'page:workbench', 'page:profile', 'page:loans', 'page:leaves', 'page:tasks', 'page:checkins',
+  'page:competitions', 'page:agent', 'page:logs', 'page:member.detail', 'page:leaderboard',
+  'action:profile.edit', 'action:profile.status', 'action:notifications',
+  'action:loan.create', 'action:loan.cancel', 'action:loan.request_return',
+  'action:leave.create', 'action:leave.cancel',
+  'action:task.create', 'action:task.update', 'action:task.delete', 'action:task.attachment',
+  'action:checkin.create', 'action:checkin.refresh',
+  'action:competition.view', 'action:agent.chat', 'action:agent.history',
+  'action:token.manage', 'page:news',
+  'page:notifications',
+];
+const MOCK_STAFF_ADDS = [
+  'page:members', 'page:assets',
+  'action:member.create', 'action:member.update', 'action:member.active',
+  'action:asset.create', 'action:asset.update', 'action:asset.repair',
+  'action:asset.repair_complete', 'action:asset.retire',
+  'action:loan.review', 'action:loan.issue', 'action:loan.receive',
+  'action:leave.review',
+  'action:competition.create', 'action:competition.update', 'action:competition.archive',
+  'action:task.score', 'action:points.rules', 'action:points.manual',
+  'page:email', 'action:email.manage',
+  'action:agent.operate',
+  'action:token.manage', 'page:news', 'action:news.manage',
+  // 兼容旧测试直接断言的管理权限字面量
+  'manageCompetitions', 'manageAssets', 'manageMembers', 'approve',
+];
+function mockPermissions(role) {
+  const base = [...MOCK_MEMBER_PERMS];
+  if (role === 'teacher' || role === 'manager') base.push(...MOCK_STAFF_ADDS);
+  if (role === 'teacher') base.push('assignRoles');
+  return base;
+}
+// 路由 id 与权限点命名不一致的别名：导航守卫/菜单渲染共用 can()，统一在此归一
+const PAGE_KEY_ALIAS = { 'page:dashboard': 'page:workbench', 'page:login-logs': 'page:loginlogs' };
 function can(permission) {
+  const key = PAGE_KEY_ALIAS[permission] || permission;
+  if (Array.isArray(db?.permissions)) return db.permissions.includes(key);
+  // mock：按当前登录成员的 role 推导（演示与既有测试）
   const role = me()?.role;
-  return permission === 'assignRoles'
-    ? role === 'teacher'
-    : MANAGEMENT_PERMISSIONS.includes(permission) && ['teacher', 'manager'].includes(role);
+  return !!role && mockPermissions(role).includes(key);
+}
+function canApprove() {
+  return can('action:loan.review') || can('action:leave.review') || can('approve');
+}
+function roleLabel(m) {
+  if (!m) return '—';
+  if (Array.isArray(m.roles) && m.roles.includes('superadmin')) return '系统管理员';
+  return ROLE[m.role] || '普通成员';
 }
 function member(id) {
   return db.members.find((x) => x.id === id);
@@ -201,9 +270,9 @@ function pendingCount() {
   return db.loans.filter((l) => needsLoanReview(l)).length + db.leaves.filter((l) => l.status === '待审批' && canReview(l)).length;
 }
 function canReview(r) {
-  const user = me(),
-    owner = member(r.memberId);
-  return !!user && can('approve') && user.id !== r.memberId && (user.role === 'teacher' || owner?.role === 'member');
+  const user = me(), owner = member(r?.memberId);
+  if (!user || !(can('action:loan.review') || can('action:leave.review'))) return false;
+  return user.id !== r.memberId && (user.role === 'teacher' || owner?.role === 'member');
 }
 function visibleLogs() {
   return db.logs
@@ -220,7 +289,7 @@ function todoItems() {
         icon: 'swap',
         view: 'loans',
       });
-    if (overdue(l) && (can('approve') || l.memberId === me().id))
+    if (overdue(l) && (canApprove() || l.memberId === me().id))
       tasks.push({
         title: '模块借用已逾期',
         description: `${member(l.memberId)?.name} · ${fmt(l.due)} 应归还`,
@@ -278,6 +347,9 @@ function applySnapshot(snapshot) {
     });
   }
   db = next;
+  serverOffset = snapshot.server_time ? new Date(snapshot.server_time).getTime() - Date.now() : 0;
+  // 动态导航：后端下发（已按权限过滤）优先，否则用默认兜底（mock 演示）
+  NAV = Array.isArray(snapshot.nav) && snapshot.nav.length ? snapshot.nav : DEFAULT_NAV;
 }
 function isActiveLoan(loan) {
   return ['使用中', '待确认归还'].includes(loan.status);

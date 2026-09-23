@@ -5,6 +5,7 @@ from apps.inventory import api
 urlpatterns = [
     path('assets', api.assets_create),
     path('assets/<str:aid>/update', api.assets_update),
+    path('assets/<str:aid>/image', api.assets_image),
     path('assets/<str:aid>/maintenance', api.assets_maintenance),
     path('assets/<str:aid>/repair-complete', api.assets_repair_complete),
     path('assets/<str:aid>/retire', api.assets_retire),

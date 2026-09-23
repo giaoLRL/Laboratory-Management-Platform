@@ -32,6 +32,9 @@ INSTALLED_APPS = [
     'apps.tasksapp',
     'apps.checkins',
     'apps.agent',
+    'apps.notify',
+    'apps.points',
+    'apps.email',
 ]
 
 MIDDLEWARE = [
@@ -91,7 +94,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('LAB_MEDIA_ROOT', BASE_DIR / 'media'))
 # 开发模式托管的 SPA 目录
 LAB_WEB_DIR = os.environ.get('LAB_WEB_DIR', str(BASE_DIR.parent / 'lab-platform-web'))
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB，打卡照片上传
+# 上传体积上限：打卡照片 / 任务附件共用。视频材料较大，按环境可配（默认 60MB，nginx client_max_body_size 需同步放开）
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get('LAB_MAX_UPLOAD_BYTES', 60 * 1024 * 1024))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -108,7 +112,10 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ('apps.common.auth.CsrfExemptSessionAuthentication',),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'apps.common.auth.TokenAuthentication',
+        'apps.common.auth.CsrfExemptSessionAuthentication',
+    ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'DEFAULT_PARSER_CLASSES': ('rest_framework.parsers.JSONParser',

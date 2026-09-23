@@ -28,12 +28,18 @@ const CONFIG = {
 
 | 方法 | 路径 | 请求体 | 成功响应示例 |
 | --- | --- | --- | --- |
-| POST | `/auth/login` | `{"username":"teacher","password":"用户输入"}` | `{"data":{"id":"m1"}}`，同时设置会话 Cookie |
+| POST | `/auth/login` | `{"username":"teacher","password":"用户输入"}` | `{"data":{"id":"m1","mustChangePassword":false,"mustCompleteProfile":true}}`，同时设置会话 Cookie |
 | GET | `/auth/me` | 无 | `{"data":{"id":"m1"}}` |
 | POST | `/auth/logout` | `{}` | `{"data":{"ok":true}}`，清除会话 |
-| GET | `/workspace` | 无 | `{"data":{"version":1,"members":[],"assets":[],"loans":[],"leaves":[],"maintenance":[],"logs":[],"competitions":[]}}` |
+| GET | `/workspace` | 无 | `{"data":{"version":1,"server_time":"2026-09-24T06:00:00+08:00","permissions":["page:workbench",...],"members":[],"assets":[],"loans":[],"leaves":[],"maintenance":[],"logs":[],"competitions":[]}}` |
+
+`server_time` 为服务器当前时间（ISO 带时区）。前端以其校准"服务器时间"用于工作台时段问候（早上好/上午好/…）与日期展示；`server_time` 缺失时（如 mock）回退浏览器本地时间。
+
+`workspace` 另含公告与通知键：`announcements`（可见公告）、`unread_announcements`（公告未读数）、`notifications`（最近 10 条站内通知：`{id,kind,title,body,refType,refId,link,read,created}`）、`unread_notifications`（未读通知数）。铃铛红点 = `unread_notifications + 待办数`。
 
 现有前端实际读取 `/workspace` 聚合快照，再在客户端搜索、分页和计算统计，适合目前小型实验室原型。数据规模增大后可拆分列表接口并改为后端分页。服务器快照必须包含当前用户的成员对象，所有数组即使没有数据也应返回 `[]`。
+
+`permissions` 返回**当前登录用户的有效权限点集合**（角色勾选 + 用户级覆盖合成后端 RBAC），前端据此控制菜单/页面/按键显示。其 key 形如 `page:members`（页面可进）、`action:loan.review`（动作可执行）等；`superadmin`（系统管理员）返回全量。前端 `can(key)` 直接读该数组，不要在前端二次推导权限。
 
 快照必须由服务器按当前会话裁剪隐私字段。普通成员的其他成员资料不得包含私人联系方式、请假原因或审批意见。为保留模块使用者与人员请假状态，普通成员仍需要：
 
@@ -53,15 +59,16 @@ const CONFIG = {
 {
   "member": {
     "id": "m3", "name": "张子涵", "username": "member", "number": "2024003",
-    "role": "member", "group": "硬件研发组", "direction": "STM32 / 电路设计",
+    "role": "member", "roles": ["member"], "group": "硬件研发组", "direction": "STM32 / 电路设计",
     "contact": "member@lab.example", "active": true, "baseStatus": "忙碌",
-    "note": "项目调试中", "joined": "2026-01-01T00:00:00.000Z", "updated": "2026-09-22T00:00:00.000Z"
+    "note": "项目调试中", "joined": "2026-01-01T00:00:00.000Z", "updated": "2026-09-22T00:00:00.000Z",
+    "mustChangePassword": false, "mustCompleteProfile": false
   },
   "asset": {
     "id": "EM-001", "name": "STM32F407 开发板", "model": "STM32F407ZGT6",
     "category": "开发板", "vendor": "STMicroelectronics", "spec": "3.3V · UART / SPI / I²C",
     "location": "器材柜 A-01", "status": "空闲", "created": "2026-06-01T00:00:00.000Z",
-    "note": "", "datasheet": ""
+    "note": "", "datasheet": "", "image": ""
   },
   "loan": {
     "id": "BR-001", "memberId": "m3", "assetIds": ["EM-001"],
@@ -88,6 +95,32 @@ const CONFIG = {
 
 资产状态在当前前端由有效借用记录优先推导为“使用中”；其他状态来自 asset.status。后端也应保持占用关系一致。成员“请假”由当前时间落在已通过请假记录的 start/end 内计算，其他时间显示 baseStatus。
 
+## 权限管理（RBAC）
+
+权限模型：静态权限点（`page:*` 菜单/页面、`action:*` 动作按键）+ 角色(`Role`)勾选集合落库 + 用户级覆盖(`permission_overrides`)。**系统管理员(superadmin)** 角色全量、不受矩阵限制，仅它能维护角色/矩阵/成员覆盖。前端按 `/workspace` 的 `permissions` 渲染菜单与按钮；后端每个写接口用同权限点强制校验（绕过前端也会被拒）。
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/permissions/meta` | 权限点分组 + 全部角色(含勾选集) + 当前用户矩阵可维护标志 | 登录 |
+| POST | `/permissions/roles` | 创建自定义角色 `{"code":"op","name":"操作员"}` | superadmin + `action:manage.roles` |
+| POST | `/permissions/roles/<code>/rename` | 重命名（内置不可改） | superadmin + `action:manage.roles` |
+| DELETE | `/permissions/roles/<code>` | 删除自定义角色（有成员占用时拒绝 409） | superadmin + `action:manage.roles` |
+| POST | `/permissions/roles/<code>/grant` | 保存角色勾选 `{"permissions":["page:members",...]}` | superadmin + `action:manage.permissions` |
+| GET | `/permissions/members/<mid>` | 读某成员权限覆盖（allow/deny） | superadmin + `action:manage.override` |
+| POST | `/permissions/members/<mid>/grant` | 写成员覆盖 `{"allowed":[],"denied":["action:loan.create"]}` | superadmin + `action:manage.override` |
+
+`permissions/meta` 返回示例：
+
+```json
+{"data":{
+  "groups":[{"name":"成员","points":[{"key":"page:members","label":"成员管理页"}, ...]}],
+  "roles":[{"code":"teacher","name":"指导老师","builtin":true,"superadmin":false,"permissions":["page:members",...]}, ...],
+  "isSuperadmin":true, "canEditRoles":true, "canEditMatrix":true, "canOverride":true
+}}
+```
+
+创建系统管理员（命令行，幂等）：`python manage.py createsuperadmin --username admin --password 密码`。
+
 ## 写接口
 
 下表接口是页面已经使用的路径。服务器从会话获取操作者与申请人，不能信任客户端传来的角色、操作人或审批人。
@@ -96,11 +129,12 @@ const CONFIG = {
 | --- | --- | --- |
 | `/members` | name, number, username, role, group, direction, contact, password（创建时必填） | `{"data":{"id":"m9"}}` |
 | `/members/:id/update` | name, number, username, role, group, direction, contact | `{"data":{"ok":true}}` |
-| `/members/me/update` | name, direction, contact | 同上 |
+| `/members/me/update` | name, direction, contact, email | 同上；本人 `must_complete_profile` 置位时（新账号首次登录）direction/contact/email 必填，成功保存后清除该标记 |
 | `/members/me/status` | status（空闲/忙碌）, note | 同上 |
 | `/members/:id/active` | active（布尔） | 同上 |
-| `/assets` | id, name, model, category, vendor, spec, location, note, datasheet | `{"data":{"id":"EM-019"}}` |
+| `/assets` | id, name, model, category, vendor, spec, location, note, datasheet, image | `{"data":{"id":"EM-019"}}` |
 | `/assets/:id/update` | 同上，资产编号不可修改 | `{"data":{"ok":true}}` |
+| `/assets/:id/image` | multipart 表单字段 `image`（≤10MB，jpg/png/webp 等） | `{"data":{"image":"/media/inventory/202609/xxx.png"}}` |
 | `/assets/:id/maintenance` | description | 同上 |
 | `/assets/:id/repair-complete` | `{}` | 同上 |
 | `/assets/:id/retire` | `{}` | 同上 |
@@ -205,3 +239,110 @@ const CONFIG = {
 7. 修改 CONFIG 并刷新页面，验证真实登录、权限与资产并发后再正式使用。
 
 本地演示不提供服务器间同步、真实离线检测、真实消息通知、自动邮件或短信。提醒仅在页面中展示，定时器用于刷新状态，不在页面关闭后后台运行。
+
+## 任务与小组（P1 新增契约）
+
+`/workspace` 快照新增/扩展两个数据类目：
+
+```json
+{
+  "groups": [
+    {"id": "G-001", "name": "硬件研发组", "leaderId": "m2", "leaderName": "林知远",
+     "capacity": 20, "note": "", "members": ["m1","m2"], "memberCount": 2, "created": "..."}
+  ],
+  "tasks": [
+    {"id": "TASK-001", "title": "调试电机", "description": "", "status": "submitted",
+     "priority": "high", "assigneeId": "m3", "assigneeName": "张子涵",
+     "creatorId": "m1", "groupId": "G-001", "groupName": "硬件研发组",
+     "due": "...", "created": "...", "updated": "...",
+     "completedAt": "...|null", "completionNote": "", "score": null,
+     "submission": "", "submittedAt": "...|null",
+     "reviewerId": "", "reviewerName": "",
+     "reviewedById": "", "reviewedByName": "", "reviewedAt": "...|null", "reviewOpinion": "",
+     "attachments": [{"url": "/media/tasks/...", "name": "test.jpg"}]}
+  ]
+}
+```
+
+- 成员对象新增 `groupId` 字段（所属小组，无则为空字符串）；`group` 为文本快照展示。
+- `groups` 仅登录可见；小组人数上限 `capacity`，同一成员只能属于一个小组。
+- 任务 `groupId` 用于“小组任务”：组内成员（含队长）可在看板内编辑/推进，不限管理角色；创建/删除仍需对应 action 权限。
+- 任务状态枚举：`todo`（待办）→ `doing`（进行中）→ `submitted`（待审核）→ `done`（已完成）。`submitted` 只能由「提交作业」进入、由审核决定去向（通过→done 并打分，退回→doing）；普通 update 不能移入/移出 `submitted`。`score`（1-5，审核通过时写入）、`completionNote` 由审核/总结写入。
+- 任务可指定 `reviewerId`（布置时选定的审核人，默认系统管理员，仅老师/负责人/系统管理员可选）；提交作业时可选上传附件（与 `submission` 同请求 multipart 提交）。审核动作仍以 `action:task.review` 权限为准，审核人字段用于任务展示与路由提示。
+
+| 方法 | 路径 | 请求体 | 权限 |
+| --- | --- | --- | --- |
+| POST | `/tasks` | title, description, status, priority, assigneeId, reviewerId, groupId, due | `action:task.create` |
+| POST | `/tasks/batch` | title, description, priority, reviewerId, groupId, due, assigneeIds（数组，≤50）→ `{ids:[...]}`，每位成员各建一条 | `action:task.create` |
+| POST | `/tasks/:id/update` | 同上字段子集（`submitted` 任务不可改状态） | `action:task.update` 或小组任务组内成员 |
+| POST | `/tasks/:id/submit` | multipart：`submission`（提交内容）+ 可选 `file`（附件，≤50MB）→ todo/doing → submitted | 负责人本人或同小组组员 |
+| POST | `/tasks/:id/review` | `{"decision":"approve","score":1-5}` 通过并打分；`{"decision":"reject","opinion":"..."}` 退回 | `action:task.review` |
+| POST | `/tasks/:id/delete` | `{}` | `action:task.delete` 且创建者/管理 |
+| POST | `/tasks/:id/attachment` | multipart file（≤8MB） | `action:task.attachment` |
+| POST | `/groups/create` | name, capacity, leaderId, note | `action:group.manage` |
+| POST | `/groups/:id/update` | name, capacity, leaderId, note | `action:group.manage` |
+| POST | `/groups/:id/delete` | `{}` | `action:group.manage` |
+| POST | `/groups/:id/members` | memberIds（数组，替换式） | `action:group.members` |
+
+## 积分与排行榜（P2 新增契约）
+
+- 成员对象 `points` 为累计总分（快照下发）。
+- 积分流水只增不删，`(user, rule_key, ref_type, ref_id)` 唯一，重复动作不重复发分。
+- 内置规则：`task_complete`（评分时发 星级×单位分 给负责人）、`checkin_daily`（每次打卡 +单位分）、`loan_on_time`（按时归还无损坏 +单位分）、`checkin_streak`、`custom`。
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/points/rules` | 规则列表（普通成员仅启用项） | 登录 |
+| POST | `/points/rules/save` | `{"rules":[{key,points,enabled}]}` | `action:points.rules` |
+| GET | `/points/leaderboard?period=week\|month\|all` | `{"period","ranking":[{memberId,name,group,points}]}` | 登录 |
+| GET | `/points/trend/<mid>` | 近 30 天每日积分 | 本人或管理可见 |
+| POST | `/tasks/:id/score` | `{"score":1-5}` 已完成任务评分（已审核打分的任务返回 409） | `action:task.score` |
+
+## 邮件提醒（P2 新增契约）
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/email/config` | SMTP 配置（密码只回传是否已设置） | 登录 |
+| POST | `/email/config/save` | smtpHost/Port/User/password/fromAddr/useSsl/enabled + sendTest | `action:email.manage` |
+| GET | `/email/rules` | 提醒规则列表 | 登录 |
+| POST | `/email/rules/save` | `{"rules":[{key,enabled,hoursBefore,subjectTpl,bodyTpl}]}` | `action:email.manage` |
+| GET | `/email/logs` | 最近 100 条发送日志 | 登录 |
+
+- 模板占位符：`{name} {title} {id} {due} {result} {reason} {rejectReason} {start} {location}`。
+- 规则键：`task_due` 任务临期、`loan_overdue` 借用逾期、`competition_deadline` 报名截止、`competition_start` 开赛提醒（均 cron 扫描）；`leave_result` 请假审批、`loan_reviewed` 借用审批、`loan_issued` 借用发放、`asset_repaired` 维修完成、`task_assigned` 任务指派（均**即时发送**）；`custom` 自定义。
+- 发送引擎：`manage.py send_reminders`（宿主机 cron 每 30 分钟），扫描同时生成**站内通知**（不依赖邮件开关）；即时类规则由业务接口触发。SMTP 请用 465/SSL（阿里云封 25 端口）。
+
+## 通知中心（站内通知契约）
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/notifications?page=&pageSize=&type=` | 本人通知分页（type 按 kind 前缀：loan/leave/task/competition/announcement/asset/points/member）→ `{items,total,page,pageSize,unread}` | 登录 |
+| POST | `/notifications/<id>/read` | 单条已读（他人通知返回 404） | 登录 |
+| POST | `/notifications/read-all` | 全部已读 | 登录 |
+
+- 通知 kind：`loan_apply/loan_reviewed/loan_issued/loan_return_requested/loan_returned/loan_overdue`、`leave_apply/leave_reviewed`、`task_assigned/task_completed/task_scored/task_due/task_submitted/task_reviewed/task_rejected`、`competition_published/competition_deadline/competition_start`、`announcement_published`、`asset_repaired`、`points_changed`、`member_joined`。
+- 通知生成幂等（recipient+kind+ref 唯一），cron 每 30 分钟重复扫描不重复生成；`link` 为前端页面路由 id。
+
+## 动态导航（路由配置下发）
+
+- `/workspace` 快照新增 `nav`：按当前用户权限过滤后的菜单/路由列表，前端据此渲染侧边栏与路由守卫（不再硬编码导航）。
+  ```json
+  {"nav": [{"id":"dashboard","label":"工作台","icon":"grid","permission":"page:workbench","param":""},
+           {"id":"member","label":"成员详情","icon":"","permission":"page:member.detail","param":"m"}]}
+  ```
+- `param` 非空表示参数子页（如 `member` → `#member/m3`），不在侧边栏展示；`permission` 留空表示登录即可见。
+- 管理接口（superadmin）：`GET /nav`（全量，含 enabled/order）、`POST /nav/save`（`{"items":[{id,label,icon,permission,param,enabled,order}]}`，upsert 不删除，enabled=false 即隐藏）。
+
+## API 令牌（只读 openapi，P3 新增契约）
+
+- 令牌只存 SHA-256 哈希，明文仅创建时返回一次（默认 90 天过期）。
+- 认证：`Authorization: Bearer <token>`；未带或失效返回 401/403。
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/tokens` | 本人令牌列表 | `action:token.manage` |
+| POST | `/tokens/create` | `{"name":"Trae","scopes":["read:assets","read:loans","read:tasks"]}` → `{"token":"lab_...","aiInstruction":"…","note":"明文仅此一次"}`，`aiInstruction` 为内含令牌的完整 AI 指令，可直接粘贴给 AI | 同上 |
+| POST | `/tokens/:id/revoke` | 吊销令牌 | 同上（仅本人） |
+| GET | `/openapi/assets` | 只读模块清单 | 令牌需 `read:assets` scope |
+| GET | `/openapi/loans` | 只读借用清单 | 令牌需 `read:loans` scope |
+| GET | `/openapi/tasks` | 只读任务清单 | 令牌需 `read:tasks` scope |

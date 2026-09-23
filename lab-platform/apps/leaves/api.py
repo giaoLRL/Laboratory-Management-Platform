@@ -4,7 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from apps.accounts.models import OperationLog
 from apps.common.ids import next_code
-from apps.common.permissions import get_member, is_staff
+from apps.common.permissions import get_member
+from apps.common.rbac import require
 from apps.common.response import ok, fail
 from apps.leaves.models import Leave
 
@@ -60,6 +61,8 @@ def _can_review(leave, viewer):
 @permission_classes([IsAuthenticated])
 def leaves_create(request):
     me = get_member(request.user)
+    if (err := require(request.user, 'action:leave.create', '没有提交请假的权限')):
+        return err
     d = request.data or {}
     try:
         from django.utils.dateparse import parse_datetime
@@ -84,14 +87,19 @@ def leaves_create(request):
     leave = Leave.objects.create(id=next_code(Leave, 'LV'), member=request.user,
                                  start=start, end=end, reason=reason)
     _log(request, f'{me.name} 提交请假 · {leave.id}')
+    from apps.notify.service import create_many, managers_with
+    create_many(
+        [u for u in managers_with('action:leave.review') if u.id != request.user.id],
+        'leave_apply', f'{me.name} 提交请假申请',
+        f'{leave.id} · {start:%m-%d %H:%M} 至 {end:%m-%d %H:%M}', ref_type='leave', ref_id=leave.id, link='leaves')
     return ok({'id': leave.id})
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def leaves_review(request, lid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以审批请假', 403)
+    if (err := require(request.user, 'action:leave.review', '没有审批请假的权限')):
+        return err
     try:
         leave = Leave.objects.get(pk=lid)
     except Leave.DoesNotExist:
@@ -116,12 +124,32 @@ def leaves_review(request, lid):
     leave.opinion = opinion
     leave.save()
     _log(request, f"审批请假 {leave.id} · {'批准' if decision == 'approve' else '拒绝'}")
+    # 审批结果回执邮件（规则 leave_result，即时发送）
+    from apps.email.models import EmailRule
+    from apps.email.service import _trigger_by_rule, _member_email
+    rule = EmailRule.objects.filter(key='leave_result').first()
+    if rule and rule.enabled:
+        prof = getattr(leave.user, 'member_profile', None)
+        name = prof.name if prof else leave.user.username
+        result = '已通过' if decision == 'approve' else '未通过'
+        _trigger_by_rule(rule, {
+            'name': name, 'result': result, 'reason': opinion or '无',
+            'start': timezone.localtime(leave.start).strftime('%m-%d %H:%M'),
+            'end': timezone.localtime(leave.end).strftime('%m-%d %H:%M'),
+            'rejectReason': opinion or '无',
+        }, 'leave', leave.id, [_member_email(leave.user)])
+    from apps.notify.service import create
+    create(leave.user, 'leave_reviewed', f'请假申请已{"通过" if decision == "approve" else "拒绝"}',
+           f'{leave.id} · {("审批意见：" + opinion) if opinion else ""}',
+           ref_type='leave', ref_id=leave.id, link='leaves')
     return ok()
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def leaves_cancel(request, lid):
+    if (err := require(request.user, 'action:leave.cancel', '没有撤销请假的权限')):
+        return err
     try:
         leave = Leave.objects.get(pk=lid)
     except Leave.DoesNotExist:

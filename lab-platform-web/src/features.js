@@ -46,12 +46,17 @@ async function verifyCredential(password, credential) {
   return mismatch === 0;
 }
 function cleanMemberData(input, self = false) {
-  const keys = self ? ['name', 'direction', 'contact'] : ['name', 'number', 'username', 'role', 'group', 'direction', 'contact'];
+  const keys = self ? ['name', 'number', 'direction', 'contact', 'email'] : ['name', 'number', 'username', 'role', 'group', 'direction', 'contact', 'email'];
   return cleanFields(input, keys);
 }
 function validateMemberData(data, id = null, self = false) {
   requirePermission(data.name && data.name.length <= 30, '姓名不能为空，且不能超过 30 个字符');
-  if (self) return;
+  requirePermission(!data.email || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email), '邮箱格式不正确');
+  if (self) {
+    requirePermission(data.number && data.number.length <= 30, '请填写有效的学号 / 工号');
+    requirePermission(!db.members.some((m) => m.id !== id && m.number === data.number), '该学号 / 工号已存在');
+    return;
+  }
   requirePermission(data.number && data.number.length <= 30 && data.group && data.group.length <= 40, '请填写有效的学号 / 工号和所属小组');
   requirePermission(/^[A-Za-z0-9_]{3,30}$/.test(data.username), '账号须为 3–30 位字母、数字或下划线');
   requirePermission(Object.hasOwn(ROLE, data.role), '请选择有效角色');
@@ -63,14 +68,14 @@ function validateMemberData(data, id = null, self = false) {
   );
 }
 async function createMemberAccount(input, password, confirmation = password) {
-  requirePermission(can('manageMembers'));
+  requirePermission(can('action:member.create'));
   const data = cleanMemberData(input);
   validateMemberData(data);
   validatePassword(password, confirmation);
   const actorId = me().id;
   const credential = CONFIG.mode === 'mock' ? await makeCredential(password) : null;
   // 校验在异步密码派生后再做一次，防止同一标签页状态变化。
-  requirePermission(me()?.id === actorId && can('manageMembers'), '当前身份已变化，请重新提交');
+  requirePermission(me()?.id === actorId && can('action:member.create'), '当前身份已变化，请重新提交');
   validateMemberData(data);
   let created = null;
   await API.mutate('/members', { ...data, password }, () => {
@@ -92,7 +97,7 @@ function showAccountCreated(created) {
     `<div class="account-success"><div class="success-mark">${icon('check')}</div><h2>${esc(created?.name || '新成员')}，欢迎加入实验室</h2><p>成员资料和登录账号已同时保存。</p></div><div class="account-result">${details(
       [
         ['登录账号', created?.username || '已创建'],
-        ['角色', ROLE[created?.role] || '普通成员'],
+        ['角色', roleLabel(created) || '普通成员'],
         ['账号状态', '已启用'],
         ['登录密码', '使用刚刚设置的初始密码'],
       ],
@@ -114,18 +119,18 @@ function membersPage() {
       (!groupFilter || m.role === groupFilter),
   );
   const p = paginate(list);
-  return `${heading('成员管理', '了解每位伙伴的状态，让协作更高效。', btn(`${icon('refresh')} 更新我的状态`, 'status') + (can('manageMembers') ? btn(`${icon('plus')} 新增成员`, 'member-new', 'primary') : ''), 'MEMBERS / 实验室成员')}${memberStatusSummary()}<section class="panel">${toolbar('搜索姓名、学号、研究方向…', ['空闲', '忙碌', '请假', '离线', '已停用'], Object.entries(ROLE))}${dataTable(
+  return `<div class="page-fit">${heading('成员管理', '了解每位伙伴的状态，让协作更高效。', btn(`${icon('refresh')} 更新我的状态`, 'status') + (can('action:member.create') ? btn(`${icon('plus')} 新增成员`, 'member-new', 'primary') : ''), 'MEMBERS / 实验室成员')}${memberStatusSummary()}<section class="panel">${toolbar('搜索姓名、学号、研究方向…', ['空闲', '忙碌', '请假', '离线', '已停用'], Object.entries(ROLE))}${dataTable(
     p,
-    ['成员', '角色 / 小组', ...(can('manageMembers') ? ['登录账号'] : []), '研究方向', '当前状态', '操作'],
+    ['成员', '角色 / 小组', ...(can('action:member.create') ? ['登录账号'] : []), '研究方向', '当前状态', '操作'],
     (m) => [
       `<div class="row">${avatar(m)}<div>${stack(m.name, m.number)}</div></div>`,
-      `<strong>${ROLE[m.role]}</strong><small>${esc(m.group)}</small>`,
-      ...(can('manageMembers') ? [`<span class="mono">${esc(m.username)}</span><small>${m.active ? '已启用' : '已停用'}</small>`] : []),
+      `<strong>${roleLabel(m)}</strong><small>${esc(m.group)}</small>`,
+      ...(can('action:member.create') ? [`<span class="mono">${esc(m.username)}</span><small>${m.active ? '已启用' : '已停用'}</small>`] : []),
       esc(m.direction),
       `${badge(m.active ? memberStatus(m) : '已停用')}<small>${esc(m.note || '—')}</small>`,
       `${recordButton('详情', 'member-detail', m.id)}${editableMember(m) ? recordButton('编辑', 'member-edit', m.id) : ''}`,
     ],
-  )}</section><div class="notice">离线是模拟连接状态，不代表成员不在实验室。请假在审批通过后的有效时段内自动生效，结束后恢复原来的工作状态。</div>`;
+  )}</section><div class="notice">离线是模拟连接状态，不代表成员不在实验室。请假在审批通过后的有效时段内自动生效，结束后恢复原来的工作状态。</div></div>`;
 }
 function assetsPage() {
   const list = db.assets.filter(
@@ -135,6 +140,7 @@ function assetsPage() {
       (!groupFilter || a.category === groupFilter),
   );
   const p = paginate(list);
+  const modelCounts = db.assets.reduce((o, x) => { o[x.model || '(未填型号)'] = (o[x.model || '(未填型号)'] || 0) + 1; return o; }, {});
   const groups = Object.values(
     db.assets.reduce((out, a) => {
       out[a.model] ??= { name: a.name, model: a.model, total: 0, available: 0 };
@@ -145,21 +151,22 @@ function assetsPage() {
   )
     .filter((g) => g.total > 1)
     .slice(0, 4);
-  return `${heading('模块管理', '每一件硬件都有专属编号，每一次使用都有迹可循。', btn(`${icon('swap')} 借用模块`, 'loan-new') + (can('manageAssets') ? btn(`${icon('plus')} 录入模块`, 'asset-new', 'primary') : ''), 'HARDWARE / 硬件资产')}<div class="model-summary">${groups.map((g) => `<div><span>${esc(g.name)}</span><b>${g.available} <small class="muted" style="font-size:11px;font-weight:400">/ ${g.total} 件可借用</small></b><div class="progress-track"><span style="width:${(g.available / g.total) * 100}%"></span></div></div>`).join('')}</div><section class="panel">${toolbar('搜索模块名称、型号、编号、使用者…', ['空闲', '使用中', '维修中', '已报废'], [...new Set([...CATEGORIES, ...db.assets.map((a) => a.category)])])}${dataTable(
+  return `<div class="page-fit">${heading('模块管理', '每一件硬件都有专属编号，每一次使用都有迹可循。', btn(`${icon('swap')} 借用模块`, 'loan-new') + (can('action:asset.create') ? btn(`${icon('plus')} 录入模块`, 'asset-new', 'primary') : ''), 'HARDWARE / 硬件资产')}<div class="model-summary">${groups.map((g) => `<div><span>${esc(g.name)}</span><b>${g.available} <small class="muted" style="font-size:11px;font-weight:400">/ ${g.total} 件可借用</small></b><div class="progress-track"><span style="width:${(g.available / g.total) * 100}%"></span></div></div>`).join('')}</div><section class="panel">${toolbar('搜索模块名称、型号、编号、使用者…', ['空闲', '使用中', '维修中', '已报废'], [...new Set([...CATEGORIES, ...db.assets.map((a) => a.category)])])}${dataTable(
     p,
     ['模块 / 型号', '资产编号', '分类 / 位置', '状态', '当前使用者', '操作'],
     (a) => {
       const l = activeLoan(a.id);
+      const totalSame = modelCounts[a.model || '(未填型号)'] || 1;
       return [
-        `<div class="row">${assetIcon(a)}<div>${stack(a.name, a.model)}</div></div>`,
+        `<div class="row">${assetIcon(a)}<div>${stack(a.name, `${a.model || '—'} · 同型号 ${totalSame} 件`)}</div></div>`,
         [esc(a.id), ' class="mono"'],
         `${esc(a.category)}<small>${esc(a.location)}</small>`,
         badge(assetStatus(a)),
         l ? `${esc(member(l.memberId)?.name)}<small>${fmt(l.due)} 归还</small>` : '<span class="muted">—</span>',
-        `${recordButton('详情', 'asset-detail', a.id)}${assetStatus(a) === '空闲' ? recordButton('借用', 'loan-new', a.id) : ''}${can('manageAssets') ? recordButton('编辑', 'asset-edit', a.id) : ''}`,
+        `${recordButton('详情', 'asset-detail', a.id)}${assetStatus(a) === '空闲' ? recordButton('借用', 'loan-new', a.id) : ''}${can('action:asset.update') ? recordButton('编辑', 'asset-edit', a.id) : ''}`,
       ];
     },
-  )}</section>`;
+  )}</section></div>`;
 }
 function loanActions(l, includeDetail = true) {
   let html = includeDetail ? recordButton('详情', 'loan-detail', l.id) : '';
@@ -184,7 +191,7 @@ function loansPage() {
     )
     .sort((a, b) => Date.parse(b.created) - Date.parse(a.created));
   const p = paginate(list);
-  return `${heading('借用与归还', '申请 → 审批 → 发放 → 归还验收，全流程清晰可追踪。', btn(`${icon('plus')} 发起借用`, 'loan-new', 'primary'), 'BORROWING / 借用记录')}${me().role === 'member' ? '<div class="notice">这里展示你的借用记录。模块审批通过后，需要由指导老师或负责人确认发放。</div>' : ''}<section class="panel">${toolbar('搜索借用单号、成员、模块、项目…', ['待审批', '待发放', '使用中', '待确认归还', '已归还', '已拒绝', '已撤销', '逾期'])}${dataTable(
+  return `<div class="page-fit">${heading('借用与归还', '申请 → 审批 → 发放 → 归还验收，全流程清晰可追踪。', btn(`${icon('plus')} 发起借用`, 'loan-new', 'primary'), 'BORROWING / 借用记录')}${me().role === 'member' ? '<div class="notice">这里展示你的借用记录。模块审批通过后，需要由指导老师或负责人确认发放。</div>' : ''}<section class="panel">${toolbar('搜索借用单号、成员、模块、项目…', ['待审批', '待发放', '使用中', '待确认归还', '已归还', '已拒绝', '已撤销', '逾期'])}${dataTable(
     p,
     ['模块 / 借用单', '申请人', '关联项目', '预计归还', '状态', '操作'],
     (l) => [
@@ -195,15 +202,15 @@ function loansPage() {
       `${badge(l.status)}${overdue(l) ? ' ' + badge('逾期') : ''}`,
       loanActions(l),
     ],
-    ['暂无借用记录', '点击“发起借用”，选择所需模块。'],
-  )}</section>`;
+    ['暂无借用记录', '点击"发起借用"，选择所需模块。'],
+  )}</section></div>`;
 }
 function leavesPage() {
   const list = db.leaves
     .filter((l) => (l.memberId === me().id || canReview(l)) && matches(l.id, member(l.memberId)?.name) && (!filter || l.status === filter))
     .sort((a, b) => Date.parse(b.created) - Date.parse(a.created));
   const p = paginate(list);
-  return `${heading('请假管理', '提前安排时间，让团队了解你的计划。', btn(`${icon('plus')} 申请请假`, 'leave-new', 'primary'), 'LEAVE / 请假记录')}<section class="panel">${toolbar('搜索申请人、申请编号…', ['待审批', '已通过', '已拒绝', '已撤销'])}${dataTable(
+  return `<div class="page-fit">${heading('请假管理', '提前安排时间，让团队了解你的计划。', btn(`${icon('plus')} 申请请假`, 'leave-new', 'primary'), 'LEAVE / 请假记录')}<section class="panel">${toolbar('搜索申请人、申请编号…', ['待审批', '已通过', '已拒绝', '已撤销'])}${dataTable(
     p,
     ['申请人 / 编号', '请假时间', '请假原因', '状态', '审批人', '操作'],
     (l) => [
@@ -215,52 +222,51 @@ function leavesPage() {
       `${recordButton('详情', 'leave-detail', l.id)}${l.status === '待审批' && canReview(l) ? recordButton('审批', 'leave-review', l.id) : ''}${l.status === '待审批' && l.memberId === me().id ? recordButton('撤销', 'leave-cancel', l.id) : ''}`,
     ],
     ['暂无请假记录', '你的请假申请会显示在这里。'],
-  )}</section><p class="privacy-note">请假原因和审批意见仅对本人及有审批权限的管理人员可见。成员列表只公开请假状态和生效时间。</p>`;
+  )}</section><p class="privacy-note">请假原因和审批意见仅对本人及有审批权限的管理人员可见。成员列表只公开请假状态和生效时间。</p></div>`;
 }
 function logsPage() {
   const p = paginate(visibleLogs().filter((l) => matches(l.actor, l.text)));
-  return `${heading('操作记录', '记录每一次变更，让实验室管理有据可查。', '', 'ACTIVITY / 实验室动态')}<section class="panel"><div class="toolbar"><div class="search-field">${icon('search')}<input id="search" aria-label="搜索" value="${esc(search)}" placeholder="搜索操作人、操作内容…"></div></div><div class="full-log">${p.rows.map((l) => `<div class="activity-item"><strong>${esc(l.actor)}</strong> · ${esc(l.text)}<small>${new Date(l.at).toLocaleString('zh-CN')}</small></div>`).join('') || empty('暂无操作记录')}</div>${p.footer}</section>`;
+  return `<div class="page-fit">${heading('操作记录', '记录每一次变更，让实验室管理有据可查。', '', 'ACTIVITY / 实验室动态')}<section class="panel"><div class="toolbar"><div class="search-field">${icon('search')}<input id="search" aria-label="搜索" value="${esc(search)}" placeholder="搜索操作人、操作内容…"></div></div><div class="full-log">${p.rows.map((l) => `<div class="activity-item"><strong>${esc(l.actor)}</strong> · ${esc(l.text)}<small>${new Date(l.at).toLocaleString('zh-CN')}</small></div>`).join('') || empty('暂无操作记录')}</div>${p.footer}</section></div>`;
 }
 function profilePage() {
   const u = me();
-  return `${heading('个人中心', '维护个人资料，更新你的工作状态。', '', 'PROFILE / 我的实验室')}<div class="grid-main"><section class="panel profile-panel"><div class="row">${avatar(u)}<div><h1 style="font-size:22px">${esc(u.name)}</h1><p class="muted" style="margin-top:8px">${ROLE[u.role]} · ${esc(u.group)}</p></div><div style="margin-left:auto">${badge(memberStatus(u))}</div></div>${details(
+  return `<div class="page-fit">${heading('个人中心', '维护个人资料，更新你的工作状态。', '', 'PROFILE / 我的实验室')}<div class="grid-main grid-fill"><div><section class="panel profile-panel"><div class="row">${avatar(u)}<div><h1 style="font-size:22px">${esc(u.name)}</h1><p class="muted" style="margin-top:8px">${roleLabel(u)} · ${esc(u.group)}</p></div><div style="margin-left:auto">${badge(memberStatus(u))}</div></div>${details(
     [
       ['学号 / 工号', u.number],
       ['登录账号', u.username],
       ['研究方向', u.direction],
       ['联系方式', u.contact],
+      ['邮箱', u.email || '—'],
       ['加入日期', new Date(u.joined).toLocaleDateString('zh-CN')],
       ['状态备注', u.note || '暂无备注'],
     ],
-  )}<div class="controls-wrap">${btn('编辑个人资料', 'profile-edit', 'primary')}${btn('更新工作状态', 'status')}${btn('申请请假', 'leave-new')}</div><p class="privacy-note">请假状态由有效审批记录决定；请假结束后会自动恢复你设置的工作状态。</p></section><section class="panel"><div class="panel-head"><h2>演示空间</h2>${icon('shield')}</div><div style="padding:0 22px 24px"><p class="muted small" style="line-height:1.9">当前模式：${CONFIG.mode === 'mock' ? '本地模拟数据' : '后端 API'}<br>${CONFIG.mode === 'mock' ? '未连接阿里云。数据仅保存在当前浏览器，同源标签页共享记录。' : '所有操作通过已配置的 API 请求服务器。'}</p>${
+  )}<div class="controls-wrap">${btn('编辑个人资料', 'profile-edit', 'primary')}${btn('修改密码', 'change-password')}${btn('更新工作状态', 'status')}${btn('申请请假', 'leave-new')}</div><p class="privacy-note">请假状态由有效审批记录决定；请假结束后会自动恢复你设置的工作状态。</p></section></div><div><section class="panel"><div class="panel-head"><h2>演示空间</h2>${icon('shield')}</div><div style="padding:0 18px 18px"><p class="muted small" style="line-height:1.9">当前模式：${CONFIG.mode === 'mock' ? '本地模拟数据' : '后端 API'}<br>${CONFIG.mode === 'mock' ? '未连接阿里云。数据仅保存在当前浏览器，同源标签页共享记录。' : '所有操作通过已配置的 API 请求服务器。'}</p>${
     CONFIG.mode === 'mock'
-      ? `<div class="field" style="margin-top:22px"><label for="switch-account">切换测试身份</label><select id="switch-account">${options(
-          db.members.filter((m) => m.active).map((m) => [m.id, `${m.name} · ${ROLE[m.role]} (${m.username})`]),
+      ? `<div class="field" style="margin-top:18px"><label for="switch-account">切换测试身份</label><select id="switch-account">${options(
+          db.members.filter((m) => m.active).map((m) => [m.id, `${m.name} · ${roleLabel(m)} (${m.username})`]),
           u.id,
-        )}</select></div><div style="margin-top:22px">${btn(`${icon('refresh')} 恢复演示数据`, 'reset', 'danger')}</div><p class="privacy-note">恢复操作会覆盖本浏览器里的演示修改。初始测试账号密码：Lab@123456。新账号使用创建时设置的密码。</p>`
+        )}</select></div><div style="margin-top:18px">${btn(`${icon('refresh')} 恢复演示数据`, 'reset', 'danger')}</div><p class="privacy-note">恢复操作会覆盖本浏览器里的演示修改。初始测试账号密码：Lab@123456。新账号使用创建时设置的密码。</p>`
       : ''
-  }</div></section></div>`;
+  }</div></section></div></div>${typeof tokensPanel === 'function' ? tokensPanel() : ''}</div>`;
 }
 
-function memberDetail(id) {
-  const m = member(id);
-  requirePermission(m, '成员不存在');
-  const l = db.leaves.find(
-    (l) => l.memberId === id && l.status === '已通过' && Date.parse(l.start) <= Date.now() && Date.parse(l.end) >= Date.now(),
-  );
-  modal(
-    '成员详情',
-    `<div class="row">${avatar(m)}<div><h2>${esc(m.name)}</h2><p class="muted small" style="margin-top:6px">${ROLE[m.role]} · ${esc(m.group)}</p></div><span style="margin-left:auto">${badge(m.active ? memberStatus(m) : '已停用')}</span></div>${details([['学号 / 工号', m.number], ...(me().id === m.id || can('manageMembers') ? [['登录账号', m.username]] : []), ['研究方向', m.direction], ['加入日期', new Date(m.joined).toLocaleDateString('zh-CN')], ['状态备注', m.note || '暂无备注'], ...(me().id === m.id || can('manageMembers') ? [['联系方式', m.contact]] : []), ['最近更新', new Date(m.updated).toLocaleString('zh-CN')], ...(l ? [['请假时间', `${fmt(l.start, true)} — ${fmt(l.end, true)}`]] : [])])}`,
-    '',
-    null,
-    editableMember(m) ? btn('编辑成员', 'member-edit', 'primary', `data-id="${m.id}"`) : '',
-  );
-}
 function memberForm(id, self = false) {
   const m = id ? member(id) : null;
   if (self) requirePermission(m?.id === me().id);
-  else requirePermission(m ? editableMember(m) : can('manageMembers'));
-  const body = `<div class="form-section-heading"><span>01</span><h3>成员资料</h3></div><div class="form-grid">${field('姓名 *', 'name', m?.name || '', 30)}${!self ? field('学号 / 工号 *', 'number', m?.number || '', 30) : ''}${!self ? field('所属小组 *', 'group', m?.group || '', 40) : ''}${fields(m, { direction: ['研究方向', 80], contact: ['联系方式', 80] })}</div>${!self ? `<div class="form-section-heading"><span>02</span><h3>登录账号</h3></div><div class="form-grid">${field('登录账号 *', 'username', m?.username || '', 'text', 'pattern="[A-Za-z0-9_]{3,30}" maxlength="30" autocomplete="off" placeholder="3–30 位字母、数字或下划线"')}${selectField('角色', 'role', can('assignRoles') ? Object.entries(ROLE) : [['member', '普通成员']], m?.role || 'member')}</div>${!m ? passwordFields() : '<p class="privacy-note">编辑资料不会修改现有登录密码。</p>'}${me().role === 'manager' ? '<p class="privacy-note">负责人可创建和维护普通成员账号；角色调整由指导老师管理。</p>' : ''}` : ''}`;
+  else requirePermission(m ? editableMember(m) : can('action:member.create'));
+  // 角色下拉：可管理成员者看全部角色；否则仅保留该成员当前角色，避免表单隐式篡改 role
+  const canAssign = can('action:member.update');
+  const roleOptions = canAssign
+    ? Object.entries(ROLE)
+    : m
+      ? [[m.role, ROLE[m.role] || m.role]]
+      : [['member', '普通成员']];
+  // 从成员管理编辑自己：角色不可改（只读显示当前角色），避免提交 role 被拦
+  const editingSelf = !self && !!m && m.id === me().id;
+  const roleField = editingSelf
+    ? `<div class="field"><label>角色</label><select id="f-role" name="role" disabled><option value="${esc(m.role)}" selected>${esc(ROLE[m.role] || m.role)}</option></select></div>`
+    : selectField('角色', 'role', roleOptions, m?.role || 'member');
+  const body = `<div class="form-section-heading"><span>01</span><h3>成员资料</h3></div><div class="form-grid">${field('姓名 *', 'name', m?.name || '', 30)}${field('学号 / 工号 *', 'number', m?.number || '', 30)}${!self ? field('所属小组 *', 'group', m?.group || '', 40) : ''}${fields(m, { direction: ['研究方向', 80], contact: ['联系方式', 80], email: ['邮箱', 'email', 'placeholder="name@example.com"'] })}</div>${!self ? `<div class="form-section-heading"><span>02</span><h3>登录账号</h3></div><div class="form-grid">${field('登录账号 *', 'username', m?.username || '', 'text', 'pattern="[A-Za-z0-9_]{3,30}" maxlength="30" autocomplete="off" placeholder="3–30 位字母、数字或下划线"')}${roleField}</div>${!m ? passwordFields() : '<p class="privacy-note">编辑资料不会修改现有登录密码。</p>'}${me().role === 'manager' ? '<p class="privacy-note">负责人可创建和维护普通成员账号；角色调整由指导老师管理。</p>' : ''}` : ''}<p class="privacy-note">填写邮箱后，任务到期、借用逾期、审批结果等提醒可发送邮件。</p>`;
   modal(
     self ? '编辑个人资料' : m ? '编辑成员' : '新增成员与账号',
     body,
@@ -273,6 +279,7 @@ function memberForm(id, self = false) {
         return;
       }
       const data = cleanMemberData(Object.fromEntries(f), self);
+      if (editingSelf) data.role = m.role; // 编辑自己时角色不可改，保留当前值提交
       validateMemberData(data, id, self);
       if (!self && m.id === me().id) requirePermission(data.role === m.role, '不能修改自己的角色');
       await save(
@@ -316,13 +323,15 @@ function assetDetail(id) {
   const a = asset(id);
   requirePermission(a, '模块不存在');
   const l = activeLoan(id);
+  const img = a.image ? (a.image.startsWith('/') ? a.image : '/' + a.image) : '';
+  const sameModel = a.model ? db.assets.filter((x) => x.model === a.model).length : 0;
   const history = db.loans
     .filter((x) => x.assetIds.includes(id) && ['使用中', '已归还', '待确认归还'].includes(x.status))
     .sort((a, b) => Date.parse(b.created) - Date.parse(a.created));
   const repairs = db.maintenance.filter((x) => x.assetId === id);
   modal(
     '模块详情',
-    `<div class="row">${assetIcon(a)}<div><h2>${esc(a.name)}</h2><p class="mono muted" style="margin-top:5px">${esc(a.id)}</p></div><span style="margin-left:auto">${badge(assetStatus(a))}</span></div>${details(
+    `<div class="row">${assetIcon(a)}<div><h2>${esc(a.name)}</h2><p class="mono muted" style="margin-top:5px">${esc(a.id)}</p></div><span style="margin-left:auto;display:flex;gap:6px;align-items:center">${sameModel ? `<span class="badge">同型号 ${sameModel} 件</span>` : ''}${badge(assetStatus(a))}</span></div><div class="asset-image-wrap">${img ? `<img class="asset-image" src="${esc(img)}" alt="${esc(a.name)}">` : `<div class="asset-image-placeholder">${icon('box')}<span>暂无模块图片</span></div>`}${can('action:asset.update') ? btn(img ? '更换图片' : '上传图片', 'asset-image', 'small', `data-id="${esc(id)}"`) : ''}</div>${details(
       [
         ['型号', a.model],
         ['分类', a.category],
@@ -334,15 +343,50 @@ function assetDetail(id) {
         ['预计归还', l ? fmt(l.due, true) : '—'],
         ['备注', a.note || '暂无备注'],
       ],
-    )}${a.datasheet && isHttpURL(a.datasheet) ? `<p style="margin-bottom:20px"><a href="${esc(a.datasheet)}" target="_blank" rel="noopener noreferrer">查看数据手册 ↗</a></p>` : ''}<h3 style="margin:18px 0 12px">借用记录</h3>${history.map((x) => `<div class="todo"><div><strong>${esc(member(x.memberId)?.name)} · ${esc(x.project)}</strong><small>${fmt(x.issued, true)} 借出 ${x.returned ? ' · ' + fmt(x.returned, true) + ' 归还' : ''}</small></div><span style="margin-left:auto">${badge(x.status)}</span></div>`).join('') || '<p class="muted small">暂无借用历史</p>'}<h3 style="margin:20px 0 12px">维修记录</h3>${repairs.map((r) => `<div class="todo"><div><strong>${esc(r.description)}</strong><small>${fmt(r.created, true)} · ${esc(member(r.actor)?.name || '管理员')}</small></div>${badge(r.status)}</div>`).join('') || '<p class="muted small">暂无维修记录</p>'}`,
+    )}${a.datasheet && isHttpURL(a.datasheet) ? `<p style="margin-bottom:20px"><a href="${esc(a.datasheet)}" target="_blank" rel="noopener noreferrer">查看数据手册 ↗</a></p>` : ''}<h3 style="margin:18px 0 12px">借用记录 <span class="muted small">· ${history.length} 条</span></h3>${history.map((x) => `<div class="todo"><div><strong>${esc(member(x.memberId)?.name)} · ${esc(x.project)}</strong><small>${fmt(x.issued, true)} 借出 ${x.returned ? ' · ' + fmt(x.returned, true) + ' 归还' : ''}</small></div><span style="margin-left:auto">${badge(x.status)}</span></div>`).join('') || '<p class="muted small">暂无借用历史</p>'}<h3 style="margin:20px 0 12px">维修记录 <span class="muted small">· ${repairs.length} 条</span></h3>${repairs.map((r) => `<div class="todo"><div><strong>${esc(r.description)}</strong><small>${fmt(r.created, true)} · ${esc(member(r.actor)?.name || '管理员')}</small></div>${badge(r.status)}</div>`).join('') || '<p class="muted small">暂无维修记录</p>'}`,
     '',
     null,
     (assetStatus(a) === '空闲' ? btn('申请借用', 'loan-new', 'primary', `data-id="${esc(id)}"`) : '') +
-      (can('manageAssets') ? btn('编辑', 'asset-edit', '', `data-id="${esc(id)}"`) : ''),
+      (can('action:asset.update') ? btn('编辑', 'asset-edit', '', `data-id="${esc(id)}"`) : ''),
   );
 }
+function uploadAssetImage(id) {
+  requirePermission(can('action:asset.update'));
+  const a = asset(id);
+  requirePermission(a, '模块不存在');
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      requirePermission(file.size <= 10 * 1024 * 1024, '图片不能超过 10MB');
+      requirePermission(/^image\//.test(file.type), '请选择图片文件');
+      if (CONFIG.mode === 'mock') {
+        a.image = URL.createObjectURL(file);
+        audit(`更新模块图片 · ${a.name}`);
+        render();
+        assetDetail(id);
+        toast('图片已更新');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('image', file);
+      const r = await API.request(`/assets/${id}/image`, { method: 'POST', body: fd });
+      a.image = r.image;
+      audit(`更新模块图片 · ${a.name}`);
+      render();
+      assetDetail(id);
+      toast('图片已上传');
+    } catch (err) {
+      toast(err.message, true);
+    }
+  };
+  input.click();
+}
 function assetForm(id) {
-  requirePermission(can('manageAssets'));
+  requirePermission(can('action:asset.create') || can('action:asset.update'));
   const a = id ? asset(id) : null;
   modal(
     a ? '编辑模块' : '录入模块',
@@ -598,12 +642,13 @@ function leaveDetail(id) {
 }
 // 简单的"按钮 → 表单"映射集中维护，业务状态迁移仍由各自处理函数校验。
 const FORM_ACTIONS = {
-  'member-detail': memberDetail,
   'member-new': () => memberForm(),
   'member-edit': memberForm,
   'profile-edit': () => memberForm(me().id, true),
+  'change-password': () => changePasswordModal(false),
   status: statusForm,
   'asset-detail': assetDetail,
+  'asset-image': uploadAssetImage,
   'asset-new': () => assetForm(),
   'asset-edit': assetForm,
   'loan-new': loanForm,
@@ -619,9 +664,66 @@ const FORM_ACTIONS = {
   ...(window.TASK_ACTIONS || {}),
   ...(window.CHECKIN_ACTIONS || {}),
   ...(window.AGENT_ACTIONS || {}),
+  ...(window.PERMISSION_ACTIONS || {}),
+  ...(window.SYS_ACTIONS || {}),
+  ...(window.MEMBER_ACTIONS || {}),
+  ...(window.POINTS_ACTIONS || {}),
+  ...(window.EMAIL_ACTIONS || {}),
+  ...(window.NOTIFY_ACTIONS || {}),
+  ...(window.NEWS_ACTIONS || {}),
 };
+// 登录页机甲骑士：每次点击换下一个词，由 CSS 的 .slashing 播放一次挥刀斩字。
+const MECHA_WORDS = ['困难', '懒惰', '命运', '他者', '过去', '压力'];
+let mechaWordIdx = 0;
+function mechaSlash(b) {
+  const svg = b.querySelector('svg');
+  if (!svg || svg.classList.contains('slashing')) return;
+  const word = MECHA_WORDS[mechaWordIdx++ % MECHA_WORDS.length];
+  svg.querySelectorAll('.mk-word').forEach((t) => {
+    t.textContent = word;
+  });
+  svg.classList.add('slashing');
+  svg.querySelector('.mk-arm-r').addEventListener('animationend', () => svg.classList.remove('slashing'), { once: true });
+}
+
+// 顶栏“待办与通知”弹窗：独立构建函数，供已读操作局部重建（避免整页刷新）
+function notifyDropdown() {
+  const todos = todoItems();
+  const notes = (db.notifications || []).slice(0, 6);
+  const noteList = notes.length
+    ? notes
+        .map(
+          (n) =>
+            `<div class="todo"><span class="todo-icon ${n.read ? '' : 'orange'}">${icon('bell')}</span><div>${stack(n.title, n.body)}</div><div class="row" style="gap:6px;margin-left:auto;flex-shrink:0">${n.read ? '' : recordButton('已读', 'notification-read', n.id)}<button class="text-btn" data-action="notification-open" data-id="${esc(n.id)}">查看</button></div></div>`,
+        )
+        .join('')
+    : '';
+  const todoList = todos
+    .map(
+      (t) =>
+        `<div class="todo"><span class="todo-icon ${t.orange ? 'orange' : ''}">${icon(t.icon)}</span><div>${stack(t.title, t.description)}</div><button class="text-btn" data-action="todo-nav" data-view="${t.view}" style="margin-left:auto">查看</button></div>`,
+    )
+    .join('');
+  modal(
+    '待办与通知',
+    `<div class="notice" style="margin-bottom:6px">${icon('bell')} ${(db.unread_notifications || 0)} 条未读通知 · ${todos.length} 项待办</div>${todoList || noteList ? `<div style="max-height:46vh;overflow-y:auto">${todoList}${todoList && noteList ? '<hr style="border:0;border-top:1px dashed var(--line);margin:6px 0">' : ''}${noteList}</div>` : empty('全部已处理', '没有待办和未读通知。')}`,
+    '',
+    null,
+    `${db.unread_notifications ? btn('全部已读', 'notification-read-all') : ''}${btn('进入通知中心', 'todo-nav', 'primary', 'data-view="notifications"')}`,
+  );
+}
+window.notifyDropdown = notifyDropdown;
+
 async function handleAction(type, b) {
   const id = b.dataset.id;
+  if (type === 'mecha-slash') {
+    mechaSlash(b);
+    return;
+  }
+  if (type === 'ui-tab') {
+    switchUiTab(b);
+    return;
+  }
   if (Object.hasOwn(FORM_ACTIONS, type)) return FORM_ACTIONS[type](id);
   if (type.startsWith('competition-')) return competitionAction(type, b);
   if (type === 'modal-close') {
@@ -652,16 +754,7 @@ async function handleAction(type, b) {
     return;
   }
   if (type === 'notifications') {
-    const todos = todoItems();
-    modal(
-      '待办提醒',
-      todos
-        .map(
-          (t) =>
-            `<div class="todo"><span class="todo-icon ${t.orange ? 'orange' : ''}">${icon(t.icon)}</span><div>${stack(t.title, t.description)}</div><button class="text-btn" data-action="todo-nav" data-view="${t.view}" style="margin-left:auto">查看</button></div>`,
-        )
-        .join('') || empty('所有待办已处理', '继续你的实验吧。'),
-    );
+    notifyDropdown();
     return;
   }
   if (type === 'todo-nav') {
@@ -691,7 +784,7 @@ async function handleAction(type, b) {
     );
   }
   if (['asset-repair', 'asset-repaired', 'asset-retire'].includes(type)) {
-    requirePermission(can('manageAssets'));
+    requirePermission(can('action:asset.repair') || can('action:asset.repair_complete') || can('action:asset.retire'));
     const a = asset(id);
     requirePermission(a && assetStatus(a) !== '使用中' && assetStatus(a) !== '已报废', '请先完成归还，报废资产不能重新操作');
     if (type === 'asset-repair') {

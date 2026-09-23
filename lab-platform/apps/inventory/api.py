@@ -6,7 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from apps.accounts.models import OperationLog
 from apps.common.ids import next_code
-from apps.common.permissions import get_member, is_staff
+from apps.common.permissions import get_member
+from apps.common.rbac import can_manage, require
 from apps.common.response import ok, fail
 from apps.inventory.models import Asset, Loan, LoanItem, Maintenance
 
@@ -55,6 +56,7 @@ def _asset_dict(a, loans_in_use):
         'vendor': a.vendor, 'spec': a.spec, 'location': a.location,
         'status': a.STATUS_IN_USE if a.id in loans_in_use and a.status == a.STATUS_FREE else a.status,
         'created': a.created, 'note': a.note, 'datasheet': a.datasheet,
+        'image': a.image.url if a.image else '',
     }
 
 
@@ -101,8 +103,8 @@ def _get_loan(lid):
 @permission_classes([IsAuthenticated])
 def assets_create(request):
     me = get_member(request.user)
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以录入模块', 403)
+    if (err := require(request.user, 'action:asset.create', '没有录入模块的权限')):
+        return err
     d = request.data or {}
     aid = str(d.get('id', '')).strip().upper()
     name = str(d.get('name', '')).strip()
@@ -122,8 +124,8 @@ def assets_create(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def assets_update(request, aid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以修改模块', 403)
+    if (err := require(request.user, 'action:asset.update', '没有编辑模块的权限')):
+        return err
     try:
         asset = Asset.objects.get(pk=aid)
     except Asset.DoesNotExist:
@@ -141,9 +143,36 @@ def assets_update(request, aid):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def assets_image(request, aid):
+    if (err := require(request.user, 'action:asset.update', '没有编辑模块的权限')):
+        return err
+    try:
+        asset = Asset.objects.get(pk=aid)
+    except Asset.DoesNotExist:
+        return fail('模块不存在', 404)
+    photo = request.FILES.get('image')
+    if not photo:
+        return fail('请选择图片文件')
+    if photo.size > 10 * 1024 * 1024:
+        return fail('图片不能超过 10MB')
+    from PIL import Image
+    try:
+        Image.open(photo).verify()
+    except Exception:
+        return fail('仅支持有效图片文件（jpg/png/webp 等）')
+    if asset.image:
+        asset.image.delete(save=False)
+    asset.image = photo
+    asset.save()
+    _log(request, get_member(request.user), f'更新模块图片 · {asset.id} {asset.name}')
+    return ok({'image': asset.image.url})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def assets_maintenance(request, aid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以登记维修', 403)
+    if (err := require(request.user, 'action:asset.repair', '没有登记维修的权限')):
+        return err
     try:
         asset = Asset.objects.get(pk=aid)
     except Asset.DoesNotExist:
@@ -164,8 +193,8 @@ def assets_maintenance(request, aid):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def assets_repair_complete(request, aid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以完成维修', 403)
+    if (err := require(request.user, 'action:asset.repair_complete', '没有完成维修的权限')):
+        return err
     try:
         asset = Asset.objects.get(pk=aid)
     except Asset.DoesNotExist:
@@ -174,14 +203,25 @@ def assets_repair_complete(request, aid):
     asset.status = Asset.STATUS_FREE
     asset.save()
     _log(request, get_member(request.user), f'维修完成 · {asset.id} {asset.name}')
+    from apps.notify.service import create_many, managers_with
+    create_many(
+        [u for u in managers_with('action:asset.update') if u.id != request.user.id],
+        'asset_repaired', f'模块维修完成 · {asset.name}',
+        f'{asset.id} 已恢复可借用', ref_type='asset', ref_id=asset.id, link='assets')
+    from apps.email.models import EmailRule
+    from apps.email.service import _trigger_by_rule, _member_email
+    erule = EmailRule.objects.filter(key='asset_repaired').first()
+    if erule and erule.enabled:
+        email = _member_email(request.user)
+        _trigger_by_rule(erule, {'title': asset.name, 'id': asset.id}, 'asset', asset.id, [email] if email else [])
     return ok()
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def assets_retire(request, aid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以报废模块', 403)
+    if (err := require(request.user, 'action:asset.retire', '没有报废模块的权限')):
+        return err
     try:
         asset = Asset.objects.get(pk=aid)
     except Asset.DoesNotExist:
@@ -201,6 +241,8 @@ def assets_retire(request, aid):
 @permission_classes([IsAuthenticated])
 def loans_create(request):
     me = get_member(request.user)
+    if (err := require(request.user, 'action:loan.create', '没有申请借用的权限')):
+        return err
     d = request.data or {}
     asset_ids = d.get('assetIds') or []
     if not isinstance(asset_ids, list) or not asset_ids:
@@ -232,6 +274,12 @@ def loans_create(request):
 
     names = ' / '.join(a.name for a in assets)
     _log(request, me, f'申请借用 · {loan.id} · {names}')
+    from apps.notify.service import create_many, managers_with
+    names = '、'.join(a.name for a in assets)
+    create_many(
+        [u for u in managers_with('action:loan.review') if u.id != request.user.id],
+        'loan_apply', f'{me.name} 提交借用申请',
+        f'{loan.id} · {names} · 预计归还 {due}', ref_type='loan', ref_id=loan.id, link='loans')
     return ok({'id': loan.id})
 
 
@@ -251,8 +299,8 @@ def _can_review(loan, viewer):
 @permission_classes([IsAuthenticated])
 def loans_review(request, lid):
     me = get_member(request.user)
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以审批', 403)
+    if (err := require(request.user, 'action:loan.review', '没有审批借用的权限')):
+        return err
     loan = _get_loan(lid)
     if loan is None:
         return fail('借用单不存在', 404)
@@ -277,6 +325,20 @@ def loans_review(request, lid):
     loan.save()
     action = '批准' if decision == 'approve' else f'拒绝 · {opinion[:40]}'
     _log(request, me, f'审批借用 {loan.id} · {action}')
+    from apps.notify.service import create
+    create(loan.member, 'loan_reviewed', f'借用申请已{"批准" if decision == "approve" else "拒绝"}',
+           f'{loan.id} · {("审批意见：" + opinion) if opinion else ""}', ref_type='loan', ref_id=loan.id, link='loans')
+    from apps.email.models import EmailRule
+    from apps.email.service import _trigger_by_rule, _member_email
+    erule = EmailRule.objects.filter(key='loan_reviewed').first()
+    if erule and erule.enabled:
+        prof = getattr(loan.member, 'member_profile', None)
+        ename = prof.name if prof else loan.member.username
+        _trigger_by_rule(erule, {
+            'name': ename, 'id': loan.id,
+            'result': '已通过' if decision == 'approve' else '未通过',
+            'reason': opinion or '无',
+        }, 'loan', loan.id, [_member_email(loan.member)])
     return ok()
 
 
@@ -284,8 +346,8 @@ def loans_review(request, lid):
 @permission_classes([IsAuthenticated])
 def loans_issue(request, lid):
     me = get_member(request.user)
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以确认发放', 403)
+    if (err := require(request.user, 'action:loan.issue', '没有确认发放的权限')):
+        return err
     loan = _get_loan(lid)
     if loan is None:
         return fail('借用单不存在', 404)
@@ -315,16 +377,31 @@ def loans_issue(request, lid):
 
     names = ' / '.join(li.asset.name for li in loan.items.all())
     _log(request, me, f'确认发放 · {loan.id} · {names}')
+    from apps.notify.service import create
+    create(loan.member, 'loan_issued', f'借用已发放 · {loan.id}',
+           f'{names} · 请于 {loan.due} 前归还', ref_type='loan', ref_id=loan.id, link='loans')
+    from apps.email.models import EmailRule
+    from apps.email.service import _trigger_by_rule, _member_email
+    erule = EmailRule.objects.filter(key='loan_issued').first()
+    if erule and erule.enabled:
+        prof = getattr(loan.member, 'member_profile', None)
+        ename = prof.name if prof else loan.member.username
+        _trigger_by_rule(erule, {
+            'name': ename, 'id': loan.id,
+            'due': timezone.localtime(loan.due).strftime('%m-%d %H:%M') if loan.due else '',
+        }, 'loan', loan.id, [_member_email(loan.member)])
     return ok()
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def loans_cancel(request, lid):
+    if (err := require(request.user, 'action:loan.cancel', '没有取消借用的权限')):
+        return err
     loan = _get_loan(lid)
     if loan is None:
         return fail('借用单不存在', 404)
-    if loan.member_id != request.user.pk and not is_staff(request.user):
+    if loan.member_id != request.user.pk and not can_manage(request.user):
         return fail('只能取消自己的借用单', 403)
     if loan.status != Loan.STATUS_PENDING:
         return fail('只有待审批的借用单可以取消', 409)
@@ -337,6 +414,8 @@ def loans_cancel(request, lid):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def loans_request_return(request, lid):
+    if (err := require(request.user, 'action:loan.request_return', '没有申请归还的权限')):
+        return err
     loan = _get_loan(lid)
     if loan is None:
         return fail('借用单不存在', 404)
@@ -348,6 +427,11 @@ def loans_request_return(request, lid):
     loan.return_requested = timezone.now()
     loan.save()
     _log(request, get_member(request.user), f'申请归还 · {loan.id}')
+    from apps.notify.service import create_many, managers_with
+    create_many(
+        [u for u in managers_with('action:loan.receive') if u.id != request.user.id],
+        'loan_return_requested', f'{get_member(request.user).name} 申请归还模块',
+        f'{loan.id} · 请验收归还', ref_type='loan', ref_id=loan.id, link='loans')
     return ok()
 
 
@@ -355,8 +439,8 @@ def loans_request_return(request, lid):
 @permission_classes([IsAuthenticated])
 def loans_receive(request, lid):
     me = get_member(request.user)
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以验收归还', 403)
+    if (err := require(request.user, 'action:loan.receive', '没有验收归还的权限')):
+        return err
     loan = _get_loan(lid)
     if loan is None:
         return fail('借用单不存在', 404)
@@ -388,4 +472,15 @@ def loans_receive(request, lid):
 
     damaged = ' / '.join(damaged_ids) if damaged_ids else '全部完好'
     _log(request, me, f'验收归还 · {loan.id} · {damaged}')
+    from apps.notify.service import create
+    create(loan.member, 'loan_returned', f'借用已归还验收 · {loan.id}',
+           f'{damaged}', ref_type='loan', ref_id=loan.id, link='loans')
+    # 按时归还且无损坏 → 发放积分（每条借用单仅一次）
+    if not damaged_ids and loan.due and loan.received and loan.received <= loan.due and loan.member_id:
+        from apps.points.service import award
+        awarded = award(loan.member, 'loan_on_time', ref_type='loan', ref_id=loan.id,
+                        reason=f'{loan.id} 按时归还', actor=request.user)
+        if awarded:
+            from apps.accounts.models import OperationLog
+            OperationLog.objects.create(actor=request.user, text=f'按时归还发放积分 +{awarded.points} · {loan.id}')
     return ok()

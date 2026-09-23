@@ -22,6 +22,7 @@ class Asset(models.Model):
     status = models.CharField('状态', max_length=16, choices=STATUS_CHOICES, default=STATUS_FREE)
     note = models.CharField('备注', max_length=512, blank=True, default='')
     datasheet = models.CharField('资料链接', max_length=512, blank=True, default='')
+    image = models.ImageField('模块图片', upload_to='inventory/%Y%m/', blank=True, null=True)
     created = models.DateTimeField('创建时间', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
 

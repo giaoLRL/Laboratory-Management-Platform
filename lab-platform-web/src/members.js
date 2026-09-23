@@ -1,0 +1,143 @@
+'use strict';
+// 成员独立详情页：hash 路由 #member/m3，数据全部来自 workspace 快照聚合（无额外接口）。
+// 可视化图表为纯 CSS/SVG，不引入第三方库。
+
+function _memberTasks(mid) {
+  return (db.tasks || []).filter((t) => t.assigneeId === mid || t.creatorId === mid);
+}
+
+// 最近 6 个月任务分布：绿色=已完成，蓝色=其余状态（柱状 + 分割段）
+function taskTrendBars(mid) {
+  const tasks = _memberTasks(mid);
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: `${d.getMonth() + 1}月`, total: 0, done: 0 });
+  }
+  const indexOf = (dt) => months.findIndex((x) => x.key === `${dt.getFullYear()}-${dt.getMonth()}`);
+  for (const t of tasks) {
+    const i = indexOf(new Date(t.created));
+    if (i >= 0) months[i].total++;
+    const doneAt = t.completedAt || (t.status === 'done' ? t.updated : null);
+    if (doneAt) {
+      const j = indexOf(new Date(doneAt));
+      if (j >= 0) months[j].done++;
+    }
+  }
+  const max = Math.max(1, ...months.map((m) => m.total));
+  return `<div class="mini-bars">${months
+    .map(
+      (m) => `<div class="mb-col"><div class="mb-track"><div class="mb-done" style="height:${(m.done / Math.max(1, m.total)) * 100}%"></div></div><div class="mb-bar" style="height:${(m.total / max) * 100}%" title="${m.label} · ${m.done}/${m.total} 完成"></div><span>${m.label}</span></div>`,
+    )
+    .join('')}</div><div class="chart-legend"><span><i style="background:#26a078"></i>已完成</span><span><i style="background:#3b5c93"></i>其余</span></div>`;
+}
+
+// 近 30 天打卡热力格：1 次浅、2 次中、3+ 次深
+let _trendCache = {};
+
+function _mockTrend(mid) {
+  const total = member(mid)?.points || 0;
+  const days = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    days.push({ day: d.toISOString().slice(0, 10), points: i === 29 ? total : 0 });
+  }
+  return { total, days };
+}
+
+async function ensureTrend(mid) {
+  if (_trendCache[mid]) return;
+  try {
+    _trendCache[mid] = CONFIG.mode === 'api' ? await API.request(`/points/trend/${mid}`) : _mockTrend(mid);
+  } catch (e) {
+    _trendCache[mid] = { total: member(mid)?.points || 0, days: [] };
+  }
+  render();
+}
+
+function trendBars(mid) {
+  const t = _trendCache[mid];
+  if (!t || !t.days || !t.days.length) return '';
+  const max = Math.max(1, ...t.days.map((d) => d.points));
+  return `<div class="mini-bars trend-bars">${t.days
+    .map(
+      (d) =>
+        `<div class="mb-col" style="min-width:5px" title="${d.day} · ${d.points} 分"><div class="mb-bar" style="height:${(d.points / max) * 100}%;min-height:2px" data-count="${d.points || ''}"></div></div>`,
+    )
+    .join('')}</div>`;
+}
+
+function checkinHeat(mid) {
+  const counts = new Map();
+  for (const c of db.checkins || []) {
+    if (c.memberId !== mid) continue;
+    const k = new Date(c.created).toDateString();
+    counts.set(k, (counts.get(k) || 0) + 1);
+  }
+  const now = new Date();
+  const cells = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const n = counts.get(d.toDateString()) || 0;
+    cells.push(
+      `<span class="heat-cell${n ? ' on' + (n > 2 ? 3 : n) : ''}" title="${d.getMonth() + 1}/${d.getDate()} · 打卡 ${n} 次">${n || ''}</span>`,
+    );
+  }
+  return `<div class="heatmap">${cells.join('')}</div>`;
+}
+
+function memberDetailPage(mid) {
+  const m = member(mid);
+  if (!m) return `${empty('成员不存在', '该成员可能已被删除。')}<div class="controls-wrap">${btn('返回成员列表', 'nav', '', 'data-view="members"')}</div>`;
+  if (!can('page:member.detail') && me().id !== mid)
+    return `${empty('没有权限查看', '仅管理角色或本人可查看成员详情。')}<div class="controls-wrap">${btn('返回成员列表', 'nav', '', 'data-view="members"')}</div>`;
+  const self = me().id === mid;
+  const canEdit = editableMember(m);
+  const canManage = can('action:manage.override');
+  const groups = db.groups || [];
+  const g = groups.find((x) => (x.members || []).includes(mid));
+  const tasks = _memberTasks(mid).sort((a, b) => Date.parse(b.updated) - Date.parse(a.updated));
+  const done = tasks.filter((t) => t.status === 'done').length;
+  const loans = (db.loans || []).filter((l) => l.memberId === mid);
+  const checkins = (db.checkins || []).filter((c) => c.memberId === mid);
+  const logs = visibleLogs().filter((l) => l.memberId === mid);
+  const actions = [
+    btn('返回成员列表', 'nav', '', 'data-view="members"'),
+    ...(canEdit ? [btn('编辑成员', 'member-edit', '', `data-id="${m.id}"`)] : []),
+    ...(canManage && !self ? [btn('权限覆盖', 'member-override', '', `data-id="${m.id}"`)] : []),
+    ...(can('action:member.reset_password') && !self ? [btn('重置密码', 'member-reset-password', 'danger', `data-id="${m.id}"`)] : []),
+  ];
+  const head = `${heading(`${esc(m.name)}<span style="font-size:16px;color:#7a7a78;font-weight:400;margin-left:10px">${roleLabel(m)}</span>`, `学号 ${esc(m.number)} · ${esc(m.group || '未分组')} · 加入 ${new Date(m.joined).toLocaleDateString('zh-CN')}`, actions.join(''), 'MEMBER / 成员详情')}`;
+  const stats = `<div class="stats">${statsCard('参与任务', tasks.length, '件', 'task', '', `<span>${done} 件已完成</span><span>·</span><span>${tasks.length - done} 件推进中</span>`)}${statsCard('完成任务', done, '件', 'check', 'green', `<span>${Math.round(percentage(done, tasks.length || 1))}% 完成率</span>`)}${statsCard('借用记录', loans.length, '笔', 'swap', 'blue', `<span>${loans.filter((l) => ['使用中', '待确认归还'].includes(l.status)).length} 笔进行中</span>`)}${statsCard('累计打卡', checkins.length, '次', 'pin', 'purple', `<span>${new Set(checkins.map((c) => new Date(c.created).toDateString())).size} 天到场</span>`)}</div>`;
+  const charts = `<section class="panel"><div class="panel-head"><div><h2>任务趋势</h2><p>最近 6 个月任务分布</p></div><span class="small muted">${done}/${tasks.length} 完成</span></div><div class="chart-body">${tasks.length ? taskTrendBars(mid) : `<div class="empty small">${icon('task')}暂无任务记录</div>`}</div></section><section class="panel"><div class="panel-head"><div><h2>积分</h2><p>近 30 天趋势</p></div><span class="small muted">${m.points || 0} 分</span></div><div class="chart-body">${_trendCache[mid] ? trendBars(mid) : (ensureTrend(mid), `<span class="muted small">${icon('clock')} 加载中…</span>`)}</div></section><section class="panel"><div class="panel-head"><div><h2>到场热力</h2><p>近 30 天实验室打卡</p></div><span class="small muted">${checkins.filter((c) => { const d = new Date(c.created); const n = new Date(); return n - d < 30 * 86400000; }).length} 次</span></div><div class="chart-body">${checkinHeat(mid)}</div></section>`;
+  const side = `<section class="panel profile-panel"><div class="row">${avatar(m)}<div><h1 style="font-size:20px">${esc(m.name)}</h1><p class="muted" style="margin-top:6px">${roleLabel(m)}${g ? ` · ${esc(g.name)}` : ''}</p></div><span style="margin-left:auto">${badge(m.active === false ? '已停用' : memberStatus(m))}</span></div>${details([
+    ['学号 / 工号', m.number],
+    ['登录账号', self || can('page:members') ? m.username : '—'],
+    ['所属小组', g ? `${g.name}（${g.memberCount}/${g.capacity} 人）` : m.group || '未分组'],
+    ['研究方向', m.direction || '—'],
+    ['联系方式', self || can('page:members') ? m.contact || '—' : '—'],
+    ['邮箱', m.email || '—'],
+    ['状态备注', m.note || self || can('page:members') ? m.note || '—' : '—'],
+    ['最近更新', new Date(m.updated).toLocaleString('zh-CN')],
+  ])}</section>`;
+  const tasksPanel = `<section class="panel"><div class="panel-head"><div><h2>任务</h2><p>负责与创建的任务</p></div><button class="text-btn" data-action="nav" data-view="tasks">任务看板 ${icon('arrow')}</button></div><div class="member-task-list">${tasks.length ? tasks.map(taskMiniRow).join('') : `<div class="empty small">${icon('task')}暂无任务</div>`}</div></section>`;
+  const loansPanel = `<section class="panel"><div class="panel-head"><div><h2>借用记录</h2><p>历史借还与进行中</p></div><button class="text-btn" data-action="nav" data-view="loans">全部记录 ${icon('arrow')}</button></div><div class="table-wrap"><table><thead><tr><th>模块</th><th>状态</th><th>借用时间</th><th>预计归还</th></tr></thead><tbody>${loans.slice(0, 8).map((l) => `<tr><td>${l.assetIds?.map((id) => `<strong>${esc(asset(id)?.name || id)}</strong>`).join('<br>') || '—'}</td><td>${badge(l.status)}</td><td>${fmt(l.issued || l.created, true)}</td><td>${fmt(l.due, true)}</td></tr>`).join('')}</tbody></table>${loans.length ? '' : `<div class="empty small">${icon('swap')}暂无借用记录</div>`}</div></section>`;
+  const logsPanel = `<section class="panel"><div class="panel-head"><div><h2>操作记录</h2><p>该成员的最近足迹</p></div></div><div class="full-log">${logs.slice(0, 8).map((l) => `<div class="activity-item"><strong>${esc(l.actor)}</strong> · ${esc(l.text)}<small>${fmt(l.at, true)}</small></div>`).join('') || `<div class="empty small">${icon('history')}暂无操作记录</div>`}</div></section>`;
+  return `<div class="page-fit">${head}${stats}<div class="grid-main grid-fill"><div>${uiTab('member-detail', [
+    ['overview', '数据概览', () => charts],
+    ['tasks', '任务', () => tasksPanel],
+    ['loans', '借用', () => loansPanel],
+    ['logs', '操作记录', () => logsPanel],
+  ])}</div><div>${side}</div></div></div>`;
+}
+
+function taskMiniRow(t) {
+  return `<div class="todo"><span class="todo-icon ${t.status === 'done' ? '' : 'orange'}">${icon(t.status === 'done' ? 'check' : 'clock')}</span><div>${stack(t.title, `${t.id}${t.groupName ? ' · ' + t.groupName : ''}${t.due ? ' · 截止 ' + fmt(t.due) : ''}`)}</div><div class="row" style="gap:6px">${t.score ? `<span class="score-chip">${'★'.repeat(t.score)}</span>` : ''}${badge(taskStatusLabel(t.status))}</div></div>`;
+}
+
+window.MEMBER_ACTIONS = {
+  'member-detail': (id) => go('member/' + id),
+};
+window.memberDetailPage = memberDetailPage;

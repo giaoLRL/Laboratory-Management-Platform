@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 from apps.common.ids import next_code
-from apps.common.permissions import is_staff
+from apps.common.rbac import require
 from apps.common.response import ok, fail
 from apps.competitions.models import Competition
 
@@ -93,21 +93,26 @@ def _validate(d, instance=None):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def competitions_create(request):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以维护比赛', 403)
+    if (err := require(request.user, 'action:competition.create', '没有创建比赛的权限')):
+        return err
     data, err = _validate(request.data or {})
     if err:
         return err
     comp = Competition.objects.create(id=next_code(Competition, 'COMP'),
                                       owner=request.user, **data)
+    from apps.notify.service import create_many, active_members
+    create_many(active_members(exclude=request.user), 'competition_published',
+                f'新比赛发布 · {data["name"][:40]}',
+                f'报名截止 {str(data["registrationEnd"])[:16]} · 开赛 {str(data["start"])[:16]}',
+                ref_type='competition', ref_id=comp.id, link='competitions')
     return ok({'id': comp.id})
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def competitions_update(request, cid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以维护比赛', 403)
+    if (err := require(request.user, 'action:competition.update', '没有编辑比赛的权限')):
+        return err
     try:
         comp = Competition.objects.get(pk=cid)
     except Competition.DoesNotExist:
@@ -124,8 +129,8 @@ def competitions_update(request, cid):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def competitions_archive(request, cid):
-    if not is_staff(request.user):
-        return fail('只有指导老师或负责人可以归档比赛', 403)
+    if (err := require(request.user, 'action:competition.archive', '没有归档比赛的权限')):
+        return err
     try:
         comp = Competition.objects.get(pk=cid)
     except Competition.DoesNotExist:

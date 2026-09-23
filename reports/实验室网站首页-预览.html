@@ -59,15 +59,10 @@
   /* 固定全屏媒体层（对齐原站 carousel: position fixed, 100vh, z-index -2） */
   /* 注意：黑底必须放在本层——若放在 .hero 上，会盖住 z-index 为负的固定视频层 */
   .hero-media { position: fixed; inset: 0; height: 100vh; z-index: -2; background: #000; }
+  /* 视频按原始画面输出：不做整体透明度压暗，也不再叠加黑色渐晕蒙版 */
   .hero-media img.bg, .hero-media video.bg {
     position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; opacity: .6;
-  }
-  .hero .overlay {
-    position: absolute; inset: 0;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,0) 30%),
-      linear-gradient(0deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 45%);
+    object-fit: cover;
   }
 
   /* ── 顶部导航（透明、in-flow、pt-40px、居中链接） ── */
@@ -742,7 +737,6 @@
   <div class="hero-media">
     <video class="bg" src="./assets/video/hero.mp4" poster="./assets/img/hero.webp"
            autoplay muted loop playsinline preload="auto"></video>
-    <div class="overlay"></div>
   </div>
 
   <!-- 顶部导航（透明，随页滚动） -->

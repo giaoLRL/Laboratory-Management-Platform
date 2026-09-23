@@ -11,6 +11,9 @@ api_patterns = [
     path('', include('apps.tasksapp.urls')),
     path('', include('apps.checkins.urls')),
     path('', include('apps.agent.urls')),
+    path('', include('apps.notify.urls')),
+    path('', include('apps.points.urls')),
+    path('', include('apps.email.urls')),
 ]
 
 urlpatterns = [

@@ -1,3 +1,6 @@
+from hashlib import sha256
+
+from django.utils import timezone
 from rest_framework.authentication import SessionAuthentication
 
 
@@ -17,3 +20,32 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         返回 403 会导致启动抛错、页面空白/报错屏。
         """
         return 'Session'
+
+
+class TokenAuthentication:
+    """外部只读接口令牌认证：`Authorization: Bearer <token>`。
+
+    只校验哈希一致 + active + 未过期；认证成功返回 (user, None)。
+    """
+
+    keyword = 'Bearer'
+
+    def authenticate(self, request):
+        auth = request.META.get('HTTP_AUTHORIZATION', '')
+        if not auth.startswith(self.keyword + ' '):
+            return None
+        token = auth[len(self.keyword) + 1:].strip()
+        if not token:
+            return None
+        from apps.accounts.models import ApiToken
+        digest = sha256(token.encode()).hexdigest()
+        row = ApiToken.objects.select_related('user').filter(token_hash=digest, active=True).first()
+        if not row:
+            return None
+        if row.expires_at and row.expires_at < timezone.now():
+            return None
+        ApiToken.objects.filter(pk=row.pk).update(last_used_at=timezone.now())
+        return (row.user, row)
+
+    def authenticate_header(self, request):
+        return self.keyword

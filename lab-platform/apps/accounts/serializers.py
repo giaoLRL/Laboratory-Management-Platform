@@ -13,7 +13,11 @@ def member_dict(p, viewer=None, full=False):
         'username': p.user.username,
         'number': p.number,
         'role': p.role,
+        'roles': [r.code for r in p.effective_roles()],
         'group': p.group,
+        'groupId': p.group_fk_id or '',
+        'email': p.email,
+        'points': getattr(p, '_points_cache', 0),
         'direction': p.direction,
         'active': p.active,
         'baseStatus': p.base_status,
@@ -23,6 +27,8 @@ def member_dict(p, viewer=None, full=False):
     if full:
         d['contact'] = p.contact
         d['note'] = p.note
+        d['mustChangePassword'] = p.must_change_password
+        d['mustCompleteProfile'] = p.must_complete_profile
     return d
 
 
