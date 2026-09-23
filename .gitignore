@@ -90,3 +90,7 @@ reports/qa/*_fix*.py
 # ── 参考前端：独立 git 仓库（含 node_modules），不并入父仓库 ──
 参考前端/
 
+# ── 本地工具与调试产物：不进 GitHub ──
+/.trae/
+*_bugcheck*.png
+
