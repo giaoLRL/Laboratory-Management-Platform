@@ -79,7 +79,9 @@ for row in src_users:
         u = User(pk=pk)
         created = True
     u.username = username
-    u.set_password(password)  # 保留 NetBox 的 PBKDF2 hash
+    # 直接保留 NetBox 的 PBKDF2 hash 字符串：
+    # set_password() 会把 hash 当明文再哈希一次，导致老用户全部无法登录！
+    u.password = password if (password and '$' in password) else '!'
     u.first_name = first or ''
     u.last_name = last or ''
     u.email = email or ''
@@ -87,8 +89,7 @@ for row in src_users:
     u.is_staff = superuser
     u.is_superuser = superuser
     if joined:
-        from django.utils import timezone
-        u.date_joined = timezone.now()
+        u.date_joined = joined  # 保留 NetBox 注册时间（原来是 timezone.now()，bug）
     if DRY_RUN:
         print(f"  [DRY] {'CREATE' if created else 'UPDATE'} User pk={pk} username={username} superuser={superuser}")
     else:
@@ -217,16 +218,19 @@ for src_mid, src_cid, role, content, created in src_msgs:
     if src_cid not in conv_id_map:
         continue
     new_conv_id = conv_id_map[src_cid]
-    # AgentMessage 没显式 id 字段，靠 conversation + created 去重
-    if AgentMessage.objects.filter(conversation_id=new_conv_id, created=created).exists():
+    role_v = (role or 'assistant')[:16]
+    content_v = (content or '')[:20000]
+    # AgentMessage 没显式 id 字段，靠 conversation + role + content 去重（created 可能为 NULL）
+    if AgentMessage.objects.filter(conversation_id=new_conv_id, role=role_v, content=content_v).exists():
         continue
     if DRY_RUN: msg_count += 1; continue
-    AgentMessage.objects.create(
+    obj = AgentMessage.objects.create(
         conversation_id=new_conv_id,
-        role=(role or 'assistant')[:16],
-        content=(content or '')[:20000],
-        created=created,
+        role=role_v,
+        content=content_v,
     )
+    if created:  # auto_now_add 会忽略 create() 传入的时间，用 update 覆盖回原时间
+        AgentMessage.objects.filter(pk=obj.pk).update(created=created)
     msg_count += 1
 if DRY_RUN: print(f"  [DRY] would create {msg_count} messages")
 else: print(f"  messages migrated/skipped: {msg_count}")

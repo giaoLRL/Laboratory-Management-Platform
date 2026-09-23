@@ -1,37 +1,36 @@
-# 具身智能实验室 · 独立管理平台后端
-# 多阶段构建：先装依赖，再复制代码，最终镜像极小
+# 多阶段 Dockerfile：builder 装依赖 → runtime 仅拷贝
 FROM python:3.12-slim AS builder
-
 WORKDIR /build
 COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install \
+      -i https://mirrors.aliyun.com/pypi/simple/ \
+      -r requirements.txt
 
-# ── 运行时 ──
 FROM python:3.12-slim
-
-# 时区 + 基础工具
 ENV TZ=Asia/Shanghai \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends tzdata curl && \
-    ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone && \
-    rm -rf /var/lib/apt/lists/*
-
-# 从 builder 拿已装依赖
+# 从 builder 拷贝 pip 包
 COPY --from=builder /install /usr/local
 
-# 应用代码
-WORKDIR /app
-COPY . /app/
+# 设置时区 + 创建媒体目录
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime \
+ && echo $TZ > /etc/timezone \
+ && mkdir -p /app/media
 
-# 媒体目录挂载点
-RUN mkdir -p /app/media/checkins /app/media/tasks
+WORKDIR /app
+COPY . .
 
 EXPOSE 8001
 
-# 生产入口：gunicorn 2 worker（2GB 机器 1 worker 足够，留余给 Postgres/Redis）
-# 注意：启动时先 migrate
-CMD ["bash", "-c", "python manage.py migrate --run-syncdb --noinput && gunicorn lab_api.wsgi:application --bind 0.0.0.0:8001 --workers 1 --timeout 30 --access-logfile -"]
+# 启动：migrate 后 gunicorn 起 1 worker（2GB 机器）
+CMD python manage.py migrate --noinput && \
+    gunicorn lab_api.wsgi:application \
+      --bind 0.0.0.0:8001 \
+      --workers 1 \
+      --threads 4 \
+      --timeout 120 \
+      --access-logfile - \
+      --error-logfile -

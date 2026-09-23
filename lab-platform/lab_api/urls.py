@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.urls import include, path, re_path
 
+from apps.common.media_views import protected_media
+
 api_patterns = [
     path('', include('apps.accounts.urls')),
     path('', include('apps.inventory.urls')),
@@ -14,6 +16,9 @@ api_patterns = [
 urlpatterns = [
     # 所有 API 统一挂在 /api/ 前缀下（生产 nginx 不剥前缀，开发/生产行为一致）
     path('api/', include(api_patterns)),
+    # 媒体文件（打卡照片/任务附件）：开发/生产统一走鉴权视图，
+    # 必须放在 DEBUG 模式的 SPA catch-all 之前
+    path('media/<path:filepath>', protected_media),
 ]
 
 if settings.DEBUG:
