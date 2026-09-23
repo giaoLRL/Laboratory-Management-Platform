@@ -96,7 +96,7 @@ function competitionForm(id) {
   const c = id ? competitionById(id) : null;
   modal(
     c ? '编辑比赛' : '新增比赛',
-    `<div class="form-grid">${fields(c, { name: ['比赛名称 *', 80], organizer: ['主办方 *', 80] })}${selectField('比赛级别', 'level', ['实验室', '校级', '省级', '国家级', '国际级'], c?.level || '校级')}${field('比赛方向', 'category', c?.category || '嵌入式设计', 40)}${field('报名开始 *', 'registrationStart', inputDate(c?.registrationStart || date(0, 9)), 'datetime-local', '')}${field('报名截止 *', 'registrationEnd', inputDate(c?.registrationEnd || date(7, 18)), 'datetime-local', '')}${field('比赛开始 *', 'start', inputDate(c?.start || date(14, 9)), 'datetime-local', '')}${field('比赛结束 *', 'end', inputDate(c?.end || date(14, 18)), 'datetime-local', '')}${field('比赛地点 *', 'location', c?.location || '', 100)}${selectField(
+    `<div class="form-grid">${fields(c, { name: ['比赛名称 *', 80], organizer: ['主办方 *', 80] })}${selectField('比赛级别', 'level', ['实验室', '校级', '省级', '国家级', '国际级'], c?.level || '校级')}${field('比赛方向', 'category', c?.category || '具身智能', 40)}${field('报名开始 *', 'registrationStart', inputDate(c?.registrationStart || date(0, 9)), 'datetime-local', '')}${field('报名截止 *', 'registrationEnd', inputDate(c?.registrationEnd || date(7, 18)), 'datetime-local', '')}${field('比赛开始 *', 'start', inputDate(c?.start || date(14, 9)), 'datetime-local', '')}${field('比赛结束 *', 'end', inputDate(c?.end || date(14, 18)), 'datetime-local', '')}${field('比赛地点 *', 'location', c?.location || '', 100)}${selectField(
       '比赛负责人',
       'ownerId',
       db.members.filter((m) => m.active || m.id === c?.ownerId).map((m) => [m.id, m.name]),

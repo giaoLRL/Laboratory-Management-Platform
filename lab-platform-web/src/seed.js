@@ -195,7 +195,7 @@ function seedCompetitions() {
     {
       id: 'COMP-002',
       name: '智能小车算法挑战赛',
-      organizer: '嵌入式创新实验室（示例）',
+      organizer: '具身智能实验室（示例）',
       level: '实验室',
       category: '机器人与控制',
       registrationStart: date(-14, 9),

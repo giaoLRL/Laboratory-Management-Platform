@@ -339,7 +339,7 @@ dialog::backdrop { background: #17284955; backdrop-filter: blur(3px); }
   .login { grid-template-columns: 1fr; }
   .login-art { display: none; }
   .login-form-wrap { padding: 36px 25px; }
-  .login-form:before { content: '芯栈 Lab / 实验室管理'; display: block; font-size: 14px; color: var(--blue); margin-bottom: 40px; font-weight: 600; }
+  .login-form:before { content: '具身智能实验室 / 管理平台'; display: block; font-size: 14px; color: var(--blue); margin-bottom: 40px; font-weight: 600; }
   .utilization { justify-content: space-evenly; padding: 10px 20px 22px; }
   .donut { width: 145px; height: 145px; }
   .chart-legend { min-width: 115px; }
