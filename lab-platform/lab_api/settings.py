@@ -85,7 +85,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-MEDIA_URL = 'media/'
+# 必须以 / 开头：打卡照片/任务附件的 .url 会拼进 JSON 返回给 SPA，
+# 相对路径在 /login/ 等非根文档路径下会解析错误（404 → 图片全挂）
+MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('LAB_MEDIA_ROOT', BASE_DIR / 'media'))
 # 开发模式托管的 SPA 目录
 LAB_WEB_DIR = os.environ.get('LAB_WEB_DIR', str(BASE_DIR.parent / 'lab-platform-web'))
