@@ -35,7 +35,7 @@ h3 { font-size: 14px; font-weight: 600; }
 .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 34px; flex-shrink: 0; }
 .brandmark { width: 39px; height: 39px; display: grid; place-items: center; }
 .brandmark svg { width: 39px; height: 39px; display: block; }
-.brand strong { font-size: 20px; letter-spacing: -0.6px; }
+.brand strong { font-size: clamp(15px, 1.35vw, 20px); letter-spacing: -0.6px; white-space: nowrap; }
 .brand small { display: block; color: #82838a; font-size: 10px; letter-spacing: 1.5px; margin-top: 4px; }
 .nav-label { font-size: 10px; letter-spacing: 1.4px; color: #8a8b90; padding: 9px 17px 12px; }
 .nav { display: grid; gap: 6px; flex: 1; min-height: 0; overflow-y: auto; align-content: start; padding-right: 2px; }
@@ -611,6 +611,17 @@ dialog[open] { animation: enter 0.16s ease; }
 .grid-main.grid-fill .tab-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .grid-main.grid-fill > div > .panel > .table-wrap, .grid-main.grid-fill > div > .panel > .member-grid { flex: 1; min-height: 0; overflow-y: auto; }
 .page-fit > .tab-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* 成员详情页：面板按内容自适应高度（修复 .panel overflow:hidden + flex 等分导致的静默裁切），
+   高度不够时整列滚动（可见），任何视口都不再切内容 */
+#tab-body-member-detail { overflow-y: auto; overflow-x: hidden; }
+#tab-body-member-detail > .panel { flex: 1 0 auto; }
+#tab-body-member-detail > .panel > .chart-body { flex: 0 0 auto; overflow: visible; }
+/* 数据概览：任务趋势 + 积分并排（省一屏高度），到场热力整行 */
+#tab-body-member-detail > .chart-duo { flex: 1 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+#tab-body-member-detail > .chart-duo > .panel { margin-bottom: 0; }
+/* 行高锁死为容器高：右列档案再长也只在自身内部滚动，不把左列一起撑出滚动条 */
+.grid-main.grid-fill.member-fill { grid-template-rows: minmax(0, 1fr); }
+@media (max-width: 900px) { #tab-body-member-detail > .chart-duo { grid-template-columns: 1fr; } }
 .page-fit > .panel.nav-admin-panel { flex: 0 1 auto; max-height: 40%; display: flex; flex-direction: column; }
 .nav-admin-panel .nav-admin { flex: 1; min-height: 0; overflow-y: auto; }
 .vt { padding: 7px 16px; font-size: 12px; font-weight: 600; color: var(--muted); border-radius: 6px; transition: 0.15s; }
@@ -654,12 +665,22 @@ dialog[open] { animation: enter 0.16s ease; }
 /* 成员详情页：图表与热力 */
 .chart-body { padding: 6px 2px 2px; }
 .mini-bars { display: flex; align-items: flex-end; gap: 6px; height: 96px; padding: 4px 0 0; }
-.mb-col { flex: 1; min-width: 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mb-col { flex: 1; min-width: 24px; height: 100%; display: flex; flex-direction: column; align-items: center; }
+/* 柱高百分比需要一个有确定高度的包含块：mb-bar-wrap 撑满去掉标签后的空间 */
+.mb-bar-wrap { width: 100%; flex: 1; min-height: 0; display: flex; align-items: flex-end; justify-content: center; }
 .mb-bar { width: 60%; max-width: 26px; border-radius: 5px 5px 0 0; background: #3b5c93; position: relative; min-height: 3px; transition: height 0.35s; }
-.mb-bar::before { content: attr(data-count); position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--muted); }
-.mb-col > span { font-size: 10px; color: var(--muted); }
-.heatmap { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; padding: 8px 2px 2px; }
-.heat-cell { aspect-ratio: 1/1; border-radius: 3px; background: #ededeb; display: grid; place-items: center; font-size: 9px; color: transparent; }
+.mb-done { position: absolute; bottom: 0; left: 0; right: 0; display: block; background: #26a078; }
+.mb-col > span { font-size: 10px; color: var(--muted); flex-shrink: 0; padding-top: 6px; }
+.heatmap-wrap { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.heat-months { display: grid; gap: 4px; font-size: 10px; color: #8a8b90; }
+.heat-months b { font-weight: 500; white-space: nowrap; }
+.heat-grid { display: grid; gap: 4px; align-items: start; }
+.heat-wd { display: grid; grid-template-rows: repeat(7, 16px); gap: 3px; font-size: 9px; color: #a5a5a2; }
+.heat-wd span { display: flex; align-items: center; justify-content: flex-end; padding-right: 2px; }
+.heatmap { display: grid; gap: 4px; }
+.heat-week { display: grid; grid-template-rows: repeat(7, 16px); gap: 3px; }
+.heat-cell { border-radius: 3px; background: #ededeb; display: grid; place-items: center; font-size: 9px; color: transparent; overflow: hidden; }
+.heat-cell.off { visibility: hidden; }
 .heat-cell.on1 { background: #cfe7da; color: #2a7d5c; }
 .heat-cell.on2 { background: #7fc5a4; color: #fff; }
 .heat-cell.on3 { background: #26a078; color: #fff; }
@@ -709,7 +730,7 @@ dialog[open] { animation: enter 0.16s ease; }
 .rule-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 2px; border-bottom: 1px dashed var(--line); }
 .rule-row .mono { font-size: 10px; }
 .trend-bars { height: 90px; gap: 2px; }
-.trend-bars .mb-bar { background: #c98a2d; }
+.trend-bars .mb-bar { background: #c98a2d; min-height: 0; }
 /* 30 天趋势柱极细，柱顶数字会互相重叠溢出；数值保留在悬浮提示里 */
 .trend-bars .mb-bar::before { content: none; }
 .score-picker { display: inline-flex; align-items: center; gap: 4px; background: #fff7e8; border: 1px solid #f0d58a; border-radius: 10px; padding: 6px 10px; }
@@ -1005,12 +1026,12 @@ dialog[open] { animation: enter 0.16s ease; }
 
 /* ── 成长档案（水平/标章/技能线/通过记录）── */
 .rank-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#243e70; background:#eef1f7; border:1px solid #d8deeb; border-radius:999px; padding:2px 10px; vertical-align:middle; }
-.ach-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; min-height:0; overflow-y:auto; padding:2px 2px 14px; }
+.ach-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; min-height:0; overflow-y:auto; padding:2px 2px 8px; }
 .ach-panel { background:#fff; border:1px solid var(--line); border-radius:11px; }
-.ach-panel .panel-head { padding:12px 14px 0; flex-shrink:0; }
+.ach-panel .panel-head { padding:8px 12px 0; flex-shrink:0; }
 .ach-panel .panel-head h2 { font-size:14px; }
 .ach-panel .chart-body { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-.ach-body { padding:10px 14px 14px; }
+.ach-body { padding:6px 12px 8px; }
 .rank-chip.in-head { margin-left:10px; }
 /* 档位表达：一/二/三档（替代星级符号，克制的描边样） */
 .score-chip.grade-0 { color:#9a9ba0; font-weight:400; }
@@ -1022,12 +1043,12 @@ dialog[open] { animation: enter 0.16s ease; }
 .exp-track { flex:1; height:7px; border-radius:4px; background:#eef0f4; overflow:hidden; }
 .exp-track span { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#3b5c93,#5f7fb8); }
 .exp-line small { white-space:nowrap; }
-.job-sum { display:flex; gap:10px; margin-top:12px; }
+.job-sum { display:flex; gap:10px; margin-top:10px; }
 .job-sum span { flex:1; text-align:center; border:1px solid var(--line); border-radius:9px; padding:8px 4px; background:#fafaf8; }
 .job-sum b { display:block; font-size:18px; color:#1b1d21; }
 .job-sum small { font-size:10.5px; color:#7a7a78; }
-.bdg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(86px,1fr)); gap:8px; }
-.bdg-tile { display:flex; flex-direction:column; align-items:center; gap:4px; border:1px solid var(--line); border-radius:9px; padding:9px 4px 7px; background:#fafaf8; cursor:default; }
+.bdg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(86px,1fr)); gap:6px; }
+.bdg-tile { display:flex; flex-direction:column; align-items:center; gap:4px; border:1px solid var(--line); border-radius:9px; padding:7px 4px 5px; background:#fafaf8; cursor:default; }
 .bdg-tile svg { width:20px; height:20px; color:#b9bec7; }
 .bdg-tile i { font-style:normal; font-size:10.5px; color:#7a7a78; text-align:center; line-height:1.2; }
 .bdg-tile.earned { border-color:#cfe3d8; background:#f0faf4; }
@@ -1036,14 +1057,14 @@ dialog[open] { animation: enter 0.16s ease; }
 .bdg-tile.tier3.earned { border-color:#e8d3a8; background:#fff7e6; }
 .bdg-tile.tier3.earned svg { color:#c98a2d; }
 .bdg-tile.tier3.earned i { color:#8a5f14; }
-.skill-row { display:flex; align-items:center; gap:8px; padding:5px 0; }
+.skill-row { display:flex; align-items:center; gap:8px; padding:3px 0; }
 .skill-row + .skill-row { border-top:1px dashed var(--line); }
 .skill-name { width:62px; flex-shrink:0; font-size:12px; font-weight:600; color:#33363c; }
 .skill-track { flex:1; height:6px; border-radius:3px; background:#eef0f4; overflow:hidden; }
 .skill-track span { display:block; height:100%; border-radius:3px; background:#26a078; }
 .skill-row small { white-space:nowrap; }
 .rec-list { display:flex; flex-direction:column; gap:2px; }
-.rec-item { display:flex; align-items:center; gap:8px; padding:5px 0; }
+.rec-item { display:flex; align-items:center; gap:8px; padding:4px 0; }
 .rec-item + .rec-item { border-top:1px dashed var(--line); }
 .rec-item .score-chip { min-width:38px; text-align:left; }
 .rec-item div { flex:1; min-width:0; }
