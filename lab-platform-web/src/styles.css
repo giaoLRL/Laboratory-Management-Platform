@@ -691,9 +691,14 @@ dialog[open] { animation: enter 0.16s ease; }
 .score-chip { font-size: 11px; color: #c98a2d; letter-spacing: 1px; }
 .empty.small { min-height: 60px; }
 /* 任务查询 / 审核表单 */
-.query-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 14px; }
+.query-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 14px; }
 .query-result { margin-top: 14px; }
 .query-form .field { min-width: 0; }
+/* 截止区间含两个日期输入，横跨两列才不会把右列挤出面板 */
+.query-form > .field:last-child { grid-column: span 2; }
+.query-form > .field:last-child .row > input { flex: 1; min-width: 0; }
+/* 任务看板的成员/小组/查询子视图在面板内滚动，避免内容被面板底边截断 */
+.panel.task-board > .sub-view { flex: 1; min-height: 0; overflow-y: auto; }
 .review-box { margin-top: 14px; border: 1px solid var(--line); background: var(--canvas); border-radius: 10px; padding: 12px 14px; }
 .review-box label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 6px; }
 .score-picker .star.on { color: #c98a2d; transform: scale(1.2); }
@@ -912,7 +917,9 @@ dialog[open] { animation: enter 0.16s ease; }
 .perm-matrix .perm-g-detail:hover td { background: #f4f4f2; }
 
 /* ── P0 系统模块：公告 / 小组 / 登录日志 / 密码 ── */
-.ann-list { display: grid; gap: 10px; }
+.ann-list { display: grid; gap: 10px; align-content: start; }
+/* 数据导出按钮组：与面板标题同缩进（原为无样式，按钮贴着面板左边框且互相紧贴） */
+.export-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 18px; }
 .ann-card { padding: 14px 18px; }
 .ann-card.unread { border-left: 3px solid var(--blue); }
 .ann-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
