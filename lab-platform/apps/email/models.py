@@ -56,6 +56,7 @@ class EmailRule(models.Model):
 
     RULE_CHOICES = [
         ('task_due', '任务临近截止'),
+        ('task_overdue', '任务已逾期'),
         ('task_assigned', '任务指派'),
         ('loan_overdue', '借用已逾期'),
         ('competition_deadline', '比赛报名截止'),

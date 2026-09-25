@@ -12,4 +12,5 @@ urlpatterns = [
     path('tasks/<str:tid>/delete', api.tasks_delete),
     path('tasks/<str:tid>/score', api.tasks_score),
     path('tasks/<str:tid>/attachment', api.tasks_attachment),
+    path('tasks/<str:tid>/image', api.tasks_image),
 ]

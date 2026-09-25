@@ -5,22 +5,26 @@ def award(user, rule_key, ref_type='', ref_id='', reason='', actor=None, points=
     """统一积分入口：规则未启用或重复发放（同 user+rule+ref）不写。
 
     points=None 时取规则的 unit 分值；传入则用给定值（如“星级 × 单位分值”）。
+    points 支持负数（如逾期惩罚扣分，配合 IntegerField 分值）。
     返回发放的 PointRecord 或 None。写操作方统一由各业务视图补 OperationLog。
     """
+    from django.db import IntegrityError, transaction
     from apps.points.models import PointRecord, PointRule
 
     rule = PointRule.objects.filter(key=rule_key).first()
     amount = rule.points if points is None else points
-    if not rule or not rule.enabled or amount <= 0:
+    if not rule or not rule.enabled or amount == 0:
         return None
-    if ref_type and ref_id and PointRecord.objects.filter(
-            user=user, rule_key=rule_key, ref_type=ref_type, ref_id=ref_id).exists():
+    try:
+        with transaction.atomic():
+            rec = PointRecord.objects.create(
+                user=user, rule_key=rule_key, points=amount,
+                ref_type=ref_type, ref_id=str(ref_id)[:64], reason=str(reason)[:256])
+    except IntegrityError:
+        # 并发重复发放：唯一约束兜底，幂等返回
         return None
-    rec = PointRecord.objects.create(
-        user=user, rule_key=rule_key, points=amount,
-        ref_type=ref_type, ref_id=str(ref_id)[:64], reason=str(reason)[:256])
     from apps.notify.service import create
-    create(user, 'points_changed', f'积分变动 +{amount}',
+    create(user, 'points_changed', f'积分变动 {amount:+d}',
            reason or f'规则 {rule_key}', ref_type='points', ref_id=str(ref_id)[:64] or rec.pk,
            link='leaderboard')
     return rec

@@ -18,7 +18,9 @@ const DEFAULT_NAV = [
   { id: 'loans', label: '借用与归还', icon: 'swap', permission: 'page:loans', param: '' },
   { id: 'competitions', label: '比赛管理', icon: 'trophy', permission: 'page:competitions', param: '' },
   { id: 'tasks', label: '任务看板', icon: 'task', permission: 'page:tasks', param: '' },
+  { id: 'levels', label: '技能关卡', icon: 'trophy', permission: 'page:levels', param: '' },
   { id: 'checkins', label: '实验室打卡', icon: 'pin', permission: 'page:checkins', param: '' },
+  { id: 'seats', label: '实验室座位', icon: 'pin', permission: 'page:seats', param: '' },
   { id: 'leaderboard', label: '积分排行', icon: 'trophy', permission: 'page:leaderboard', param: '' },
   { id: 'agent', label: '智能体助手', icon: 'chat', permission: 'page:agent', param: '' },
   { id: 'logs', label: '操作记录', icon: 'history', permission: 'page:logs', param: '' },
@@ -30,6 +32,7 @@ const DEFAULT_NAV = [
   { id: 'email', label: '邮件通知', icon: 'mail', permission: 'page:email', param: '' },
   { id: 'groups', label: '小组管理', icon: 'users', permission: 'page:groups', param: '' },
   { id: 'login-logs', label: '登录日志', icon: 'history', permission: 'page:loginlogs', param: '' },
+  { id: 'homepage', label: '主页管理', icon: 'image', permission: 'page:homepage', param: '' },
   { id: 'member', label: '成员详情', icon: '', permission: 'page:member.detail', param: 'm' },
   { id: 'task', label: '任务详情', icon: '', permission: 'page:tasks', param: 'TASK' },
 ];
@@ -121,6 +124,12 @@ const API = {
       return data.data ?? data;
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('请求超时，请检查服务器连接');
+      if (e.status === 401 && !path.startsWith('/auth/login')) {
+        // 会话过期/失效：清除本地会话回登录页（登录失败 401 是密码错误，不跳转）
+        sessionId = null;
+        db = null;
+        if (typeof render === 'function') render();
+      }
       throw e;
     } finally {
       clearTimeout(timer);
@@ -177,7 +186,7 @@ const API = {
       localAction();
       localStorage.setItem(DB_KEY, JSON.stringify(db));
     } catch (e) {
-      applySnapshot(JSON.parse(backup));
+      applySnapshot(JSON.parse(backup), true);
       throw e;
     }
   },
@@ -264,6 +273,8 @@ function overdue(l) {
   return isActiveLoan(l) && Date.parse(l.due) < Date.now();
 }
 function audit(text, memberId = me().id) {
+  // API 模式下操作日志由后端生成（OperationLog），本地不再双写，避免与后端审计歧义
+  if (CONFIG.mode !== 'mock') return;
   db.logs.push({ id: uid('LOG'), actor: me().name, text, memberId, at: new Date().toISOString() });
 }
 function pendingCount() {
@@ -272,11 +283,16 @@ function pendingCount() {
 function canReview(r) {
   const user = me(), owner = member(r?.memberId);
   if (!user || !(can('action:loan.review') || can('action:leave.review'))) return false;
+  // 对象级约束：不能审自己；负责人只能审普通成员（后端 _can_review 同样强制）
   return user.id !== r.memberId && (user.role === 'teacher' || owner?.role === 'member');
+}
+const STAFF_PAGE_KEYS = ['page:members', 'page:assets', 'page:permissions', 'page:loginlogs', 'page:announcements', 'page:news', 'page:email', 'page:homepage', 'page:groups'];
+function isStaffView() {
+  return STAFF_PAGE_KEYS.some((k) => can(k));
 }
 function visibleLogs() {
   return db.logs
-    .filter((l) => me().role !== 'member' || l.memberId === me().id || !l.private)
+    .filter((l) => isStaffView() || l.memberId === me().id || !l.private)
     .sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
 function todoItems() {
@@ -310,12 +326,13 @@ function todoItems() {
   return tasks;
 }
 function editableMember(m) {
-  return !!m && (me().role === 'teacher' || (me().role === 'manager' && m.role === 'member'));
+  // 权限点 + 对象级约束（负责人只能管理普通成员，与后端 members_update 一致）
+  return !!m && can('action:member.update') && (me().role === 'teacher' || m.role === 'member');
 }
 function getLoan(id) {
   const l = db.loans.find((x) => x.id === id);
   requirePermission(l, '借用记录不存在');
-  requirePermission(me().role !== 'member' || l.memberId === me().id);
+  requirePermission(l.memberId === me().id || can('action:loan.review') || can('action:loan.issue') || can('action:loan.receive'));
   return l;
 }
 function getLeave(id) {
@@ -333,7 +350,7 @@ function validateSnapshot(snapshot) {
     '演示数据格式无效，请刷新或恢复演示数据',
   );
 }
-function applySnapshot(snapshot) {
+function applySnapshot(snapshot, exact = false) {
   validateSnapshot(snapshot);
   requirePermission(Array.isArray(snapshot.competitions), '比赛数据格式无效');
   const next = { ...snapshot };
@@ -342,7 +359,9 @@ function applySnapshot(snapshot) {
     next[key] = snapshot[key].map((record) => {
       const current = existing.get(record.id);
       if (!current) return record;
-      for (const field of Object.keys(current)) if (!Object.hasOwn(record, field)) delete current[field];
+      // 默认只合并/覆盖，不删除后端漏发的字段（保留旧值，避免 UI 依赖处显示异常）；
+      // exact（失败回滚）必须精确还原，否则失败操作留下的脏字段会一直留在内存里
+      if (exact) for (const field of Object.keys(current)) if (!Object.hasOwn(record, field)) delete current[field];
       return Object.assign(current, record);
     });
   }

@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 from apps.accounts.models import OperationLog
-from apps.common.ids import next_code
+from apps.common.ids import create_with_code, next_code
 from apps.common.permissions import get_member
 from apps.common.rbac import can_manage, require
 from apps.common.response import ok, fail
@@ -68,11 +68,11 @@ def _maintenance_dict(m):
 
 def workspace_slice(profile, staff):
     """工作空间快照：assets / loans / maintenance（含隐私裁剪）。"""
-    assets = list(Asset.objects.exclude(status=Asset.STATUS_RETIRED) | Asset.objects.filter(status=Asset.STATUS_RETIRED))
+    assets = list(Asset.objects.all())
     in_use_ids = set(
         LoanItem.objects.filter(
             loan__status__in=(Loan.STATUS_IN_USE, Loan.STATUS_RETURNING)).values_list('asset_id', flat=True))
-    assets_d = [_asset_dict(a, in_use_ids) for a in Asset.objects.all()]
+    assets_d = [_asset_dict(a, in_use_ids) for a in assets]
 
     loan_qs = Loan.objects.prefetch_related('items')
     if not staff:
@@ -81,7 +81,7 @@ def workspace_slice(profile, staff):
 
     maint_d = [_maintenance_dict(m) for m in Maintenance.objects.all()]
 
-    ts = [a.updated for a in assets] + [l.created for l in loan_qs] + [m.created for m in Maintenance.objects.all()]
+    ts = [a.updated for a in assets] + [l.updated for l in loan_qs] + [m.updated for m in Maintenance.objects.all()]
     return {'assets': assets_d, 'loans': loans_d, 'maintenance': maint_d, '_ts': ts}
 
 
@@ -182,8 +182,8 @@ def assets_maintenance(request, aid):
         return fail('请填写问题描述')
     if asset.status in (Asset.STATUS_IN_USE, Asset.STATUS_RETIRED):
         return fail('使用中或已报废的模块不能送修', 409)
-    Maintenance.objects.create(id=next_code(Maintenance, 'MT'), asset=asset,
-                               description=description, status='维修中', actor=request.user)
+    create_with_code(Maintenance, 'MT', asset=asset,
+                     description=description, status='维修中', actor=request.user)
     asset.status = Asset.STATUS_REPAIR
     asset.save()
     _log(request, get_member(request.user), f'登记维修 · {asset.id} {asset.name} · {description[:40]}')
@@ -199,20 +199,24 @@ def assets_repair_complete(request, aid):
         asset = Asset.objects.get(pk=aid)
     except Asset.DoesNotExist:
         return fail('模块不存在', 404)
-    Maintenance.objects.filter(asset=asset, status='维修中').update(status='已完成')
+    m = Maintenance.objects.filter(asset=asset, status='维修中').order_by('-created').first()
+    if m:
+        m.status = '已完成'
+        m.save()
     asset.status = Asset.STATUS_FREE
     asset.save()
     _log(request, get_member(request.user), f'维修完成 · {asset.id} {asset.name}')
     from apps.notify.service import create_many, managers_with
     create_many(
-        [u for u in managers_with('action:asset.update') if u.id != request.user.id],
+        [u for u in managers_with('action:asset.update') if u.id != request.user.id and u.id != (m.actor_id or -1)],
         'asset_repaired', f'模块维修完成 · {asset.name}',
         f'{asset.id} 已恢复可借用', ref_type='asset', ref_id=asset.id, link='assets')
     from apps.email.models import EmailRule
     from apps.email.service import _trigger_by_rule, _member_email
     erule = EmailRule.objects.filter(key='asset_repaired').first()
     if erule and erule.enabled:
-        email = _member_email(request.user)
+        # 收件人 = 送修登记人（申请人），而非执行"维修完成"的操作者自己
+        email = _member_email(m.actor if m and m.actor else None)
         _trigger_by_rule(erule, {'title': asset.name, 'id': asset.id}, 'asset', asset.id, [email] if email else [])
     return ok()
 
@@ -254,6 +258,11 @@ def loans_create(request):
         return fail('请填写借用用途')
     if not due:
         return fail('请填写预计归还时间')
+    # 逾期治理：有逾期未归还的模块时禁止发起新借用，先归还再申请
+    if Loan.objects.filter(member=request.user,
+                           status__in=(Loan.STATUS_IN_USE, Loan.STATUS_RETURNING),
+                           due__lt=timezone.now()).exists():
+        return fail('你有逾期未归还的模块，请先归还后再申请', 409)
 
     with transaction.atomic():
         assets = Asset.objects.select_for_update().filter(id__in=asset_ids)
@@ -267,15 +276,14 @@ def loans_create(request):
         if bad:
             return fail(f'以下模块当前不可借用：{", ".join(bad)}', 409)
 
-        loan = Loan.objects.create(id=next_code(Loan, 'BR'), member=request.user,
-                                   purpose=purpose, project=project, due=due,
-                                   status=Loan.STATUS_PENDING)
+        loan = create_with_code(Loan, 'BR', member=request.user,
+                                purpose=purpose, project=project, due=due,
+                                status=Loan.STATUS_PENDING)
         LoanItem.objects.bulk_create([LoanItem(loan=loan, asset_id=a) for a in asset_ids])
 
     names = ' / '.join(a.name for a in assets)
     _log(request, me, f'申请借用 · {loan.id} · {names}')
     from apps.notify.service import create_many, managers_with
-    names = '、'.join(a.name for a in assets)
     create_many(
         [u for u in managers_with('action:loan.review') if u.id != request.user.id],
         'loan_apply', f'{me.name} 提交借用申请',
@@ -458,12 +466,15 @@ def loans_receive(request, lid):
             if li.asset_id in damaged_ids:
                 li.asset.status = Asset.STATUS_REPAIR
                 li.asset.save()
-                Maintenance.objects.create(id=next_code(Maintenance, 'MT'), asset=li.asset,
-                                           description=note or '归还验收发现损坏',
-                                           status='维修中', actor=request.user)
+                create_with_code(Maintenance, 'MT', asset=li.asset,
+                                 description=note or '归还验收发现损坏',
+                                 status='维修中', actor=request.user)
             else:
                 li.asset.status = Asset.STATUS_FREE
                 li.asset.save()
+        # 记录损坏标记（CSV 导出/审计用）
+        if damaged_ids:
+            LoanItem.objects.filter(loan=loan, asset_id__in=damaged_ids).update(damaged=True)
         loan.status = Loan.STATUS_DONE
         loan.received = timezone.now()
         loan.receiver = request.user

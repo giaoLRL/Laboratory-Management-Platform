@@ -58,6 +58,11 @@ def email_config_save(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def email_rules_get(request):
+    # 按 RULE_CHOICES 兜底创建缺失规则（新增规则无需数据迁移，配置页自动出现）
+    from apps.email.models import EmailRule
+    for key, label in EmailRule.RULE_CHOICES:
+        if not EmailRule.objects.filter(key=key).exists():
+            EmailRule.objects.create(key=key, label=label, enabled=True)
     return ok([_rule_dict(r) for r in EmailRule.objects.all()])
 
 
@@ -89,6 +94,9 @@ def email_rules_save(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def email_logs(request):
+    from apps.common.rbac import require
+    if (err := require(request.user, 'action:email.manage', '没有查看邮件日志的权限')):
+        return err
     rows = []
     for lg in EmailLog.objects.all()[:100]:
         rows.append({'ruleKey': lg.rule_key, 'recipient': lg.recipient, 'subject': lg.subject,

@@ -22,7 +22,7 @@ TOOL_BUILDERS = [
         'q': {'type': 'string', 'description': '名称关键词'},
         'status': {'type': 'string', 'description': '空闲/使用中/维修中/报废'}}),
     ('query_loans', '查询借用单（可按状态筛选）', False, '', {
-        'status': {'type': 'string', 'description': '待审批/使用中/待确认归还/已归还'}}),
+        'status': {'type': 'string', 'description': '待审批/已批准/已拒绝/使用中/归还申请中/已完成'}}),
     ('query_tasks', '查询任务（可按看板列与负责人筛选）', False, '', {
         'status': {'type': 'string', 'description': 'todo/doing/done'},
         'assignee': {'type': 'string', 'description': '负责人姓名关键词'}}),
@@ -36,7 +36,7 @@ TOOL_BUILDERS = [
         'title': {'type': 'string', 'description': '任务标题'},
         'description': {'type': 'string', 'description': '任务描述'},
         'priority': {'type': 'string', 'description': 'low/normal/high/urgent'},
-        'assignee': {'type': 'string', 'description': '负责人姓名（可选）'},
+        'assigneeId': {'type': 'string', 'description': '负责人成员编号（m 开头，如 m3，可先调用 query_members 查询后再填）'},
         'due': {'type': 'string', 'description': '截止时间，如 2026-10-08 18:00'}}),
     ('remember', '记住我的偏好/信息（个人记忆，写操作）', True, '', {
         'key': {'type': 'string', 'description': '记忆标签，如 direction'},
@@ -224,11 +224,11 @@ def execute_pending_op(user, conversation):
                 return op, '', '你没有创建任务的权限'
             from apps.tasksapp.api import _validate_task
             from apps.tasksapp.models import Task
-            from apps.common.ids import next_code
+            from apps.common.ids import create_with_code
             fields, err = _validate_task(op.get('args') or {})
             if err is not None:
                 return op, '', str(getattr(err, 'data', {}).get('message', '参数不合法'))
-            task = Task.objects.create(id=next_code(Task, 'TASK'), creator=user, **fields)
+            task = create_with_code(Task, 'TASK', creator=user, **fields)
             from apps.accounts.models import OperationLog
             OperationLog.objects.create(actor=user, text=f'智能体代建任务 · {task.id} {task.title[:30]}')
             result = f'已创建任务 {task.id}「{task.title}」，可在任务看板查看。'

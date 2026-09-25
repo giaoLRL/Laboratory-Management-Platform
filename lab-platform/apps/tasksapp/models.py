@@ -30,6 +30,7 @@ class Task(models.Model):
     reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks_reviewed', verbose_name='实际审核人')
     reviewed_at = models.DateTimeField('审核时间', null=True, blank=True)
     review_opinion = models.TextField('审核意见', blank=True, default='')
+    media = models.JSONField('任务图片/示例视频', default=list, blank=True)  # [{url,name}]
     created = models.DateTimeField('创建时间', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
 

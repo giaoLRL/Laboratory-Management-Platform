@@ -34,6 +34,15 @@ function _notifyIcon(kind) {
 
 async function ensureNotify() {
   const type = filter || '';
+  if (CONFIG.mode === 'mock') {
+    const notes = db.notifications || [];
+    const unread = (db.unread_notifications || 0);
+    const resp = { items: notes, total: notes.length, unread };
+    resp.page = page;
+    resp.type = type;
+    _notifyCache = resp;
+    return _notifyCache;
+  }
   const resp = await API.request(
     `/notifications?page=${page}&pageSize=${NOTIFY_PAGE_SIZE}${type ? `&type=${type}` : ''}`);
   resp.page = page;

@@ -259,11 +259,12 @@
     border-radius: 20px; overflow: hidden;
     background: #000;
   }
-  .showcase-card img {
+  .showcase-card :is(img, video) {
     width: 100%; height: 100%; object-fit: cover; display: block;
     opacity: .92; transition: opacity .3s, transform .6s;
+    --hp-scale: 100%; transform: scale(var(--hp-scale));
   }
-  .showcase-card:hover img { opacity: 1; transform: scale(1.03); }
+  .showcase-card:hover :is(img, video) { opacity: 1; transform: scale(calc(var(--hp-scale, 100%) * 1.03)); }
   .showcase-card .v-mask {
     position: absolute; inset: 0;
     background: linear-gradient(180deg, rgba(0,0,0,.05) 60%, rgba(0,0,0,.5) 100%);
@@ -281,21 +282,6 @@
     content: ""; width: 6px; height: 6px; border-radius: 50%;
     background: #3DE0FF;
   }
-  .showcase-card .v-play {
-    position: absolute; left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    width: 64px; height: 64px; border-radius: 50%;
-    border: 1px solid rgba(255,255,255,.4);
-    background: rgba(0,0,0,.4); backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; opacity: 0; transition: opacity .3s, transform .3s, background .3s;
-  }
-  .showcase-card:hover .v-play { opacity: 1; }
-  .showcase-card .v-play:hover {
-    transform: translate(-50%, -50%) scale(1.1);
-    background: rgba(77,125,255,.5);
-  }
-  .showcase-card .v-play svg { width: 22px; height: 22px; fill: #fff; margin-left: 3px; }
 
   /* ══════════ 行业前景（3 张白卡横向滚动，gap 12px） ══════════ */
   .bench-section { padding-bottom: 80px; }
@@ -392,11 +378,12 @@
     margin-bottom: 12px; border-radius: 20px; overflow: hidden;
     background: #000;
   }
-  .g-item img {
+  .g-item :is(img, video) {
     width: 100%; height: auto; display: block;
     opacity: .92; transition: opacity .35s, transform .6s;
+    --hp-scale: 100%; transform: scale(var(--hp-scale));
   }
-  .g-item:hover img { opacity: 1; transform: scale(1.04); }
+  .g-item:hover :is(img, video) { opacity: 1; transform: scale(calc(var(--hp-scale, 100%) * 1.04)); }
   .g-item .v-mask {
     position: absolute; inset: 0;
     background: linear-gradient(180deg, rgba(0,0,0,.05) 60%, rgba(0,0,0,.55) 100%);
@@ -469,8 +456,8 @@
   .news-body h4 { font-size: 15.5px; font-weight: 600; color: #212121; margin-bottom: 4px; }
   .news-body p { font-size: 13.5px; color: var(--text-dim); }
   /* 动态配图 */
-  .news-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
-  .news-photos img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; display: block; }
+  .news-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; overflow: hidden; }
+  .news-photos :is(img, video) { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; display: block; --hp-scale: 100%; transform: scale(var(--hp-scale)); }
 
   /* ── 团队 ── */
   .leader-card {
@@ -508,8 +495,8 @@
   .join-text ul { list-style: none; margin-bottom: 26px; }
   .join-text li { color: var(--text-dim); font-size: 14.5px; margin-bottom: 10px; padding-left: 24px; position: relative; }
   .join-text li::before { content: "▸"; position: absolute; left: 4px; color: #4D7DFF; }
-  .join-img { flex: 1; min-width: 280px; }
-  .join-img img { width: 100%; border-radius: 20px; display: block; }
+  .join-img { flex: 1; min-width: 280px; overflow: hidden; border-radius: 20px; }
+  .join-img :is(img, video) { width: 100%; border-radius: 20px; display: block; --hp-scale: 100%; transform: scale(var(--hp-scale)); }
   .btn-solid {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 13px 28px; border-radius: 999px;
@@ -551,14 +538,14 @@
     width: 345px; white-space: pre-line; text-align: left;
     font-size: 16px; line-height: 24px; font-weight: 400; color: rgba(33,33,33,.8);
   }
-  .footer-qr { display: flex; flex-direction: column; gap: 14px; width: 164px; }
+  .footer-qr { display: flex; flex-direction: column; gap: 14px; width: 160px; align-items: center; }
   .footer-qr .qr-box {
-    width: 100px; height: 100px; flex-shrink: 0;
+    width: 140px; height: 140px; flex-shrink: 0;
     border-radius: 8px; background: #fff; border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
-  .footer-qr .qr-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .footer-qr .qr-box :is(img, video) { width: 100%; height: 100%; object-fit: cover; display: block; --hp-scale: 100%; transform: scale(var(--hp-scale)); }
   .footer-qr .qr-note {
     white-space: nowrap; text-align: left;
     font-size: 14px; line-height: 32px; letter-spacing: .02em; font-weight: 400; color: rgba(33,33,33,.5);
@@ -588,6 +575,32 @@
     .footer-nav { width: 100%; }
     .footer-slogan { width: auto; }
   }
+
+  /* ── 图片灯箱（所有配图点击查看大图） ── */
+  .lightboxable { cursor: zoom-in; }
+  .lightbox {
+    position: fixed; inset: 0; z-index: 300;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(10, 12, 18, .92);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .lightbox.open { opacity: 1; pointer-events: auto; }
+  .lightbox :is(img, video) {
+    max-width: min(92vw, 1600px); max-height: 88vh;
+    object-fit: contain; border-radius: 8px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+  }
+  .lightbox #lightboxVideo { display: none; }
+  .lightbox .lb-close {
+    position: absolute; top: 18px; right: 18px;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08);
+    color: #fff; font-size: 22px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .lightbox .lb-close:hover { background: rgba(255,255,255,.2); }
 
   /* ── Toast ── */
   #toast {
@@ -709,31 +722,32 @@
 <body>
 <!--
   ═══════════ 部署素材清单（放到本文件同目录的 assets/ 下） ═══════════
-  assets/img/
-    hero.webp            视频海报帧        1918×1080 114KB（已生成）
-    school-logo.png      学校官方组合标（白色版）327×78（已提取自学校官网）
-    school-badge.png     圆形校徽裁剪           78×78（已生成，用作 favicon）
-    demo-drone-nav.webp  展示区A主图/视频封面   1920×1080 ≤200KB
-    demo-flight-ctrl.webp 展示区A竖图      720×1280  ≤150KB
-    demo-iot.webp        物联网系统        1920×1080 ≤200KB
-    demo-edc.webp        电赛工作台        1920×1080 ≤200KB
-    demo-car.webp        智能小车竖图      720×1280  ≤150KB
-    uav-nav.webp         展示区B           1920×1080 ≤200KB
-    build.webp           展示区C           1920×1080 ≤200KB
-    work-01.webp … work-08.webp  作品集     原比例    ≤200KB
-    join.webp            加入我们配图      1200×900  ≤200KB
-    qrcode.png           招新群二维码      480×480（已替换为真实群码）
+  assets/img/  （均为真实拍摄插图，webp q80，已压缩；hero.webp 为视频海报帧）
+    hero.webp             Hero 视频海报帧（原版）  1918×1080 114KB
+    school-logo.png       学校官方组合标（白色版）327×78（已提取自学校官网）
+    school-badge.png      圆形校徽裁剪           78×78（已生成，用作 favicon）
+    demo-drone-nav.webp   展示区A-主演示（视觉导航调试屏） 1400×1866
+    demo-flight-ctrl.webp 展示区A-飞控调试（微型无人机）   900×1600
+    demo-iot.webp         展示区A-物联网（ESP32 开发板）  1400×1866
+    demo-edc.webp         展示区A-电赛作品（智能小车）    1400×1866
+    demo-car.webp         展示区A-智能小车调试           900×1200
+    uav-nav.webp          展示区B（四旋翼无人机调试）     1080×1920
+    build.webp            展示区C（机械臂装配调试）      1920×1440
+    work-01…08.webp       作品集（视觉识别/训练场/机械臂/焊接工位等 8 张实拍）
+    news-1…3.webp          最新动态配图（竞赛答辩现场 / 实验室日常开发）
+    join.webp             加入我们配图（实验室日常开发场景） 1200×900
+    qrcode.png            招新群二维码      480×480（真实群码）
   assets/video/
-    hero.mp4             Hero 背景视频     1.3MB（已接入：1080p/8s/无声/≤2Mbps/faststart）
-    其余视频位            ≤2Mbps / 8-15s / 1080p，接入后替换对应 <img>
+    hero.mp4              Hero 背景视频（保持原版） 1.3MB（1080p/8s/无声/≤2Mbps/faststart）
   assets/audio/
-    bgm.mp3              背景音乐（科幻氛围乐 16s 循环 251KB，已生成；可替换为授权曲目 ≤128kbps）
-  压缩建议：Squoosh.app 或 cwebp -q 80；3Mbps 带宽下首屏总重控制在 500KB 内
+    bgm.mp3               背景音乐（科幻氛围乐 16s 循环 251KB，已生成；可替换为授权曲目 ≤128kbps）
+  说明：Hero 保持视频；其余配图均为真实拍摄，支持点击查看大图（灯箱）。
+  更新图片后请同步递增 src 后的 ?v= 版本参数，强制浏览器缓存失效。
   ═════════════════════════════════════════════════════════════════ -->
 
 <!-- ═══════════ Hero（固定全屏媒体 + 顶部透明导航 + 底部标题块） ═══════════ -->
 <header class="hero" id="top">
-  <!-- Hero 背景视频（已接入）：静音自动循环；更换素材时保持 muted + playsinline，码率 ≤2Mbps -->
+  <!-- Hero 背景视频（保持原版）：静音自动循环；更换素材时保持 muted + playsinline，码率 ≤2Mbps -->
   <div class="hero-media">
     <video class="bg" src="./assets/video/hero.mp4" poster="./assets/img/hero.webp"
            autoplay muted loop playsinline preload="auto"></video>
@@ -778,7 +792,7 @@
   <div class="hero-content">
     <div class="hero-inner">
       <div class="hero-text">
-        <h1>具身智能实验室</h1>
+        <h1 data-hp="hero.title">具身智能实验室</h1>
         <div class="description">围绕全国大学生电子设计竞赛、物联网设计竞赛与智能导航大赛，以赛促学、以赛代练，在真实工程问题中打磨硬技术。<br>我们深耕<span class="rotator"><i>物联网</i><i>无人机</i><i>嵌入式</i><i>智能导航</i><i>物联网</i></span></div>
       </div>
       <div class="button-group">
@@ -806,8 +820,8 @@
 <section id="demo" class="showcase">
   <div class="sec-head reveal">
     <div>
-      <h2>从电路板到蓝天</h2>
-      <p>三大赛道，一个实验室：物联网系统、电子设计、无人机自主导航——所有作品都由成员从零打磨，在赛场上接受检验。</p>
+      <h2 data-hp="demo.title">从电路板到蓝天</h2>
+      <p data-hp="demo.subtitle">三大赛道，一个实验室：物联网系统、电子设计、无人机自主导航——所有作品都由成员从零打磨，在赛场上接受检验。</p>
     </div>
     <div class="arrow-group">
       <button class="arrow-btn" id="sc-prev" disabled aria-label="上一个"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.7071 4.29289C13.0976 4.68342 13.0976 5.31658 12.7071 5.70711L7.41421 11H19C19.5523 11 20 11.4477 20 12C20 12.5523 19.5523 13 19 13H7.41421L12.7071 18.2929C13.0976 18.6834 13.0976 19.3166 12.7071 19.7071C12.3166 20.0976 11.6834 20.0976 11.2929 19.7071L4.29289 12.7071C3.90237 12.3166 3.90237 11.6834 4.29289 11.2929L11.2929 4.29289C11.6834 3.90237 12.3166 3.90237 12.7071 4.29289Z"/></svg></button>
@@ -815,36 +829,31 @@
     </div>
   </div>
   <div class="showcase-track" id="sc-track" style="padding: 0 var(--content-margin);">
-    <!-- 视频位：替换为 <video src="..." autoplay muted loop playsinline></video> -->
+    <!-- 配图卡：点击图片可查看大图 -->
     <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
-      <img src="./assets/img/demo-drone-nav.webp" alt="无人机自主导航">
+      <img data-hp-img="work-05" class="lightboxable" src="./assets/img/work-05.webp?v=2" alt="机器视觉检测系统运行界面">
       <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">主演示 · 无人机自主导航</div>
+      <div class="v-tag" data-hp="demo.cards.1">主演示 · 机器视觉检测系统</div>
     </div>
     <div class="showcase-card reveal" style="width: 337.5px; height: 600px;">
-      <img src="./assets/img/demo-flight-ctrl.webp" alt="飞控调试">
+      <img data-hp-img="demo-flight-ctrl" class="lightboxable" src="./assets/img/demo-flight-ctrl.webp?v=2" alt="飞控调试">
       <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">视频位</div>
-    </div>
-    <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
-      <img src="./assets/img/demo-iot.webp" alt="物联网系统">
-      <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">视频位 · 物联网系统</div>
-    </div>
-    <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
-      <img src="./assets/img/demo-edc.webp" alt="电赛作品">
-      <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">视频位 · 电赛作品</div>
+      <div class="v-tag" data-hp="demo.cards.2">飞控与遥控调试</div>
     </div>
     <div class="showcase-card reveal" style="width: 337.5px; height: 600px;">
-      <img src="./assets/img/demo-car.webp" alt="智能小车">
+      <img data-hp-img="demo-iot" class="lightboxable" src="./assets/img/demo-iot.webp?v=2" alt="物联网开发板">
       <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">视频位</div>
+      <div class="v-tag" data-hp="demo.cards.3">物联网系统 · ESP32 开发板</div>
+    </div>
+    <div class="showcase-card reveal" style="width: 1066.67px; height: 600px;">
+      <img data-hp-img="demo-edc" class="lightboxable" src="./assets/img/demo-edc.webp?v=2" alt="电赛作品">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.4">电赛作品 · 智能小车</div>
+    </div>
+    <div class="showcase-card reveal" style="width: 337.5px; height: 600px;">
+      <img data-hp-img="demo-car" class="lightboxable" src="./assets/img/demo-car.webp?v=2" alt="智能小车">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.5">智能小车调试</div>
     </div>
   </div>
 </section>
@@ -853,16 +862,15 @@
 <section id="vla" style="padding-top: 0;">
   <div class="sec-head reveal">
     <div>
-      <h2>智启导航：让无人机自主飞行</h2>
-      <p>飞控调参、SLAM 建图、路径规划、视觉避障——智能导航大赛（无人机赛道）核心技术，从室内定点巡航到复杂任务的全自主飞行。</p>
+      <h2 data-hp="uav.title">智启导航：让无人机自主飞行</h2>
+      <p data-hp="uav.subtitle">飞控调参、SLAM 建图、路径规划、视觉避障——智能导航大赛（无人机赛道）核心技术，从室内定点巡航到复杂任务的全自主飞行。</p>
     </div>
   </div>
   <div class="container">
     <div class="showcase-card reveal" style="width: 100%; height: 500px;">
-      <img src="./assets/img/uav-nav.webp" alt="无人机导航演示">
+      <img data-hp-img="uav-nav" class="lightboxable" src="./assets/img/uav-nav.webp?v=2" alt="四旋翼无人机调试">
       <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">视频位 · 自主避障演示</div>
+      <div class="v-tag" data-hp="uav.tag">四旋翼无人机 · 动力与飞控调试</div>
     </div>
   </div>
 </section>
@@ -871,16 +879,15 @@
 <section id="sim2real" style="padding-top: 0;">
   <div class="sec-head reveal">
     <div>
-      <h2>从想法到实物</h2>
+      <h2 data-hp="build.title">从想法到实物</h2>
       <p>方案设计、电路搭建、固件开发、联调测试——每一件参赛作品都要走完完整的工程链路，这也是竞赛教给我们最重要的事。</p>
     </div>
   </div>
   <div class="container">
     <div class="showcase-card reveal" style="width: 100%; height: 500px;">
-      <img src="./assets/img/build.webp" alt="从设计到实物">
+      <img data-hp-img="build" class="lightboxable" src="./assets/img/build.webp?v=2" alt="机械臂工程调试">
       <div class="v-mask"></div>
-      <button class="v-play" aria-label="播放"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-      <div class="v-tag">视频位 · 作品诞生记</div>
+      <div class="v-tag" data-hp="build.tag">作品诞生记 · 机械臂装配调试</div>
     </div>
   </div>
 </section>
@@ -958,50 +965,50 @@
   <div class="container">
     <div class="sec-head reveal">
       <div>
-        <h2>我们的作品</h2>
-        <p>历年参赛与训练作品（示例占位图，请替换为作品实拍）。</p>
+        <h2 data-hp="works.title">我们的作品</h2>
+        <p data-hp="works.subtitle">历年参赛与训练作品实拍。</p>
       </div>
     </div>
     <div class="gallery-masonry">
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-01.webp" alt="四轴自主导航无人机">
+        <img data-hp-img="work-01" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-01.webp?v=2" alt="机器视觉识别系统">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">四轴自主导航无人机</span><span class="idx">智能导航大赛</span></div>
+        <div class="v-cap"><span class="name">机器视觉识别系统</span><span class="idx">智能导航大赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-02.webp" alt="智能循迹小车">
+        <img data-hp-img="work-02" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-02.webp?v=2" alt="无人机竞速训练场">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">智能循迹小车</span><span class="idx">电赛</span></div>
+        <div class="v-cap"><span class="name">无人机竞速训练场</span><span class="idx">智能导航大赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-03.webp" alt="智慧家居系统">
+        <img data-hp-img="work-03" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-03.webp?v=2" alt="视觉识别算法调试">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">智慧家居物联网系统</span><span class="idx">物联网竞赛</span></div>
+        <div class="v-cap"><span class="name">视觉识别算法调试</span><span class="idx">电赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-04.webp" alt="环境监测站">
+        <img data-hp-img="work-04" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-04.webp?v=2" alt="机械臂搬运系统">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">远程环境监测站</span><span class="idx">物联网竞赛</span></div>
+        <div class="v-cap"><span class="name">机械臂搬运系统</span><span class="idx">校内选拔</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-05.webp" alt="信号处理装置">
+        <img data-hp-img="demo-drone-nav" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/demo-drone-nav.webp?v=2" alt="工件视觉检测系统">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">信号与系统实验装置</span><span class="idx">电赛</span></div>
+        <div class="v-cap"><span class="name">工件视觉检测系统</span><span class="idx">物联网竞赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-06.webp" alt="巡线机器人">
+        <img data-hp-img="work-06" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-06.webp?v=2" alt="视觉云台平台">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">巡线机器人</span><span class="idx">校内选拔</span></div>
+        <div class="v-cap"><span class="name">视觉云台平台</span><span class="idx">智能导航大赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-07.webp" alt="穿越机">
+        <img data-hp-img="work-07" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-07.webp?v=2" alt="双机械臂系统">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">FPV 穿越机</span><span class="idx">智能导航大赛</span></div>
+        <div class="v-cap"><span class="name">双机械臂系统</span><span class="idx">校内选拔</span></div>
       </div>
       <div class="g-item reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/work-08.webp" alt="焊接调试">
+        <img data-hp-img="work-08" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-08.webp?v=2" alt="元件器材库">
         <div class="v-mask"></div>
-        <div class="v-cap"><span class="name">焊接调试工位</span><span class="idx">日常备赛</span></div>
+        <div class="v-cap"><span class="name">元件器材库</span><span class="idx">日常备赛</span></div>
       </div>
     </div>
   </div>
@@ -1012,8 +1019,8 @@
   <div class="container">
     <div class="sec-head reveal">
       <div>
-        <h2>技术方向</h2>
-        <p>围绕"感知 — 决策 — 行动"技术链，覆盖三大赛道的核心技能栈</p>
+        <h2 data-hp="research.title">技术方向</h2>
+        <p data-hp="research.subtitle">围绕"感知 — 决策 — 行动"技术链，覆盖三大赛道的核心技能栈</p>
       </div>
     </div>
     <div class="research-grid">
@@ -1056,8 +1063,8 @@
   <div class="container">
     <div class="sec-head reveal">
       <div>
-        <h2>最新动态</h2>
-        <p>获奖、招新与备赛资讯</p>
+        <h2 data-hp="news.title">最新动态</h2>
+        <p data-hp="news.subtitle">获奖、招新与备赛资讯</p>
       </div>
     </div>
     <div class="news-wrap">
@@ -1068,9 +1075,9 @@
           <h4>第十届湖南省大学生物联网应用创新设计竞赛 · 技能赛斩获两项省级一等奖</h4>
           <p>实验室两支队伍在技能赛中均获省级一等奖。从方案设计、电路搭建到联调测试，队员们在真实赛场上完成了完整工程链路的检验。</p>
           <div class="news-photos">
-            <img loading="lazy" decoding="async" src="./assets/img/news-1.webp" alt="队伍一在竞赛背景板前合影">
-            <img loading="lazy" decoding="async" src="./assets/img/news-2.webp" alt="队伍二在竞赛背景板前合影">
-            <img loading="lazy" decoding="async" src="./assets/img/news-3.webp" alt="实验室全体成员与指导老师在竞赛现场合影">
+            <img data-hp-img="news-1" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/news-1.webp?v=3" alt="获奖队合影">
+            <img data-hp-img="news-2" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/news-2.webp?v=3" alt="获奖队合影">
+            <img data-hp-img="news-3" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/news-3.webp?v=3" alt="实验室全体成员合影">
           </div>
         </div>
       </div>
@@ -1120,8 +1127,8 @@
   <div class="container">
     <div class="sec-head reveal">
       <div>
-        <h2>加入我们</h2>
-        <p>从零基础到国赛领奖台，这条路我们已经走过很多遍</p>
+        <h2 data-hp="join.title">加入我们</h2>
+        <p data-hp="join.subtitle">从零基础到国赛领奖台，这条路我们已经走过很多遍</p>
       </div>
     </div>
     <div class="join-flex">
@@ -1135,7 +1142,7 @@
         <a class="btn-solid" href="mailto:lab@example.edu.cn">联系我们：lab@example.edu.cn</a>
       </div>
       <div class="join-img reveal">
-        <img loading="lazy" decoding="async" src="./assets/img/join.webp" alt="实验室日常">
+        <img data-hp-img="join" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/join.webp?v=2" alt="实验室日常开发场景">
       </div>
     </div>
   </div>
@@ -1158,7 +1165,7 @@
 知行合一</div>
         </div>
         <div class="footer-qr">
-          <div class="qr-box"><img src="./assets/img/qrcode.png" alt="招新群二维码"></div>
+          <div class="qr-box"><img data-hp-img="qrcode" class="lightboxable" src="./assets/img/qrcode.png?v=2" alt="招新群二维码"></div>
           <div class="qr-note">扫码加入实验室招新群</div>
         </div>
       </div>
@@ -1199,6 +1206,13 @@
 
 <div id="toast" role="status"></div>
 
+<!-- 图片 / 视频灯箱 -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="媒体查看">
+  <img id="lightboxImg" src="" alt="">
+  <video id="lightboxVideo" controls muted playsinline></video>
+  <button class="lb-close" aria-label="关闭">&times;</button>
+</div>
+
 <script>
   // ═══ Toast ═══
   const toast = document.getElementById('toast');
@@ -1208,9 +1222,45 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
   }
-  document.querySelectorAll('.v-play').forEach(btn => {
-    btn.addEventListener('click', () => showToast('视频位待接入素材：替换 <img> 为 <video autoplay muted loop playsinline> 即可'));
-  });
+  // ═══ 媒体灯箱：配图/视频点击查看大图，Esc / 点击遮罩关闭 ═══
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxVideo = document.getElementById('lightboxVideo');
+  function openLightbox(el) {
+    if (!lightbox || !el) return;
+    if (el.tagName === 'VIDEO') {
+      lightboxImg.style.display = 'none';
+      var v = lightboxVideo;
+      v.removeAttribute('src'); // 强制重新加载新源
+      v.src = el.currentSrc || el.src;
+      v.muted = true; // 无用户手势兜底 + 视频位静音语义
+      v.style.display = 'block';
+      var p = v.play(); if (p) p.catch(function () {});
+    } else {
+      if (lightboxVideo) { lightboxVideo.pause(); lightboxVideo.removeAttribute('src'); lightboxVideo.style.display = 'none'; }
+      lightboxImg.style.display = 'block';
+      lightboxImg.src = el.currentSrc || el.src;
+      lightboxImg.alt = el.alt || '';
+    }
+    lightbox.classList.add('open');
+  }
+  function closeLightbox() {
+    if (lightboxVideo) { lightboxVideo.pause(); lightboxVideo.removeAttribute('src'); }
+    if (lightbox) lightbox.classList.remove('open');
+  }
+  if (lightbox) {
+    // 事件委托：兼容首页动态拉取后替换出的 video/img（一次性遍历绑定会漏掉动态元素）
+    document.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('.lightboxable') : null;
+      if (!el) return;
+      e.stopPropagation();
+      openLightbox(el);
+    });
+    lightbox.addEventListener('click', function (e) {
+      if (e.target === lightbox || e.target.classList.contains('lb-close')) closeLightbox();
+    });
+    addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
+  }
 
   // ═══ 移动端菜单 ═══
   const burger = document.getElementById('navBurger');
@@ -1501,6 +1551,60 @@
       });
     });
   })();
+</script>
+<script>
+/* 主页内容动态化：向管理平台后端拉取已发布的文案与配图并替换页面元素。
+ * data-hp="<key>" 文本 / data-hp-img="<key>" 图片；接口不可用或超时时静默回退页面默认值（渐进增强）。 */
+(function () {
+  if (!/^https?:$/.test(location.protocol)) return; // file:// 本地预览直接跳过
+  var ctl, t;
+  try { ctl = new AbortController(); } catch (e) { return; }
+  t = setTimeout(function () { try { ctl.abort(); } catch (e) {} }, 8000);
+  // 带时间戳绕过边缘缓存：编辑保存后官网刷新立即生效
+  fetch('/api/homepage/public?v=' + Date.now(), { signal: ctl.signal, credentials: 'omit' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      clearTimeout(t);
+      d = d && d.data ? d.data : d;
+      if (!d || !d.text) return;
+      var v = Date.now();
+      Object.keys(d.text || {}).forEach(function (k) {
+        var el = document.querySelector('[data-hp="' + k + '"]');
+        if (el && typeof d.text[k] === 'string') el.textContent = d.text[k];
+      });
+      Object.keys(d.images || {}).forEach(function (k) {
+        var node = document.querySelector('[data-hp-img="' + k + '"]');
+        if (!node) return;
+        var m = (d.images[k] && d.images[k].type) || 'image';
+        var u = (d.images[k] && d.images[k].url) || '';
+        var sc = Math.min(150, Math.max(80, Number((d.images[k] && d.images[k].scale) || 100))) + '%';
+        if (!u) return;
+        // 无条件剥离旧 ?v= 再追加本次加载时间戳：seed 的 ?v=2、上传图裸 URL 一起覆盖，
+        // 避免命中浏览器对 /assets/(30 天) 或边缘按 path 的旧缓存
+        u = u.split('?')[0] + '?v=' + v;
+        if (m === 'video') {
+          if (node.tagName === 'IMG') {
+            // 图片位替换为视频位（静音循环自动播放，点击可放大带声播放）
+            var vd = document.createElement('video');
+            vd.className = node.className + ' lightboxable';
+            vd.muted = true; vd.autoplay = true; vd.loop = true;
+            vd.playsInline = true; vd.preload = 'metadata';
+            vd.style.setProperty('--hp-scale', sc);
+            vd.setAttribute('src', u);
+            node.parentNode.replaceChild(vd, node);
+          } else if (node.tagName === 'VIDEO') {
+            if (node.getAttribute('src') !== u) node.setAttribute('src', u);
+            node.style.setProperty('--hp-scale', sc);
+          }
+        } else if (node.tagName !== 'VIDEO') {
+          if (node.getAttribute('src') !== u) node.setAttribute('src', u);
+          node.style.setProperty('--hp-scale', sc);
+          if (d.images[k].alt) node.setAttribute('alt', d.images[k].alt);
+        }
+      });
+    })
+    .catch(function () { clearTimeout(t); }); // 失败/超时静默，保持页面默认内容
+})();
 </script>
 </body>
 </html>

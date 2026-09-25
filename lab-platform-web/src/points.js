@@ -29,7 +29,7 @@ async function ensureLeaderboard(period) {
 
 function leaderboardPage() {
   const staffConfig = can('action:points.rules');
-  const head = heading('积分排行榜', '打卡、任务评分与按时归还都会计入积分，监督成员成长。', btn(`${icon('refresh')} 刷新`, 'lb-refresh'), 'POINTS / 积分中心');
+  const head = heading('积分排行榜', '打卡、任务评分与按时归还都会计入积分，监督成员成长。', btn(`${icon('refresh')} 刷新`, 'lb-refresh') + (can('action:points.manual') ? btn(`${icon('plus')} 手动调分`, 'points-manual', 'primary') : ''), 'POINTS / 积分中心');
   const tabs = `<div class="view-tabs">${[
     ['week', '本周'],
     ['month', '本月'],
@@ -108,6 +108,30 @@ async function rulesSave() {
   toast('积分规则已保存');
 }
 
+function pointsManualForm() {
+  const candidates = (db.members || []).filter((m) => m.active).map((m) => [m.id, `${m.name} · ${m.number || ''}`]);
+  modal(
+    '手动调分',
+    `<div class="form-grid">${selectField('成员 *', 'memberId', candidates, '')}${field('分值 *（-100 ~ 100，正加负扣）', 'points', '', 'number', 'placeholder="如 5 或 -5"')}${area('调分原因 *', 'reason', '', 'maxlength="100" placeholder="例如：比赛获奖加分 / 逾期未还扣分"')}</div>`,
+    '确认调分',
+    async (f) => {
+      const memberId = f.get('memberId');
+      const points = Number(f.get('points'));
+      const reason = (f.get('reason') || '').trim();
+      requirePermission(memberId, '请选择成员');
+      requirePermission(Number.isInteger(points) && points !== 0, '请填写非零整数分值');
+      requirePermission(Math.abs(points) <= 100, '分值须在 -100 ~ 100 之间');
+      requirePermission(reason, '请填写调分原因');
+      await API.request('/points/manual', { method: 'POST', body: JSON.stringify({ memberId, points, reason }) });
+      _lbCache = {};
+      await API.load();
+      document.querySelector('#modal')?.close();
+      render();
+      toast('调分成功');
+    },
+  );
+}
+
 const POINTS_ACTIONS = {
   'lb-period': lbPeriod,
   'lb-refresh': () => {
@@ -115,6 +139,7 @@ const POINTS_ACTIONS = {
     render();
   },
   'rule-save': rulesSave,
+  'points-manual': pointsManualForm,
 };
 window.POINTS_ACTIONS = POINTS_ACTIONS;
 window.leaderboardPage = leaderboardPage;

@@ -109,6 +109,9 @@ for src_pk, new_pk in user_pk_map.items():
         mp.role = role
         if not mp.number or mp.number.startswith('NB-'):
             mp.number = number
+        # 回填邮箱：老用户邮箱在 auth_user.email，不迁移则邮件提醒对存量用户全部失效
+        if not mp.email and u.email:
+            mp.email = u.email
         if DRY_RUN: print(f"  [DRY] UPDATE MemberProfile user={username} role={role}")
         else: mp.save()
     except MemberProfile.DoesNotExist:
@@ -117,7 +120,7 @@ for src_pk, new_pk in user_pk_map.items():
             MemberProfile.objects.create(
                 user=u, name=name[:32] or username,
                 number=number, role=role, active=bool(u.is_active),
-                joined=u.date_joined,
+                email=u.email or '', joined=u.date_joined,
             )
 
 print(f"  users migrated: {len(user_pk_map)}")

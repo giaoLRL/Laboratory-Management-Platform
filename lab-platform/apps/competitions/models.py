@@ -23,6 +23,7 @@ class Competition(models.Model):
     stages = models.JSONField('流程节点', default=list)  # [{title, at, description}]
     archived = models.BooleanField('已归档', default=False)
     created = models.DateTimeField('创建时间', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
         ordering = ['-created']

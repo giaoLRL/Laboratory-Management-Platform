@@ -64,6 +64,7 @@ class Loan(models.Model):
     received = models.DateTimeField(null=True, blank=True)
     receiver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='loans_received')
     note = models.CharField('验收备注', max_length=512, blank=True, default='')
+    updated = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
         ordering = ['-created']
@@ -72,6 +73,7 @@ class Loan(models.Model):
 class LoanItem(models.Model):
     loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='items')
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='loan_items')
+    damaged = models.BooleanField('验收损坏', default=False)
 
 
 class Maintenance(models.Model):
@@ -81,6 +83,7 @@ class Maintenance(models.Model):
     status = models.CharField('状态', max_length=16, default='维修中')
     created = models.DateTimeField('登记时间', auto_now_add=True)
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
         ordering = ['-created']

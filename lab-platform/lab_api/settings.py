@@ -2,7 +2,7 @@
 
 环境变量（生产部署时由 docker-compose / systemd 注入）：
   LAB_SECRET_KEY      生产密钥（本地开发有默认值，生产必须显式设置）
-  LAB_DEBUG           '1' 开启调试（默认），生产设为 '0'
+  LAB_DEBUG           '1' 开启调试（本地开发默认开，生产的默认是关）
   LAB_ALLOWED_HOSTS   逗号分隔
   LAB_DB_ENGINE       'sqlite'（默认，本地开发） / 'postgres'（生产）
   LAB_DB_NAME/HOST/PORT/USER/PASSWORD
@@ -11,10 +11,26 @@
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('LAB_SECRET_KEY', 'dev-only-secret-key-change-in-production')
-DEBUG = os.environ.get('LAB_DEBUG', '1') == '1'
+# 生产环境（LAB_ENV=production）必须显式注入 LAB_SECRET_KEY，缺失即拒绝启动；
+# 本地开发（LAB_ENV 未设置）允许默认值，避免本地 runserver 无法启动。
+LAB_ENV = os.environ.get('LAB_ENV')
+SECRET_KEY = os.environ.get('LAB_SECRET_KEY')
+if not SECRET_KEY:
+    if LAB_ENV == 'production':
+        raise ImproperlyConfigured('生产环境必须设置 LAB_SECRET_KEY 环境变量')
+    SECRET_KEY = 'dev-only-secret-key-change-in-production'
+
+# 本地开发默认开调试：urls.py 里 SPA 的托管路由写在 `if settings.DEBUG` 之内，
+# 关掉调试后 Django 只提供 /api/ 与 /media/，访问 / 会返回 404（SPA 交由 nginx 托管）。
+# 生产的 deploy_server.sh 已同时注入 LAB_ENV=production 与 LAB_DEBUG=0，这里再兜一道：
+# 生产只要出现调试开启就直接拒绝启动，避免默认值改动被误带到线上。
+DEBUG = os.environ.get('LAB_DEBUG', '0' if LAB_ENV == 'production' else '1') == '1'
+if LAB_ENV == 'production' and DEBUG:
+    raise ImproperlyConfigured('生产环境不允许开启调试（请设置 LAB_DEBUG=0）')
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get(
     'LAB_ALLOWED_HOSTS', '127.0.0.1,localhost,wuyuan.me,www.wuyuan.me').split(',') if h.strip()]
 
@@ -34,7 +50,10 @@ INSTALLED_APPS = [
     'apps.agent',
     'apps.notify',
     'apps.points',
+    'apps.levels',
     'apps.email',
+    'apps.homepage',
+    'apps.seats',
 ]
 
 MIDDLEWARE = [
@@ -110,6 +129,26 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 天
 CSRF_COOKIE_SAMESITE = 'Lax'
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# HTTPS 纵深防御：nginx 已传 X-Forwarded-Proto（deploy_server.sh 的 proxy_set_header）。
+# LAB_SECURE=1 时（生产部署脚本注入）启用 Secure Cookie 与 HSTS。
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+_secure_cookies = os.environ.get('LAB_SECURE', '0') == '1'
+SESSION_COOKIE_SECURE = _secure_cookies
+CSRF_COOKIE_SECURE = _secure_cookies
+SECURE_HSTS_SECONDS = int(os.environ.get('LAB_HSTS', '31536000' if _secure_cookies else '0'))
+
+# 错误/请求日志：统一走 console（gunicorn 捕获），生产容器日志可查
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'root': {'handlers': ['console'], 'level': os.environ.get('LAB_LOG_LEVEL', 'INFO')},
+    'loggers': {
+        'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
+        'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+    },
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

@@ -6,5 +6,6 @@ urlpatterns = [
     path('points/leaderboard', api.points_leaderboard),
     path('points/rules', api.points_rules),
     path('points/rules/save', api.points_rules_save),
+    path('points/manual', api.points_manual),
     path('points/trend/<str:mid>', api.points_trend),
 ]

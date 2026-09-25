@@ -7,17 +7,21 @@ def member_dict(p, viewer=None, full=False):
     full=True（本人或管理角色）时附带私有字段 contact / note；
     其他成员仅返回公开信息（不含私人联系方式与备注）。
     """
+    roles = getattr(p, '_roles_cache', None)
+    if roles is None:
+        roles = p.effective_roles()
     d = {
         'id': member_id(p.user_id),
         'name': p.name,
         'username': p.user.username,
         'number': p.number,
         'role': p.role,
-        'roles': [r.code for r in p.effective_roles()],
+        'roles': [r.code for r in roles],
         'group': p.group,
         'groupId': p.group_fk_id or '',
         'email': p.email,
         'points': getattr(p, '_points_cache', 0),
+        'exp': p.level_exp,
         'direction': p.direction,
         'active': p.active,
         'baseStatus': p.base_status,

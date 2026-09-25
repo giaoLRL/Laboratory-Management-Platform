@@ -103,13 +103,15 @@ function memberDetailPage(mid) {
   const loans = (db.loans || []).filter((l) => l.memberId === mid);
   const checkins = (db.checkins || []).filter((c) => c.memberId === mid);
   const logs = visibleLogs().filter((l) => l.memberId === mid);
+  // 成长档案（头衔/标章/技能线/近期通过记录）：本人直接用快照，他人走接口缓存
+  const mdata = _memberProfileCached(mid);
   const actions = [
     btn('返回成员列表', 'nav', '', 'data-view="members"'),
     ...(canEdit ? [btn('编辑成员', 'member-edit', '', `data-id="${m.id}"`)] : []),
     ...(canManage && !self ? [btn('权限覆盖', 'member-override', '', `data-id="${m.id}"`)] : []),
     ...(can('action:member.reset_password') && !self ? [btn('重置密码', 'member-reset-password', 'danger', `data-id="${m.id}"`)] : []),
   ];
-  const head = `${heading(`${esc(m.name)}<span style="font-size:16px;color:#7a7a78;font-weight:400;margin-left:10px">${roleLabel(m)}</span>`, `学号 ${esc(m.number)} · ${esc(m.group || '未分组')} · 加入 ${new Date(m.joined).toLocaleDateString('zh-CN')}`, actions.join(''), 'MEMBER / 成员详情')}`;
+  const head = `${heading(`${esc(m.name)}<span style="font-size:16px;color:#7a7a78;font-weight:400;margin-left:10px">${roleLabel(m)}</span>${mdata ? `<span class="rank-chip" style="margin-left:10px">${esc(mdata.rankTitle || rankTitle(m.exp || 0))} · ${mdata.exp || 0} EXP</span>` : ''}`, `学号 ${esc(m.number)} · ${esc(m.group || '未分组')} · 加入 ${new Date(m.joined).toLocaleDateString('zh-CN')}`, actions.join(''), 'MEMBER / 成员详情')}`;
   const stats = `<div class="stats">${statsCard('参与任务', tasks.length, '件', 'task', '', `<span>${done} 件已完成</span><span>·</span><span>${tasks.length - done} 件推进中</span>`)}${statsCard('完成任务', done, '件', 'check', 'green', `<span>${Math.round(percentage(done, tasks.length || 1))}% 完成率</span>`)}${statsCard('借用记录', loans.length, '笔', 'swap', 'blue', `<span>${loans.filter((l) => ['使用中', '待确认归还'].includes(l.status)).length} 笔进行中</span>`)}${statsCard('累计打卡', checkins.length, '次', 'pin', 'purple', `<span>${new Set(checkins.map((c) => new Date(c.created).toDateString())).size} 天到场</span>`)}</div>`;
   const charts = `<section class="panel"><div class="panel-head"><div><h2>任务趋势</h2><p>最近 6 个月任务分布</p></div><span class="small muted">${done}/${tasks.length} 完成</span></div><div class="chart-body">${tasks.length ? taskTrendBars(mid) : `<div class="empty small">${icon('task')}暂无任务记录</div>`}</div></section><section class="panel"><div class="panel-head"><div><h2>积分</h2><p>近 30 天趋势</p></div><span class="small muted">${m.points || 0} 分</span></div><div class="chart-body">${_trendCache[mid] ? trendBars(mid) : (ensureTrend(mid), `<span class="muted small">${icon('clock')} 加载中…</span>`)}</div></section><section class="panel"><div class="panel-head"><div><h2>到场热力</h2><p>近 30 天实验室打卡</p></div><span class="small muted">${checkins.filter((c) => { const d = new Date(c.created); const n = new Date(); return n - d < 30 * 86400000; }).length} 次</span></div><div class="chart-body">${checkinHeat(mid)}</div></section>`;
   const side = `<section class="panel profile-panel"><div class="row">${avatar(m)}<div><h1 style="font-size:20px">${esc(m.name)}</h1><p class="muted" style="margin-top:6px">${roleLabel(m)}${g ? ` · ${esc(g.name)}` : ''}</p></div><span style="margin-left:auto">${badge(m.active === false ? '已停用' : memberStatus(m))}</span></div>${details([
@@ -122,19 +124,59 @@ function memberDetailPage(mid) {
     ['状态备注', m.note || self || can('page:members') ? m.note || '—' : '—'],
     ['最近更新', new Date(m.updated).toLocaleString('zh-CN')],
   ])}</section>`;
-  const tasksPanel = `<section class="panel"><div class="panel-head"><div><h2>任务</h2><p>负责与创建的任务</p></div><button class="text-btn" data-action="nav" data-view="tasks">任务看板 ${icon('arrow')}</button></div><div class="member-task-list">${tasks.length ? tasks.map(taskMiniRow).join('') : `<div class="empty small">${icon('task')}暂无任务</div>`}</div></section>`;
-  const loansPanel = `<section class="panel"><div class="panel-head"><div><h2>借用记录</h2><p>历史借还与进行中</p></div><button class="text-btn" data-action="nav" data-view="loans">全部记录 ${icon('arrow')}</button></div><div class="table-wrap"><table><thead><tr><th>模块</th><th>状态</th><th>借用时间</th><th>预计归还</th></tr></thead><tbody>${loans.slice(0, 8).map((l) => `<tr><td>${l.assetIds?.map((id) => `<strong>${esc(asset(id)?.name || id)}</strong>`).join('<br>') || '—'}</td><td>${badge(l.status)}</td><td>${fmt(l.issued || l.created, true)}</td><td>${fmt(l.due, true)}</td></tr>`).join('')}</tbody></table>${loans.length ? '' : `<div class="empty small">${icon('swap')}暂无借用记录</div>`}</div></section>`;
+  const tasksPanel = `<section class="panel"><div class="panel-head"><div><h2>任务</h2><p>负责与创建的任务</p></div><button class="text-btn" data-action="nav" data-view="tasks">任务看板 ${icon('arrow')}</button></div><div class="member-task-list">${tasks.length ? tasks.map(memberTaskMiniRow).join('') : `<div class="empty small">${icon('task')}暂无任务</div>`}</div></section>`;
+  const loansPanel = `<section class="panel"><div class="panel-head"><div><h2>借用记录</h2><p>历史借还与进行中</p></div><button class="text-btn" data-action="nav" data-view="loans">全部记录 ${icon('arrow')}</button></div><div class="table-wrap"><table><thead><tr><th>模块</th><th>状态</th><th>借用时间</th><th>预计归还</th><th>操作</th></tr></thead><tbody>${loans.slice(0, 8).map((l) => `<tr><td>${l.assetIds?.map((id) => `<strong>${esc(asset(id)?.name || id)}</strong>`).join('<br>') || '—'}</td><td>${badge(l.status)}</td><td>${fmt(l.issued || l.created, true)}</td><td>${fmt(l.due, true)}</td><td>${recordButton('详情', 'loan-detail', l.id)}</td></tr>`).join('')}</tbody></table>${loans.length ? '' : `<div class="empty small">${icon('swap')}暂无借用记录</div>`}</div></section>`;
   const logsPanel = `<section class="panel"><div class="panel-head"><div><h2>操作记录</h2><p>该成员的最近足迹</p></div></div><div class="full-log">${logs.slice(0, 8).map((l) => `<div class="activity-item"><strong>${esc(l.actor)}</strong> · ${esc(l.text)}<small>${fmt(l.at, true)}</small></div>`).join('') || `<div class="empty small">${icon('history')}暂无操作记录</div>`}</div></section>`;
+  const achievementsPanel = `<section class="panel"><div class="panel-head"><div><h2>成长档案</h2><p>水平 · 荣誉标章 · 技能线 · 通过记录</p></div></div><div class="chart-body">${mdata ? achievementsHTML(mdata) : `<div class="empty small">${icon('trophy')}读取成长档案中…</div>`}</div></section>`;
+  _ensureMemberProfile(mid);
+  _refreshAchievementsPanel(mid, achievementsPanel);
   return `<div class="page-fit">${head}${stats}<div class="grid-main grid-fill"><div>${uiTab('member-detail', [
     ['overview', '数据概览', () => charts],
+    ['achievements', '成长', () => achievementsPanel],
     ['tasks', '任务', () => tasksPanel],
     ['loans', '借用', () => loansPanel],
     ['logs', '操作记录', () => logsPanel],
   ])}</div><div>${side}</div></div></div>`;
 }
 
-function taskMiniRow(t) {
-  return `<div class="todo"><span class="todo-icon ${t.status === 'done' ? '' : 'orange'}">${icon(t.status === 'done' ? 'check' : 'clock')}</span><div>${stack(t.title, `${t.id}${t.groupName ? ' · ' + t.groupName : ''}${t.due ? ' · 截止 ' + fmt(t.due) : ''}`)}</div><div class="row" style="gap:6px">${t.score ? `<span class="score-chip">${'★'.repeat(t.score)}</span>` : ''}${badge(taskStatusLabel(t.status))}</div></div>`;
+// 成员成长档案缓存与异步加载（本人走快照，他人走 /levels/member/<mid>/profile）
+const _achCache = {};
+function _memberProfileCached(mid) {
+  if (mid === me().id) return db.myProfile || null;
+  return _achCache[mid] || null;
+}
+function _ensureMemberProfile(mid) {
+  if (!window.memberProfile) return;
+  memberProfile(mid, !!_achCache[mid]).then((d) => {
+    if (d && !_achCache[mid]) {
+      _achCache[mid] = d;
+      render();
+    }
+  });
+}
+// 成就 tab 依赖异步档案数据：停在成就页且数据未就绪时，到达后原地刷新一次
+let _achPoll = null;
+function _refreshAchievementsPanel(mid, panelHTML) {
+  if (UI_TAB_STATE['member-detail'] !== 'achievements') return;
+  if (_memberProfileCached(mid)) return;
+  if (_achPoll || mid !== _achPollMid) { clearInterval(_achPoll); _achPoll = null; _achPollMid = mid; }
+  if (!_achPoll) {
+    _achPollMid = mid;
+    _achPoll = setInterval(() => {
+      if (_memberProfileCached(_achPollMid)) {
+        clearInterval(_achPoll); _achPoll = null;
+        if (UI_TAB_STATE['member-detail'] === 'achievements') {
+          const body = document.querySelector('#tab-body-member-detail');
+          if (body) body.innerHTML = uiTabRender('member-detail');
+        }
+      }
+    }, 400);
+  }
+}
+let _achPollMid = null;
+
+function memberTaskMiniRow(t) {
+  return `<div class="todo"><span class="todo-icon ${t.status === 'done' ? '' : 'orange'}">${icon(t.status === 'done' ? 'check' : 'clock')}</span><div>${stack(t.title, `${t.id}${t.groupName ? ' · ' + t.groupName : ''}${t.due ? ' · 截止 ' + fmt(t.due) : ''}`)}</div><div class="row" style="gap:6px">${t.score ? `<span class="score-chip">${'★'.repeat(t.score)}</span>` : ''}${badge(taskStatusLabel(t.status))}${recordButton('查看', 'task-detail', t.id)}</div></div>`;
 }
 
 window.MEMBER_ACTIONS = {

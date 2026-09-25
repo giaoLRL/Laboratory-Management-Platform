@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
+from django.contrib.auth.models import User
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
@@ -34,7 +35,7 @@ def points_rules(request):
     if require(request.user, 'action:points.rules', '') is None:
         qs = PointRule.objects.all()
     else:
-        qs = PointRule.objects.filter(enabled=True, points__gt=0)
+        qs = PointRule.objects.filter(enabled=True)
     return ok([_rule_dict(r) for r in qs])
 
 
@@ -49,7 +50,7 @@ def points_rules_save(request):
         if not rule:
             continue
         try:
-            points = max(0, min(int(item.get('points', rule.points)), 1000))
+            points = min(max(int(item.get('points', rule.points)), -100), 1000)
         except (TypeError, ValueError):
             points = rule.points
         rule.points = points
@@ -58,11 +59,56 @@ def points_rules_save(request):
     return ok({'rules': [_rule_dict(r) for r in PointRule.objects.all()]})
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def points_manual(request):
+    """手动调分：教师对突出表现加分 / 违纪扣分（配审计日志）。"""
+    if (err := require(request.user, 'action:points.manual', '没有手动调分的权限')):
+        return err
+    d = request.data or {}
+    mid = parse_member_id(str(d.get('memberId', '')))
+    if not mid:
+        return fail('成员不合法')
+    try:
+        points = int(d.get('points'))
+    except (TypeError, ValueError):
+        return fail('请提供整数分值')
+    points = min(max(points, -100), 100)
+    if points == 0:
+        return fail('分值不能为 0')
+    reason = str(d.get('reason', '')).strip()
+    if not reason:
+        return fail('请填写调分原因')
+    me = getattr(request.user, 'member_profile', None)
+    if not me:
+        return fail('账号不存在或已停用', 403)
+    target_user = request.user if mid == request.user.pk else User.objects.filter(pk=mid).first()
+    if not target_user:
+        return fail('成员不存在', 404)
+    from apps.points.service import award
+    # ref_id 用时间戳+随机唯一值：允许同对象多次手动调分（不受 uniq_point_award 去重限制）
+    import time as _t
+    import uuid as _u
+    ref_id = f'manual-{_t.time():.6f}-{_u.uuid4().hex[:8]}'
+    rec = award(target_user, 'custom', ref_type='manual', ref_id=ref_id,
+                points=points, reason=f'{reason}（由 {me.name} 调分）')
+    if not rec:
+        return fail('调分失败：规则未启用或分值异常', 409)
+    from apps.accounts.models import OperationLog
+    OperationLog.objects.create(
+        actor=request.user, text=f'手动调分 {me.name} → {mid} {"+" if points > 0 else ""}{points} 分 · {reason}')
+    return ok({'total': user_total(mid)})
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def points_leaderboard(request):
     """排行榜：period=week|month|all（默认 all）。"""
-    period = str(request.GET.get('period', 'all'))
+    # period 必须从查询串读出来：前端一直是 /points/leaderboard?period=week 这样调的，
+    # 漏了这一步会直接 NameError → 500，而前端 catch 后只显示空榜单（页面看着没坏、其实一直空着）。
+    period = request.GET.get('period') or 'all'
+    if period not in ('week', 'month', 'all'):
+        period = 'all'
     qs = PointRecord.objects.all()
     if period == 'week':
         qs = qs.filter(created__gte=timezone.now() - timedelta(days=7))

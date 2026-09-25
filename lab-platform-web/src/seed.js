@@ -146,6 +146,26 @@ function seed() {
     },
     { id: 'LV-002', memberId: 'm7', start: date(1), end: date(3, 18), reason: '参加校外技术交流', status: '待审批', created: date(-1, 15) },
   ];
+  // 小组：与 members 的 group 字段保持一致（mock 演示用）
+  const groups = [
+    { id: 'g1', name: '硬件研发组', leaderId: 'm3', leaderName: '张子涵', capacity: 8, memberCount: 2, members: ['m3', 'm6'], note: '', updated: date(-2) },
+    { id: 'g2', name: '系统研发组', leaderId: 'm2', leaderName: '林知远', capacity: 8, memberCount: 3, members: ['m2', 'm5', 'm8'], note: '嵌入式 Linux 方向', updated: date(-2) },
+    { id: 'g3', name: '物联网组', leaderId: 'm7', leaderName: '陈思远', capacity: 8, memberCount: 2, members: ['m4', 'm7'], note: '', updated: date(-2) },
+    { id: 'g4', name: '导师组', leaderId: 'm1', leaderName: '陈明远', capacity: 5, memberCount: 1, members: ['m1'], note: '', updated: date(-2) },
+  ];
+  // 任务：覆盖 todo/doing/submitted/done 四种状态
+  const tasks = [
+    { id: 'TK-001', title: '完成温湿度采集 demo', description: 'STM32 + DHT22 数据上云', list: '默认', status: 'doing', priority: 'high', assigneeId: 'm3', groupId: 'g1', due: date(2), created: date(-3), updated: date(-1) },
+    { id: 'TK-002', title: '搭建 LoRa 组网上行链路', description: '', status: 'todo', priority: 'normal', assigneeId: 'm7', groupId: 'g3', due: date(5), created: date(-2), updated: date(-2) },
+    { id: 'TK-003', title: '树莓派边缘推理压测', description: 'CPU/GPU 占用采样', status: 'submitted', priority: 'medium', assigneeId: 'm8', groupId: 'g2', due: date(-1), created: date(-4), updated: date(-1) },
+    { id: 'TK-004', title: '撰写大赛报名材料', description: '', status: 'done', priority: 'medium', assigneeId: 'm4', groupId: 'g3', due: date(-3), score: 4, completionNote: '已完成', completedAt: date(-2), created: date(-10), updated: date(-2) },
+  ];
+  // 打卡：近两天部分成员到场
+  const checkins = [
+    { id: 'CI-001', memberId: 'm2', created: date(-1, 9), latitude: 26.4186, longitude: 111.6036, photo: '' },
+    { id: 'CI-002', memberId: 'm4', created: date(-1, 9), latitude: 26.4186, longitude: 111.6036, photo: '' },
+    { id: 'CI-003', memberId: 'm7', created: date(-1, 9), latitude: 26.4186, longitude: 111.6036, photo: '' },
+  ];
   return {
     version: 1,
     competitions: seedCompetitions(),
@@ -153,6 +173,9 @@ function seed() {
     assets,
     loans,
     leaves,
+    groups,
+    tasks,
+    checkins,
     maintenance: [{ id: 'MT-001', assetId: 'EM-008', description: '舵机齿轮异常', status: '维修中', created: date(-2), actor: 'm2' }],
     logs: [
       { id: 'LOG-1', actor: '林知远', text: '确认归还 DHT22 温湿度传感器', at: date(-6), memberId: 'm4' },

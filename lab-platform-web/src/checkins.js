@@ -21,11 +21,29 @@ function checkinsPage() {
   const isStaff = canApprove() || can('page:members');
   const list = (db.checkins || [])
     .filter((c) => isStaff || c.memberId === meId)
+    .filter(
+      (c) =>
+        !search ||
+        matches(
+          isStaff ? member(c.memberId)?.name || '' : '',
+          c.latitude ?? '',
+          c.longitude ?? '',
+          fmt(c.created, true),
+        ),
+    )
+    .filter((c) => !filter || c.memberId === filter)
     .sort((a, b) => Date.parse(b.created) - Date.parse(a.created));
   const p = paginate(list, typeof window !== 'undefined' && window.innerHeight < 800 ? 4 : 8);
   const today = new Date().toDateString();
   const checkedToday = list.some((c) => new Date(c.created).toDateString() === today && (isStaff || c.memberId === meId));
-  return `<div class="page-fit">${heading('实验室打卡', '到实验室现场签到，让在线状态更准确。', !checkedToday ? btn(`${icon('plus')} 立即打卡`, 'checkin-new', 'primary') : btn(`${icon('check')} 今日已打卡`, 'checkin-done'), 'CHECK-IN / 到场签到')}<div class="stats">${statsCard('累计打卡', list.length, '次', 'pin', '', `<span>${isStaff ? '全员记录' : '我的记录'}</span>`)}${statsCard('本月打卡', list.filter((c) => { const d = new Date(c.created); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length, '次', 'calendar', 'green', '<span>坚持到场</span>')}${statsCard('今日状态', checkedToday ? '已打卡' : '待打卡', '', 'check', checkedToday ? 'green' : 'orange', `<span>${checkedToday ? '可专注实验' : '点击上方按钮打卡'}</span>`)}${statsCard('定位精度', _lastGps ? '已获取' : '待获取', '', 'wifi', _lastGps ? 'green' : '', '<span>GPS + 现场照片</span>')}</div><section class="panel"><div class="toolbar"><div class="search-field">${icon('search')}<input aria-label="搜索" id="search" placeholder="${isStaff ? '搜索成员、时间…' : '搜索时间…'}"></div>${isStaff ? `<select aria-label="成员筛选" id="filter">${options([...new Set(list.map((c) => c.memberId))].map((id) => [id, member(id)?.name || id]), '', '全部成员')}</select>` : ''}<button class="text-btn" data-action="checkin-refresh">刷新</button></div><div class="checkin-grid">${
+  /* 我自己的在席状态：onDuty 由后端按 signout_at 判定；签退后座位上的小人会消失 */
+  const myToday = (db.checkins || []).find((c) => c.memberId === meId && new Date(c.created).toDateString() === today);
+  const actionBtn = !myToday
+    ? btn(`${icon('plus')} 立即打卡`, 'checkin-new', 'primary')
+    : myToday.onDuty === true
+      ? btn(`${icon('logout')} 下班签退`, 'checkin-signout')
+      : btn(`${icon('check')} 今日已签退`, 'checkin-done');
+  return `<div class="page-fit">${heading('实验室打卡', '到实验室现场签到，签退后座位上的小人会消失。', actionBtn, 'CHECK-IN / 到场签到')}<div class="stats">${statsCard('累计打卡', list.length, '次', 'pin', '', `<span>${isStaff ? '全员记录' : '我的记录'}</span>`)}${statsCard('本月打卡', list.filter((c) => { const d = new Date(c.created); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length, '次', 'calendar', 'green', '<span>坚持到场</span>')}${statsCard('今日状态', checkedToday ? '已打卡' : '待打卡', '', 'check', checkedToday ? 'green' : 'orange', `<span>${checkedToday ? '可专注实验' : '点击上方按钮打卡'}</span>`)}${statsCard('定位精度', _lastGps ? '已获取' : '待获取', '', 'wifi', _lastGps ? 'green' : '', '<span>GPS + 现场照片</span>')}</div><section class="panel"><div class="toolbar"><div class="search-field">${icon('search')}<input aria-label="搜索" id="search" placeholder="${isStaff ? '搜索成员、时间…' : '搜索时间…'}"></div>${isStaff ? `<select aria-label="成员筛选" id="filter">${options([...new Set(list.map((c) => c.memberId))].map((id) => [id, member(id)?.name || id]), '', '全部成员')}</select>` : ''}<button class="text-btn" data-action="checkin-refresh">刷新</button></div><div class="checkin-grid">${
     p.rows.length
       ? p.rows
           .map((c) => {
@@ -78,6 +96,22 @@ async function checkinNow() {
     });
 }
 
+async function checkinSignout() {
+  modal(
+    '下班签退',
+    '<p style="line-height:1.9;font-size:13px">签退后今天不能再打卡，你在实验室座位图上的小人会立刻消失。确定离开实验室吗？</p>',
+    '确认签退',
+    async () => {
+      await API.request('/checkins/signout', { method: 'POST' });
+      audit('签退 · 离开实验室');
+      await API.load();
+      document.querySelector('#modal')?.close();
+      render();
+      toast('已签退，座位上的小人已消失');
+    },
+  );
+}
+
 async function checkinRefresh() {
   await API.load();
   render();
@@ -87,6 +121,7 @@ async function checkinRefresh() {
 window.checkinsPage = checkinsPage;
 window.CHECKIN_ACTIONS = {
   'checkin-new': checkinNow,
-  'checkin-done': () => toast('今天已打卡，明天再来'),
+  'checkin-signout': checkinSignout,
+  'checkin-done': () => toast('今天已签退，明天再来'),
   'checkin-refresh': checkinRefresh,
 };

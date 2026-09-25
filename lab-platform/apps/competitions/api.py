@@ -2,7 +2,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-from apps.common.ids import next_code
+from apps.common.ids import create_with_code, next_code
 from apps.common.rbac import require
 from apps.common.response import ok, fail
 from apps.competitions.models import Competition
@@ -42,7 +42,7 @@ def _status_of(c):
 
 def workspace_slice(profile, staff):
     comps = [_comp_dict(c) for c in Competition.objects.all()]
-    ts = [c.created for c in Competition.objects.all()]
+    ts = [c.updated for c in Competition.objects.all()]
     return {'competitions': comps, '_ts': ts}
 
 
@@ -98,12 +98,14 @@ def competitions_create(request):
     data, err = _validate(request.data or {})
     if err:
         return err
-    comp = Competition.objects.create(id=next_code(Competition, 'COMP'),
-                                      owner=request.user, **data)
+    from django.db import transaction
+    with transaction.atomic():
+        comp = create_with_code(Competition, 'COMP',
+                                owner=request.user, **data)
     from apps.notify.service import create_many, active_members
     create_many(active_members(exclude=request.user), 'competition_published',
                 f'新比赛发布 · {data["name"][:40]}',
-                f'报名截止 {str(data["registrationEnd"])[:16]} · 开赛 {str(data["start"])[:16]}',
+                f'报名截止 {str(data["registration_end"])[:16]} · 开赛 {str(data["start"])[:16]}',
                 ref_type='competition', ref_id=comp.id, link='competitions')
     return ok({'id': comp.id})
 

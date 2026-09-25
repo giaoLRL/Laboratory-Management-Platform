@@ -50,16 +50,22 @@ class AnnouncementRead(models.Model):
 
 
 def visible_announcements(profile, staff=False):
-    """当前用户可见的公告（含范围过滤），置顶优先、新的在前。"""
+    """当前用户可见的公告（含范围过滤），置顶优先、新的在前。
+
+    SQLite 不支持 JSONField 的 contains 查找（member_ids 过滤），
+    为便于本地开发与测试，全部走内存过滤（公告数量级小，无性能顾虑）。
+    """
     now = timezone.now()
-    qs = Announcement.objects.filter(active=True)
-    if not staff:
-        qs = qs.filter(
-            models.Q(scope=Announcement.SCOPE_ALL)
-            | models.Q(scope=Announcement.SCOPE_GROUP, group__members=profile)
-            | models.Q(scope=Announcement.SCOPE_MEMBERS, member_ids__contains=[profile.user_id]),
-        )
-    return [a for a in qs if a.pk]
+    qs = list(Announcement.objects.prefetch_related('group__members').filter(active=True))
+    result = []
+    for a in qs:
+        if a.scope == Announcement.SCOPE_ALL:
+            result.append(a)
+        elif a.scope == Announcement.SCOPE_GROUP and a.group and profile in a.group.members.all():
+            result.append(a)
+        elif a.scope == Announcement.SCOPE_MEMBERS and profile.user_id in (a.member_ids or []):
+            result.append(a)
+    return result
 
 
 class NewsItem(models.Model):

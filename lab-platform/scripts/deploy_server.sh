@@ -38,12 +38,28 @@ docker images lab-platform --format "  image: {{.Repository}}:{{.Tag}} {{.Size}}
 
 echo ""
 echo "=== [5/9] 启动 lab 容器（自动 migrate）==="
+# SECRET_KEY 持久化：首次生成后落盘 $LAB/secret_key，避免每次部署换 key
+# 导致 signing.dumps 加密的 SMTP 密码/令牌失效（邮件提醒会静默挂掉）。
+if [ ! -s "$LAB/secret_key" ]; then
+  echo "  !! 首次部署：生成 LAB_SECRET_KEY 并持久化到 $LAB/secret_key"
+  head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$LAB/secret_key"
+fi
+SECRET_KEY=$(cat "$LAB/secret_key")
+# DeepSeek API Key：不接受硬编码，必须由运维放置 $LAB/llm_key（一行明文）
+if [ ! -s "$LAB/llm_key" ]; then
+  echo "!! 缺少 $LAB/llm_key（DeepSeek API Key，一行明文）。请先放置后重试。" >&2
+  exit 1
+fi
+LLM_KEY=$(cat "$LAB/llm_key")
+
 docker run -d --name lab-lab-1 \
   --restart unless-stopped \
   --network lab-netbox_default \
   -p 8001:8001 \
+  -e LAB_ENV=production \
   -e LAB_DEBUG=0 \
-  -e LAB_SECRET_KEY=prod-$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n') \
+  -e LAB_SECURE=1 \
+  -e LAB_SECRET_KEY="$SECRET_KEY" \
   -e LAB_ALLOWED_HOSTS=wuyuan.me,www.wuyuan.me,127.0.0.1 \
   -e LAB_DB_ENGINE=postgres \
   -e LAB_DB_NAME=lab2 \
@@ -51,7 +67,7 @@ docker run -d --name lab-lab-1 \
   -e LAB_DB_PORT=5432 \
   -e LAB_DB_USER=netbox \
   -e LAB_DB_PASSWORD=netbox123 \
-  -e LAB_LLM_API_KEY=sk-e734158e9b3f43f89e4c5605912a0d19 \
+  -e LAB_LLM_API_KEY="$LLM_KEY" \
   -e LAB_LLM_BASE_URL=https://api.deepseek.com/v1 \
   -e LAB_LLM_MODEL=deepseek-chat \
   -v $LAB/data/media:/app/media \
@@ -75,18 +91,26 @@ docker logs --tail 6 lab-lab-1
 
 echo ""
 echo "=== [6/9] ETL：NetBox → lab2 ==="
-docker exec \
-  -e SOURCE_DB_HOST=lab-netbox-postgres-1 \
-  -e SOURCE_DB_PORT=5432 \
-  -e SOURCE_DB_NAME=netbox \
-  -e SOURCE_DB_USER=netbox \
-  -e SOURCE_DB_PASSWORD=netbox123 \
-  lab-lab-1 python manage.py shell -c "exec(open('/app/scripts/etl.py').read())"
+# ETL 是**一次性**历史迁移：它按稳定 id 「合并」源库字段，重跑会把线上已经改过的
+# 资产名称/位置/状态回退成旧 NetBox 的值（借用、维修、报废记录都会被抹平）。
+# 另外源库 netbox 里 auth_user 已不存在，现在跑会直接报错中断整个部署。
+# 所以默认跳过，只有在明确要重导历史数据时才显式 LAB_RUN_ETL=1。
+if [ "${LAB_RUN_ETL:-0}" != "1" ]; then
+  echo "  跳过（ETL 是一次性迁移；要重跑请显式 LAB_RUN_ETL=1）"
+else
+  docker exec \
+    -e SOURCE_DB_HOST=lab-netbox-postgres-1 \
+    -e SOURCE_DB_PORT=5432 \
+    -e SOURCE_DB_NAME=netbox \
+    -e SOURCE_DB_USER=netbox \
+    -e SOURCE_DB_PASSWORD=netbox123 \
+    lab-lab-1 python manage.py shell -c "exec(open('/app/scripts/etl.py').read())"
 
-echo ""
-echo "  lab2 数据统计："
-docker exec lab-netbox-postgres-1 psql -U netbox -d lab2 -c \
-  "SELECT (SELECT count(*) FROM auth_user) AS users, (SELECT count(*) FROM accounts_memberprofile) AS profiles, (SELECT count(*) FROM inventory_asset) AS assets, (SELECT count(*) FROM agent_conversation) AS convs, (SELECT count(*) FROM agent_agentmessage) AS msgs" || true
+  echo ""
+  echo "  lab2 数据统计："
+  docker exec lab-netbox-postgres-1 psql -U netbox -d lab2 -c \
+    "SELECT (SELECT count(*) FROM auth_user) AS users, (SELECT count(*) FROM accounts_memberprofile) AS profiles, (SELECT count(*) FROM inventory_asset) AS assets, (SELECT count(*) FROM agent_conversation) AS convs, (SELECT count(*) FROM agent_agentmessage) AS msgs" || true
+fi
 
 echo ""
 echo "=== [7/9] 冒烟测试 ==="
@@ -105,6 +129,18 @@ cp -a $LAB/lab-platform-web/. $LAB/spa/
 find $LAB/spa -type d -exec chmod 755 {} +
 find $LAB/spa -type f -exec chmod 644 {} +
 ls -la $LAB/spa/index.html
+
+echo ""
+echo "=== [8.5/9] 安装提醒 cron（幂等）==="
+# 提醒/新闻抓取依赖宿主机 cron 定时 docker exec；未安装则功能整体静默失效。
+# 先剔除旧条目再追加，保证重复执行不堆积。
+(
+  crontab -l 2>/dev/null | grep -v 'lab-lab-1 python manage.py send_reminders' | grep -v 'lab-lab-1 python manage.py fetch_news'
+  echo "*/30 * * * * docker exec lab-lab-1 python manage.py send_reminders"
+  echo "*/30 * * * * docker exec lab-lab-1 python manage.py fetch_news"
+) | crontab -
+echo "  当前 crontab："
+crontab -l 2>/dev/null | grep 'lab-lab-1' || echo "  （无 lab-lab-1 定时任务）"
 
 echo ""
 echo "=== [9/9] 切 nginx ==="
@@ -182,9 +218,12 @@ docker ps --filter name=lab-lab-1 --format 'lab-lab-1: {{.Status}}'
 free -h | head -2
 echo ""
 echo "验证清单："
-echo "  https://wuyuan.me/            → 营销首页（不变）"
-echo "  https://wuyuan.me/#dashboard  → SPA 管理平台（用原 NetBox 密码登录）"
-echo "  https://wuyuan.me/api/auth/me → 401/403 JSON"
+echo "  https://wuyuan.me/                 → 营销首页（不变）"
+# 注意：hash 片段不会发给服务器，https://wuyuan.me/#dashboard 请求的是 /，
+# 命中的是 `location = /`（营销首页）而不是 SPA。SPA 的真实入口是首页上「进入管理系统」指向的 /login/
+echo "  https://wuyuan.me/login/           → SPA 管理平台（用原 NetBox 密码登录）"
+echo "  https://wuyuan.me/index.html       → SPA 直链（等价入口）"
+echo "  https://wuyuan.me/api/auth/me      → 401 JSON"
 echo ""
 echo "回滚预案（三步）："
 echo "  1) docker rm -f lab-lab-1"

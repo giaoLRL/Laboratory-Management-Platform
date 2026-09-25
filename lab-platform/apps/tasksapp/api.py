@@ -3,16 +3,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 from apps.accounts.models import OperationLog
-from apps.common.ids import next_code, parse_member_id
+from apps.common.ids import create_with_code, next_code, parse_member_id
 from apps.common.permissions import get_member
 from apps.common.rbac import can, can_manage, require
 from apps.common.response import ok, fail
 from apps.tasksapp.models import Task, TaskAttachment
 
 
-def _log(request, text):
+def _log(request, text, ref_type='', ref_id=''):
     OperationLog.objects.create(
-        actor=request.user if request.user.is_authenticated else None, text=str(text)[:256])
+        actor=request.user if request.user.is_authenticated else None, text=str(text)[:256],
+        ref_type=str(ref_type)[:32], ref_id=str(ref_id)[:64])
 
 
 def _task_dict(t):
@@ -37,6 +38,7 @@ def _task_dict(t):
         'reviewedAt': t.reviewed_at,
         'reviewOpinion': t.review_opinion,
         'attachments': [{'url': a.file.url, 'name': a.name or a.file.name} for a in t.attachments.all()],
+        'media': t.media or [],
     }
 
 
@@ -47,8 +49,10 @@ def _member_name(user):
 
 def workspace_slice(profile, staff):
     """全员可见任务（协作看板），隐私字段无。"""
-    tasks = [_task_dict(t) for t in Task.objects.prefetch_related('attachments').all()]
-    ts = [t.updated for t in Task.objects.all()]
+    qs = (Task.objects.select_related('assignee', 'assignee__member_profile', 'creator', 'reviewer', 'reviewed_by', 'group')
+          .prefetch_related('attachments').all())
+    tasks = [_task_dict(t) for t in qs]
+    ts = [t.updated for t in qs]
     return {'tasks': tasks, '_ts': ts}
 
 
@@ -151,8 +155,8 @@ def tasks_create(request):
     fields, err = _validate_task(request.data or {})
     if err:
         return err
-    task = Task.objects.create(id=next_code(Task, 'TASK'), creator=request.user, **fields)
-    _log(request, f'创建任务 · {task.id} {task.title[:30]}')
+    task = create_with_code(Task, 'TASK', creator=request.user, **fields)
+    _log(request, f'创建任务 · {task.id} {task.title[:30]}', 'task', task.id)
     _notify_assigned(task, request)
     return ok({'id': task.id})
 
@@ -187,10 +191,10 @@ def tasks_batch(request):
     created = []
     with transaction.atomic():
         for pid in assignee_ids:
-            task = Task.objects.create(id=next_code(Task, 'TASK'), creator=request.user,
-                                       assignee_id=pid, **fields)
+            task = create_with_code(Task, 'TASK', creator=request.user,
+                                    assignee_id=pid, **fields)
             created.append(task)
-            _log(request, f'批量布置任务 · {task.id} {task.title[:30]}')
+            _log(request, f'批量布置任务 · {task.id} {task.title[:30]}', 'task', task.id)
     for task in created:
         _notify_assigned(task, request)
     return ok({'ids': [t.id for t in created]})
@@ -223,7 +227,7 @@ def tasks_submit(request, tid):
     task.status = Task.STATUS_SUBMITTED
     task.submitted_at = timezone.now()
     task.save()
-    _log(request, f'提交任务 · {task.id} {task.title[:30]}')
+    _log(request, f'提交任务 · {task.id} {task.title[:30]}', 'task', task.id)
     if task.creator_id and task.creator_id != request.user.pk:
         try:
             from apps.notify.service import create
@@ -261,7 +265,7 @@ def tasks_review(request, tid):
         task.status = Task.STATUS_DOING
         task.completed_at = None
         task.save()
-        _log(request, f'任务退回 · {task.id} {task.title[:30]} · {opinion[:50]}')
+        _log(request, f'任务退回 · {task.id} {task.title[:30]} · {opinion[:50]}', 'task', task.id)
         if task.assignee_id:
             try:
                 from apps.notify.service import create
@@ -293,7 +297,7 @@ def tasks_review(request, tid):
             rec = award(task.assignee, 'task_complete', ref_type='task', ref_id=task.id, points=amount,
                         reason=f'{task.id} 评分 {score}★', actor=request.user)
             awarded = rec.points if rec else 0
-    _log(request, f'任务审核通过 · {task.id} {score}★' + (f' · 发放 {awarded} 分' if awarded else ''))
+    _log(request, f'任务审核通过 · {task.id} {score}★' + (f' · 发放 {awarded} 分' if awarded else ''), 'task', task.id)
     if task.assignee_id:
         try:
             from apps.notify.service import create
@@ -303,6 +307,36 @@ def tasks_review(request, tid):
         except Exception:  # noqa: BLE001
             pass
     return ok({'status': task.status, 'score': score, 'awarded': awarded})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def tasks_image(request, tid):
+    """任务图片/示例图上传：追加到 task.media（发布者示意 / 完成图）。"""
+    try:
+        task = Task.objects.get(pk=tid)
+    except Task.DoesNotExist:
+        return fail('任务不存在', 404)
+    if not _can_edit_task(request.user, task):
+        return fail('没有编辑任务的权限', 403)
+    f = request.FILES.get('file')
+    if not f:
+        return fail('请选择要上传的文件')
+    if f.size > 50 * 1024 * 1024:
+        return fail('文件不能超过 50MB')
+    import os
+    ext = os.path.splitext(f.name or '')[1].lower().lstrip('.')
+    if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avif'):
+        return fail(f'仅支持图片或视频：.{ext}')
+    from django.core.files.storage import default_storage
+    from django.utils import timezone as tz
+    pname = default_storage.save(f'tasks/{tz.now():%Y%m}/{task.id}_{len(task.media or [])}.{ext}', f)
+    media = list(task.media or [])
+    media.append({'url': default_storage.url(pname), 'name': f.name})
+    task.media = media
+    task.save(update_fields=['media', 'updated'])
+    _log(request, f'任务图片上传 · {task.id} {f.name[:30]}', 'task', task.id)
+    return ok({'media': media})
 
 
 @api_view(['POST'])
@@ -331,7 +365,7 @@ def tasks_update(request, tid):
     elif task.status != Task.STATUS_DONE:
         task.completed_at = None
     task.save()
-    _log(request, f'更新任务 · {task.id} {task.title[:30]}')
+    _log(request, f'更新任务 · {task.id} {task.title[:30]}', 'task', task.id)
     from apps.notify.service import create
     if task.assignee_id and task.assignee_id != old_assignee and task.assignee_id != request.user.pk:
         create(task.assignee, 'task_assigned', f'任务指派 · {task.title[:30]}',
@@ -388,7 +422,7 @@ def tasks_score(request, tid):
             rec = award(task.assignee, 'task_complete', ref_type='task', ref_id=task.id, points=amount,
                         reason=f'{task.id} 评分 {score}★', actor=request.user)
             awarded = rec.points if rec else 0
-    _log(request, f'任务评分 · {task.id} {score}★' + (f' · 发放 {awarded} 分' if awarded else ''))
+    _log(request, f'任务评分 · {task.id} {score}★' + (f' · 发放 {awarded} 分' if awarded else ''), 'task', task.id)
     if task.assignee_id:
         from apps.notify.service import create
         create(task.assignee, 'task_scored', f'任务已评分 · {task.title[:30]}',
@@ -407,10 +441,18 @@ def tasks_detail(request, tid):
         return fail('任务不存在', 404)
     from apps.accounts.models import OperationLog
     logs = []
-    for lg in OperationLog.objects.filter(text__icontains=task.id).order_by('-at')[:30]:
+    # 结构化查询（ref_type='task'），替代 text__icontains 全表 LIKE
+    for lg in OperationLog.objects.filter(ref_type='task', ref_id=task.id).order_by('-at')[:30]:
         prof = getattr(lg.actor, 'member_profile', None)
         logs.append({'actor': prof.name if prof else (lg.actor.username if lg.actor else ''),
                      'text': lg.text, 'at': lg.at})
+    # 兜底：旧日志（无 ref 字段）仍按编号模糊匹配补充
+    if len(logs) < 30:
+        old = OperationLog.objects.exclude(ref_type='task').filter(text__icontains=task.id).order_by('-at')[:30 - len(logs)]
+        for lg in old:
+            prof = getattr(lg.actor, 'member_profile', None)
+            logs.append({'actor': prof.name if prof else (lg.actor.username if lg.actor else ''),
+                         'text': lg.text, 'at': lg.at})
     return ok({
         'task': _task_dict(task),
         'editable': _can_edit_task(request.user, task),
@@ -424,12 +466,18 @@ def tasks_delete(request, tid):
     if (err := require(request.user, 'action:task.delete', '没有删除任务的权限')):
         return err
     try:
-        task = Task.objects.get(pk=tid)
+        task = Task.objects.prefetch_related('attachments').get(pk=tid)
     except Task.DoesNotExist:
         return fail('任务不存在', 404)
     if task.creator_id != request.user.pk and not can_manage(request.user):
         return fail('只有创建者或管理员可以删除任务', 403)
-    _log(request, f'删除任务 · {task.id} {task.title[:30]}')
+    if task.status in (Task.STATUS_SUBMITTED, Task.STATUS_DONE):
+        return fail('已完成或待审核的任务不能删除', 409)
+    _log(request, f'删除任务 · {task.id} {task.title[:30]}', 'task', task.id)
+    # 删除磁盘附件，避免 media 目录孤儿文件累积
+    for att in task.attachments.all():
+        if att.file:
+            att.file.delete(save=False)
     task.delete()
     return ok()
 

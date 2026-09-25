@@ -94,3 +94,27 @@ reports/qa/*_fix*.py
 /.trae/
 *_bugcheck*.png
 
+
+# ── 含凭据的脚本：不入库（本地仍可运行） ──
+# deploy_v*.py 里是生产服务器 root 密码，start.sh 里是线上在用的 DeepSeek key。
+# 注意：这两个文件在更早的提交里**已经进过历史**，加 ignore 只能阻止以后再提交，
+# 不能消除历史里的明文 —— 唯一彻底的补救是轮换凭据（改 root 密码 / 吊销并重建 key）。
+/deploy_v*.py
+/start.sh
+# 旧 NetBox 时代的 QA 探针（target 已删除的 /plugins/lab-manager/），一律写着老 admin 密码与内部 TOKEN，整体不入库：
+/reports/qa/*.js
+/reports/qa/*.py
+
+# ── 本地调试产物 ──
+/.shots/
+/lab-platform/db.sqlite3*
+/reports/_s3_*.tar
+/reports/_fix_nginx.sh
+/*.tar
+
+# ── 大体积素材与运行时产物：不入库 ──
+# 主页插图是几 MB 一张的原图（主题插画），进仓库只会把体积撑起来
+/*插图*/
+# 打卡照片 / 任务附件属运行时上传，本地产生、不进仓库
+/lab-platform/media/checkins/
+/lab-platform/media/tasks/

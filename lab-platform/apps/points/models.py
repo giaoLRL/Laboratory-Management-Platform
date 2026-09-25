@@ -7,7 +7,7 @@ class PointRule(models.Model):
 
     key = models.CharField('规则键', max_length=32, unique=True)
     label = models.CharField('规则名称', max_length=64)
-    points = models.PositiveIntegerField('单位分值', default=0)
+    points = models.IntegerField('单位分值', default=0)
     enabled = models.BooleanField('启用', default=True)
     builtin = models.BooleanField('内置', default=True)
 

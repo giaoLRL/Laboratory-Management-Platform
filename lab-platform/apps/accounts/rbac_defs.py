@@ -83,6 +83,12 @@ PERMISSION_POINTS = [
     ('action:task.attachment', '上传附件', False),
     ('action:task.review', '审核任务', False),
 
+    # ── 关卡系统 ──
+    ('page:levels', '关卡页', False),
+    ('action:level.manage', '管理关卡', False),
+    ('action:level.review', '审核通关', False),
+    ('action:level.comment', '关卡评论', True),
+
     # ── 打卡 ──
     ('page:checkins', '打卡页', False),
     ('action:checkin.create', '打卡', False),
@@ -104,17 +110,30 @@ PERMISSION_POINTS = [
     # ── 日志 ──
     ('page:logs', '操作记录页', True),
 
+    # ── 可视化座位 ──
+    ('page:seats', '座位图页', False),
+    ('action:seats.move', '移动自己的小人', False),
+    ('action:seats.status', '设置状态与形象', False),
+    ('action:seats.bubble', '冒气泡', False),
+    ('action:seats.chat', '在大厅发言', False),
+    ('action:seats.manage', '编辑实验室布局与大厅管理', False),
+
     # ── 系统（仅 superadmin） ──
     ('page:permissions', '权限矩阵页', False),
     ('action:manage.roles', '角色管理', False),
     ('action:manage.permissions', '权限矩阵维护', False),
     ('action:manage.override', '成员权限覆盖', False),
+
+    # ── 主页管理（仅 superadmin） ──
+    ('page:homepage', '主页管理页', False),
+    ('action:homepage.edit', '主页内容编辑', False),
 ]
 
 ALL_KEYS = {key for (key, _, _) in PERMISSION_POINTS}
 
 # 矩阵上"仅 superadmin 可见且可交互"的系统区权限点（用于权限不由矩阵篡夺自身）
-MANAGE_KEYS = {'action:manage.roles', 'action:manage.permissions', 'action:manage.override'}
+MANAGE_KEYS = {'action:manage.roles', 'action:manage.permissions', 'action:manage.override',
+               'page:homepage', 'action:homepage.edit'}
 
 # 权限点在矩阵里展示的分组顺序：[(group_label, [keys...]), ...]
 PERMISSION_GROUPS = [
@@ -136,8 +155,12 @@ PERMISSION_GROUPS = [
     ('比赛', ['page:competitions', 'action:competition.view', 'action:competition.create',
               'action:competition.update', 'action:competition.archive']),
     ('积分', ['page:leaderboard', 'action:task.score', 'action:points.rules', 'action:points.manual']),
+    ('关卡', ['page:levels', 'action:level.manage', 'action:level.review', 'action:level.comment']),
+    ('座位', ['page:seats', 'action:seats.move', 'action:seats.status', 'action:seats.bubble',
+              'action:seats.chat', 'action:seats.manage']),
     ('智能体', ['page:agent', 'action:agent.chat', 'action:agent.history', 'action:agent.operate']),
     ('日志', ['page:logs', 'action:export.csv']),
     ('邮件', ['page:email', 'action:email.manage']),
     ('系统', ['page:permissions', 'action:manage.roles', 'action:manage.permissions', 'action:manage.override']),
+    ('主页', ['page:homepage', 'action:homepage.edit']),
 ]

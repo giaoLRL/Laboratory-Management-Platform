@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 from apps.accounts.models import OperationLog
-from apps.common.ids import next_code
+from apps.common.ids import create_with_code, next_code
 from apps.common.permissions import get_member
 from apps.common.rbac import require
 from apps.common.response import ok, fail
@@ -35,7 +35,7 @@ def workspace_slice(profile, staff):
         own = staff or l.member_id == profile.user_id
         if own:
             out.append(_leave_dict(l, profile.user_id, staff))
-            ts.append(l.created)
+            ts.append(l.updated)
         elif l.status == Leave.STATUS_APPROVED and l.start <= now <= l.end:
             out.append({'id': l.id, 'memberId': f'm{l.member_id}', 'start': l.start,
                         'end': l.end, 'status': l.status})
@@ -84,8 +84,8 @@ def leaves_create(request):
     if overlap:
         return fail('与已有的待审批/已批准请假时间重叠', 409)
 
-    leave = Leave.objects.create(id=next_code(Leave, 'LV'), member=request.user,
-                                 start=start, end=end, reason=reason)
+    leave = create_with_code(Leave, 'LV', member=request.user,
+                             start=start, end=end, reason=reason)
     _log(request, f'{me.name} 提交请假 · {leave.id}')
     from apps.notify.service import create_many, managers_with
     create_many(
@@ -161,4 +161,26 @@ def leaves_cancel(request, lid):
     leave.status = Leave.STATUS_CANCELLED
     leave.save()
     _log(request, f'撤销请假 · {leave.id}')
+    return ok()
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def leaves_revert(request, lid):
+    """销假/到岗登记：仅本人、仅已批准且尚未结束的请假。"""
+    if (err := require(request.user, 'action:leave.create', '没有销假权限')):
+        return err
+    try:
+        leave = Leave.objects.get(pk=lid)
+    except Leave.DoesNotExist:
+        return fail('请假单不存在', 404)
+    if leave.member_id != request.user.pk:
+        return fail('只能销自己的假', 403)
+    if leave.status != Leave.STATUS_APPROVED:
+        return fail('仅已批准的请假可以销假', 409)
+    if leave.end <= timezone.now():
+        return fail('该请假已结束，无需销假', 409)
+    leave.status = Leave.STATUS_REVERTED
+    leave.save()
+    _log(request, f'到岗销假 · {leave.id}')
     return ok()

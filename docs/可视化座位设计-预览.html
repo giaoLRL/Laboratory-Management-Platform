@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可视化座位 · 具身智能实验室（设计预览）</title>
+<style>
+  :root{
+    --brand:#243E70; --brand-hover:#1C3260; --brand-tint:#EDF0F4;
+    --floor:#f7f6f3; --canvas:#f1f1ee; --line:#e7e7e3; --line-2:#dcdcd7;
+    --text-1:#1b1d21; --text:#5a5e66; --text-2:#83837f;
+    --shadow:0 1px 3px rgba(20,24,35,.07);
+    --r-lg:11px; --r-sm:6px;
+    --amber:#d99a3e;
+    --green:#2f9e63; --navy:#243E70; --purple:#7b5ea7; --orange:#c07a2f; --gray:#83837f; --teal:#2f7f8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--canvas); color:var(--text-1); font-size:13px;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  /* ================= 顶栏 ================= */
+  .topbar{
+    display:flex; align-items:center; gap:12px; padding:9px 18px;
+    background:#fff; border-bottom:1px solid var(--line); flex-shrink:0; z-index:20;
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0}
+  .brand-mark{width:32px;height:32px;flex-shrink:0}
+  .brand h1{font-size:15px;font-weight:600;letter-spacing:.2px;white-space:nowrap}
+  .brand h1 span{color:var(--text-2);font-weight:400}
+  .brand .sub{font-size:11px;color:var(--text-2);white-space:nowrap;margin-top:1px}
+  .topbar .spacer{flex:1}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; padding:5px 11px;
+    border:1px solid var(--line-2); border-radius:999px; color:var(--text);
+    font-size:12px; background:#fff; white-space:nowrap;
+  }
+  .pill b{color:var(--text-1);font-weight:600;font-variant-numeric:tabular-nums}
+  .pill.live b{color:var(--green)}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+    border:1px solid var(--line-2); border-radius:999px; font-size:12px;
+    color:var(--text); background:#fff; white-space:nowrap;
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  .btn:hover{border-color:var(--brand);color:var(--brand)}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-hover);color:#fff}
+  #clock{font-variant-numeric:tabular-nums}
+  /* ================= 图例 ================= */
+  .legend{
+    display:flex; align-items:center; gap:18px; padding:7px 18px; flex-shrink:0;
+    background:#fff; border-bottom:1px solid var(--line); font-size:11px; color:var(--text-2);
+  }
+  .legend .group{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .legend .item{display:inline-flex; align-items:center; gap:5px; white-space:nowrap}
+  .legend .sep{width:1px;height:13px;background:var(--line-2)}
+  .sw{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line-2);background:#fff;position:relative;flex-shrink:0}
+  .sw.occ{border:1.5px solid rgba(47,158,99,.6);background:#fff}
+  .sw.bench{background:#e8e8e3;border-color:#dedeD8}
+  .sw.store{background:#faf2e2;border-color:#ecdcb9}
+  .sw.wall{background:#5d6269;border-color:#5d6269}
+  .sw.floor{background:#f7f6f3;border-color:#e7e7e3}
+  .sw.movable{border:1.5px dashed var(--brand);background:#eef2f8}
+  /* ================= 主体 ================= */
+  main{
+    flex:1; min-height:0; display:flex; overflow:hidden;
+  }
+  .viewport{
+    flex:1; min-width:0; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; padding:16px;
+  }
+  #stage{position:relative;flex-shrink:0}
+  .room{
+    position:relative; background:var(--floor);
+    border:1px solid var(--line-2); border-radius:14px; box-shadow:var(--shadow);
+    display:grid; gap:3px; padding:12px;
+    grid-template-columns:repeat(13,64px);
+    grid-template-rows:repeat(11,64px);
+    transform-origin:center center;
+  }
+  .room-label{
+    position:absolute; left:16px; top:-9px; padding:2px 9px; background:#fff;
+    border:1px solid var(--line-2); border-radius:999px; font-size:10px; color:var(--text-2); letter-spacing:.3px;
+  }
+  /* ---------- 格子：全部显式定位，无自动排列 ---------- */
+  .cell{position:relative; border-radius:7px}
+  .c-wall{background:#5d6269; border-radius:4px}
+  .c-floor{background:#f7f6f3; border:1px solid #efeeea}
+  .c-bench{background:#e8e8e3; border:1px solid #deded8}
+  .c-store{background:#faf2e2; border:1px solid #ecdcb9}
+  .c-store::after{
+    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:30px; height:2px; border-radius:1px; background:#e0cfa8;
+    box-shadow:0 -5px 0 #e0cfa8, 0 5px 0 #e0cfa8;
+  }
+  .c-door{background:#fff; border:1px solid var(--line-2); cursor:default}
+  .c-bench-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:10px; letter-spacing:3px; color:#a4a49f; text-indent:3px;
+  }
+  .c-door svg{position:absolute; inset:0; width:100%; height:100%}
+  /* ---------- 工位 ---------- */
+  .c-wk{
+    background:#fcfbf8; border:1px solid #e8e6e0; cursor:pointer;
+    transition:box-shadow .15s, background .15s;
+  }
+  .c-wk:hover{box-shadow:0 0 0 2px var(--brand); z-index:7}
+  .c-wk .ring{
+    position:absolute; inset:2px; border-radius:6px; border:1.5px solid var(--st);
+    opacity:.6; pointer-events:none;
+  }
+  /* 坐姿场景：桌子 + 坐在桌前的小人（桌子常驻，占本格宽 58px） */
+  .c-wk .scene{position:absolute; left:0; right:0; bottom:1px; display:flex; justify-content:center; pointer-events:none}
+  .c-wk .scene svg{width:58px; height:44px; display:block}
+  /* 空位占位（虚线，标识此处无人） */
+  .c-wk .ph{
+    position:absolute; left:19px; top:20px; width:26px; height:22px;
+    border:1px dashed #e4e3dd; border-radius:8px; pointer-events:none;
+  }
+  .c-wk.occ{background:#fff}
+  .c-wk.occ.locked{cursor:not-allowed}
+  .c-wk.occ.locked:hover{box-shadow:0 0 0 2px var(--st)}
+  .c-wk.movable{background:#eef2f8; box-shadow:0 0 0 1.5px var(--brand) inset}
+  .c-wk.movable:hover{background:#e6ecf6; box-shadow:0 0 0 2px var(--brand) inset}
+  .c-wk.movable::after{
+    content:"+"; position:absolute; left:50%; top:24px; transform:translateX(-50%);
+    font-size:14px; color:var(--brand); opacity:.5;
+  }
+  /* 通道空地：默认是地面，有可去位置时与工位同一套高亮语言 */
+  .c-floor.walkable,.c-floor.movable{cursor:pointer}
+  .c-floor.movable{background:#eef2f8; box-shadow:0 0 0 1.5px var(--brand) inset}
+  .c-floor.movable::after{
+    content:"+"; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    font-size:14px; color:var(--brand); opacity:.45;
+  }
+  .c-floor.occ{cursor:pointer; background:#f4f3ef}
+  /* 走动层：只在移动过程中放一个行走形体，覆盖在格子上方 */
+  .walk-layer{position:absolute; inset:0; z-index:12; pointer-events:none}
+  .walker{
+    position:absolute; left:0; top:0; width:64px; height:64px; padding-bottom:1px;
+    display:flex; align-items:flex-end; justify-content:center;
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+  }
+  .walker svg{width:58px; height:44px; display:block}
+  /* 名字牌（顶部，避免遮挡桌面） */
+  .nm{
+    position:absolute; left:50%; top:1px; transform:translateX(-50%);
+    display:inline-flex; align-items:center; gap:3px; max-width:56px;
+    padding:0 5px; height:13px; border-radius:999px; background:#fff;
+    border:1px solid var(--line-2); font-size:9px; color:var(--text); white-space:nowrap;
+    pointer-events:none;
+  }
+  .nm span{overflow:hidden; text-overflow:ellipsis}
+  .nm.me{background:var(--brand); border-color:var(--brand); color:#fff}
+  .nm.me .sdot{background:#fff !important; opacity:.85}
+  .sdot{width:5px; height:5px; border-radius:50%; flex-shrink:0}
+  /* 气泡 */
+  .bub{
+    position:absolute; left:50%; bottom:calc(100% + 7px); transform:translateX(-50%);
+    z-index:9; background:#fff; border:1px solid var(--brand); border-radius:9px;
+    box-shadow:0 4px 14px rgba(20,24,35,.13); font-size:10px; color:var(--text-1);
+    padding:3px 9px; max-width:168px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    cursor:pointer; animation:bubIn .22s ease-out;
+  }
+  .bub::after{
+    content:""; position:absolute; left:50%; bottom:-5px; margin-left:-4.5px; width:9px; height:9px;
+    background:#fff; border-right:1px solid var(--brand); border-bottom:1px solid var(--brand);
+    transform:rotate(45deg);
+  }
+  @keyframes bubIn{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.94)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+  @media (prefers-reduced-motion:reduce){.bub{animation:none}.c-wk{transition:none}.walker{transition:none}.chat{transition:none}}
+  /* 正在发言：淡琥珀描边，克制的一眼可见 */
+  .c-wk.speaking{box-shadow:0 0 0 2px var(--amber)}
+  /* ================= 实验室大厅（右侧可收起抽屉） ================= */
+  .chat{
+    width:300px; flex-shrink:0; background:#fff; border-left:1px solid var(--line);
+    display:flex; overflow:hidden; transition:width .22s ease;
+  }
+  .chat.closed{width:38px}
+  .chat.closed .chat-inner{display:none}
+  .chat:not(.closed) .railbtn{display:none}
+  .railbtn{
+    width:38px; flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+    gap:10px; padding:14px 0; position:relative; background:#fff;
+  }
+  .railbtn:hover{background:var(--brand-tint)}
+  .railtext{writing-mode:vertical-rl; font-size:11px; letter-spacing:2px; color:var(--text-2)}
+  .railbtn:hover .railtext{color:var(--brand)}
+  .railbadge{
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:#c0472f;
+    color:#fff; font-size:10px; font-style:normal; line-height:16px; text-align:center;
+  }
+  .railbadge.hide{display:none}
+  .chat-inner{flex:1; min-width:0; display:flex; flex-direction:column}
+  .chat-head{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:11px 14px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .chat-head h4{font-size:13px; font-weight:600}
+  .chat-sub{font-size:10px; color:var(--text-2); margin-top:2px}
+  .fold{width:24px; height:24px; border-radius:6px; color:var(--text-2); font-size:14px; line-height:1}
+  .fold:hover{background:var(--brand-tint); color:var(--text-1)}
+  .chat-list{
+    flex:1; min-height:0; overflow-y:auto; padding:12px 14px;
+    display:flex; flex-direction:column; gap:11px;
+  }
+  .msg{display:flex; gap:8px; align-items:flex-start}
+  .msg .mav{
+    width:22px; height:20px; flex-shrink:0; border-radius:6px; background:var(--brand-tint);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .msg .mav svg{width:19px; height:18px}
+  .msg .mbody{min-width:0; flex:1}
+  .msg .meta{display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text-2); margin-bottom:3px}
+  .msg .meta b{font-size:11px; font-weight:600; color:var(--text-1)}
+  .msg .meta time{margin-left:auto; font-variant-numeric:tabular-nums}
+  .msg .tagme{
+    font-style:normal; font-size:9px; padding:0 5px; height:14px; line-height:14px;
+    border-radius:999px; background:var(--brand); color:#fff;
+  }
+  .msg .mtext{
+    font-size:12px; line-height:1.6; color:var(--text-1); word-break:break-word;
+    background:#f7f7f4; border:1px solid var(--line); border-radius:9px; padding:6px 10px;
+  }
+  .msg.me .mtext{background:var(--brand-tint); border-color:#dbe3f0}
+  .chat-foot{border-top:1px solid var(--line); padding:10px 14px; flex-shrink:0; background:#fcfcfa}
+  .foot-row{display:flex; gap:8px}
+  .foot-row input{flex:1; min-width:0}
+  .foot-opt{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-2); margin-top:8px; cursor:pointer}
+  .foot-opt input{width:13px; height:13px; accent-color:var(--brand); margin:0}
+  /* ================= 弹窗 ================= */
+  .mask{
+    position:fixed; inset:0; background:rgba(20,24,35,.32); z-index:60;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .mask.on{display:flex}
+  .modal{
+    background:#fff; border-radius:var(--r-lg); box-shadow:0 14px 44px rgba(20,24,35,.2);
+    width:min(470px,100%); max-height:84vh; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .modal-head{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .modal-head h3{font-size:14px;font-weight:600;flex:1}
+  .modal-head .x{
+    width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-2);font-size:14px;line-height:1;
+  }
+  .modal-head .x:hover{background:var(--brand-tint);color:var(--text-1)}
+  .modal-body{padding:16px 18px;overflow:auto}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);flex-shrink:0;background:#fcfcfa}
+  /* 状态选择 */
+  .status-row{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line-2);
+    border-radius:999px;font-size:12px;color:var(--text);cursor:pointer;background:#fff;transition:all .12s;
+  }
+  .chip:hover{border-color:var(--brand);color:var(--brand)}
+  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chip.active .dot{background:#fff !important}
+  .field{margin-top:14px}
+  .field label{display:block;font-size:11px;color:var(--text-2);margin-bottom:6px}
+  input[type=text]{
+    width:100%;padding:8px 11px;border:1px solid var(--line-2);border-radius:var(--r-sm);
+    font-size:13px;color:var(--text-1);background:#fff;outline:none;transition:border-color .15s;
+  }
+  input[type=text]:focus{border-color:var(--brand)}
+  .hint{font-size:11px;color:var(--text-2);line-height:1.7;margin-top:8px}
+  /* 本人面板 / 他人卡片 */
+  .pcard{display:flex;gap:16px;align-items:flex-start}
+  .pcard .av{
+    width:112px;height:96px;flex-shrink:0;border-radius:var(--r-lg);
+    background:var(--brand-tint); border:1px solid var(--line);
+    display:flex; align-items:flex-end; justify-content:center; padding-bottom:7px;
+  }
+  .pcard .av svg{width:100px;height:76px}
+  .pcard .info{flex:1;min-width:0}
+  .pcard .nm2{font-size:15px;font-weight:600}
+  .pcard .mid2{font-size:10px;color:var(--text-2);margin:3px 0 0}
+  .pcard .stat{
+    display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:5px 11px;
+    border-radius:999px;background:#f7f8f6;border:1px solid var(--line);font-size:12px;
+  }
+  .pcard .stat b{font-weight:600}
+  .pcard .txt{font-size:12px;color:var(--text);margin-top:8px;line-height:1.6;word-break:break-word}
+  .pcard .seatline{font-size:11px;color:var(--text-2);margin-top:10px}
+  .menu{display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%}
+  .menu-btn{
+    display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:11px 13px;
+    border:1px solid var(--line-2);border-radius:9px;background:#fff;text-align:left;transition:all .12s;
+  }
+  .menu-btn:hover{border-color:var(--brand);background:#fbfcfe}
+  .menu-btn span{font-size:13px;font-weight:600}
+  .menu-btn small{font-size:11px;color:var(--text-2);line-height:1.5}
+  /* 形象编辑器 */
+  .mx{display:flex;gap:16px}
+  .mx .prev{
+    width:112px;height:104px;flex-shrink:0;border:1px solid var(--line);border-radius:var(--r-lg);
+    display:flex;align-items:flex-end;justify-content:center;background:var(--brand-tint);padding-bottom:7px;
+  }
+  .mx .prev svg{width:104px;height:79px}
+  .mx-parts{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+  .part-row label{display:block;font-size:11px;color:var(--text-2);margin-bottom:5px}
+  .part-opts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .pop{
+    min-width:32px;height:32px;border:1px solid var(--line-2);border-radius:8px;background:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:1px;transition:all .12s;
+  }
+  .pop:hover{border-color:var(--brand)}
+  .pop.active{border-color:var(--brand);background:var(--brand-tint);box-shadow:0 0 0 1px var(--brand) inset}
+  .pop.swatch{width:28px;height:28px;border-radius:50%}
+  .pop svg{width:22px;height:27px;display:block}
+  .pop.hair,.pop.prop{flex-direction:column;gap:1px;padding:2px 3px;width:auto;height:auto;min-width:0}
+  .pop.hair svg{width:34px;height:24px}
+  .pop.prop svg{width:38px;height:20px}
+  .pop .cap{font-size:8px;color:var(--text-2);padding:0 3px;line-height:1.2}
+  .pop.text{width:auto;padding:0 11px;font-size:11px;color:var(--text)}
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:99;
+    background:#1b1d21;color:#fff;font-size:12px;padding:8px 18px;border-radius:999px;
+    box-shadow:0 6px 20px rgba(20,24,35,.22);animation:bubIn .22s ease-out;
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="3" y="3" width="42" height="42" rx="11" fill="#3A3F46"/>
+        <polygon points="10,14 38,14 34,20 30,20 30,32 27,35 24,32 24,24 22,33 19,37 15,31 16,22" fill="#fff"/>
+        <rect x="13" y="17" width="22" height="6" rx="3" fill="#243E70"/>
+        <rect x="13" y="20" width="22" height="3" fill="#d99a3e"/>
+        <rect x="38" y="4" width="3" height="6" rx="1.5" fill="#d99a3e"/>
+      </svg>
+      <div>
+        <h1>可视化座位 <span>· 实验室俯视图</span></h1>
+        <div class="sub">具身智能实验室 · 设计预览（演示数据）</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill live"><i class="dot" style="background:var(--green)"></i>在席 <b id="on-count">0</b> / <b id="seat-total">0</b></span>
+    <span class="pill" id="clock">--:--:--</span>
+    <button class="btn" data-act="my-seat">我的座位</button>
+    <button class="btn" data-act="edit-char">编辑形象</button>
+    <button class="btn primary" data-act="help">使用说明</button>
+  </header>
+
+  <div class="legend">
+    <div class="group">
+      <span class="item"><span class="sw"></span>空工位</span>
+      <span class="item"><span class="sw occ"></span>已占用（绿框）</span>
+      <span class="item"><span class="sw movable"></span>可挪入</span>
+      <span class="sep"></span>
+      <span class="item"><span class="sw bench"></span>测试台</span>
+      <span class="item"><span class="sw store"></span>储物柜</span>
+      <span class="item"><span class="sw floor"></span>通道</span>
+      <span class="item"><span class="sw wall"></span>墙体</span>
+    </div>
+    <div class="group" style="margin-left:auto" id="status-legend"></div>
+  </div>
+
+  <main>
+    <div class="viewport" id="viewport">
+      <div id="stage">
+        <div id="room" class="room">
+          <div class="room-label">B 区 · 实验室平面（俯视）</div>
+          <div class="walk-layer" id="walk-layer"></div>
+        </div>
+      </div>
+    </div>
+    <aside id="chat" class="chat closed">
+      <button class="railbtn" data-act="chat-toggle" title="展开实验室大厅">
+        <i class="railbadge hide" id="rail-badge"></i>
+        <span class="railtext">实验室大厅</span>
+      </button>
+      <div class="chat-inner">
+        <div class="chat-head">
+          <div>
+            <h4>实验室大厅</h4>
+            <div class="chat-sub">公共频道 · 全员可见</div>
+          </div>
+          <button class="fold" data-act="chat-toggle" title="收起">»</button>
+        </div>
+        <div class="chat-list" id="chat-list"></div>
+        <div class="chat-foot">
+          <div class="foot-row">
+            <input type="text" id="chat-input" maxlength="200" placeholder="说点什么…（Enter 发送）">
+            <button class="btn primary" data-act="chat-send">发送</button>
+          </div>
+          <label class="foot-opt"><input type="checkbox" id="chat-bubble" checked>同时在座位上冒气泡</label>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+<script>
+'use strict';
+/* ================= 状态预设 ================= */
+const STATUSES = [
+  {key:'work',    label:'在工位',   color:'#2f9e63'},
+  {key:'debug',   label:'调试中',   color:'#243E70'},
+  {key:'meeting', label:'开会',     color:'#7b5ea7'},
+  {key:'rest',    label:'休息',     color:'#c07a2f'},
+  {key:'out',     label:'实验室外', color:'#83837f'},
+  {key:'custom',  label:'自定义',   color:'#2f7f8f'},
+];
+const stOf = k => STATUSES.find(s => s.key === k) || STATUSES[5];
+
+/* ================= 形象部件库（白名单，禁止任意 SVG） ================= */
+const CHARACTER_BOOK = {
+  skin:      ['#f6d0ac','#eec096','#d8a377','#c08a5e'],
+  hairStyle: ['flat','cap','bob','spike'],
+  hairColor: ['#3a3f46','#6a5a41','#2e3648','#1b1d21'],
+  top:       ['#243E70','#6f7c8c','#3e6b5a','#96603a','#6a4a7f'],
+  chair:     ['#9aa0a8','#6d747d','#b9a68a','#c3c7cd'],
+  prop:      ['none','pc','wrench','book'],
+  glasses:   [false,true],
+};
+const HAIR_LABEL = {flat:'短发', cap:'工帽', bob:'齐耳', spike:'寸头'};
+const PROP_LABEL = {none:'无', pc:'笔记本', wrench:'焊枪', book:'技术书'};
+const PART_LABEL = {skin:'肤色', hairStyle:'发型', hairColor:'发色', top:'上衣', chair:'椅背', prop:'桌上物品', glasses:'眼镜'};
+
+/* 头部（含发型 / 五官 / 眼镜）：坐姿与站姿共用，保证同一人在不同姿态下长相一致 */
+function headSVG(p){
+  const ink = '#20242c', sk = p.skin, hc = p.hairColor;
+  let g = `<circle cx="29" cy="7.6" r="7.2" fill="${sk}"/>`;
+  if (p.hairStyle === 'flat')
+    g += `<path d="M21.8 7.8c0-4.1 3.2-6.7 7.2-6.7s7.2 2.6 7.2 6.7c-2.3-2.1-4.7-3-7.2-3s-4.9.9-7.2 3z" fill="${hc}"/>`;
+  if (p.hairStyle === 'bob'){
+    g += `<path d="M21.8 7.8c0-4.1 3.2-6.7 7.2-6.7s7.2 2.6 7.2 6.7c-2.3-2.1-4.7-3-7.2-3s-4.9.9-7.2 3z" fill="${hc}"/>`;
+    g += `<rect x="21.1" y="6.6" width="2.5" height="6.6" rx="1.25" fill="${hc}"/>`;
+    g += `<rect x="34.4" y="6.6" width="2.5" height="6.6" rx="1.25" fill="${hc}"/>`;
+  }
+  if (p.hairStyle === 'cap'){
+    g += `<path d="M21.8 7.6c0-4 3.2-6.6 7.2-6.6s7.2 2.6 7.2 6.6z" fill="${hc}"/>`;
+    g += `<rect x="19.6" y="6.6" width="18.8" height="2.6" rx="1.3" fill="${hc}"/>`;
+  }
+  if (p.hairStyle === 'spike')
+    g += `<path d="M22 8.2 24.2 1.2 26.7 6 29 0.2 31.3 6 33.8 1.2 36 8.2z" fill="${hc}"/>`;
+  g += `<circle cx="26.2" cy="8.4" r="1.35" fill="${ink}"/><circle cx="31.8" cy="8.4" r="1.35" fill="${ink}"/>`;
+  g += `<path d="M27.4 11.6q1.6 1.3 3.2 0" stroke="${ink}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+  if (p.glasses)
+    g += `<circle cx="26.2" cy="8.4" r="2.8" fill="none" stroke="${ink}" stroke-width="1"/>`+
+         `<circle cx="31.8" cy="8.4" r="2.8" fill="none" stroke="${ink}" stroke-width="1"/>`+
+         `<path d="M29 8.4h.4M23.4 7.6 22 7.1M34.6 7.6 36 7.1" stroke="${ink}" stroke-width="1" stroke-linecap="round"/>`;
+  return g;
+}
+
+/* 坐姿场景（viewBox 58×44）：桌子常驻在底部，小人坐在桌后、双手搭在桌面上，腿被桌沿遮挡。
+   桌子画进场景里 ⇒ 同一段 SVG 在格子、预览卡、编辑器局部裁剪中都能等比复用。 */
+function sceneSVG(p, opt){
+  opt = opt || {};
+  let g = '';
+  if (p){
+    const sk = p.skin, tp = p.top;
+    /* 椅背（在身后，露出两侧） */
+    g += `<rect x="16.5" y="8" width="25" height="16" rx="8" fill="${p.chair}" opacity=".6"/>`;
+    /* 手臂：前臂落到桌沿以下被挡住，手掌单独画在桌面上 */
+    g += `<path d="M20.6 16.5Q17 21 16.2 26.4" stroke="${tp}" stroke-width="4.4" stroke-linecap="round" fill="none"/>`;
+    g += `<path d="M37.4 16.5Q41 21 41.8 26.4" stroke="${tp}" stroke-width="4.4" stroke-linecap="round" fill="none"/>`;
+    /* 躯干：下缘与桌沿 y=24 齐平，形成腿部被桌子遮挡的错觉 */
+    g += `<path d="M19.5 18.6q0-5.6 5.6-5.6h7.8q5.6 0 5.6 5.6V24H19.5z" fill="${tp}"/>`;
+    g += headSVG(p);
+  }
+  /* 桌子（无论有没有人都存在） */
+  g += `<rect x="1" y="24" width="56" height="20" rx="4" fill="#e6dfcd"/>`;
+  g += `<path d="M2.6 24.7h52.8" stroke="#f5f1e5" stroke-width="1.3" stroke-linecap="round"/>`;
+  g += `<rect x="1" y="37.6" width="56" height="6.4" rx="4" fill="#d5ccb6"/>`;
+  if (opt.seatNo)
+    g += `<text x="4.8" y="34.8" font-size="7" font-family="-apple-system,'PingFang SC',sans-serif" fill="#aea48f" letter-spacing=".3">${esc(opt.seatNo)}</text>`;
+  if (p){
+    /* 桌上的随身物品 */
+    if (p.prop === 'pc')
+      g += `<rect x="23.4" y="25.8" width="11.2" height="8" rx="1.6" fill="#dfe2e6" stroke="#9aa0a8" stroke-width=".9"/>`+
+           `<rect x="25" y="27.2" width="8" height="5.2" rx=".7" fill="#5d6b82"/>`;
+    if (p.prop === 'book')
+      g += `<rect x="23.6" y="26.2" width="10.8" height="8.4" rx="1.6" fill="#d99a3e" stroke="#a8781f" stroke-width=".9"/>`+
+           `<path d="M29 26.2v8.4" stroke="#a8781f" stroke-width=".8"/>`;
+    if (p.prop === 'wrench'){
+      g += `<path d="M24 33.6 33.4 27.4" stroke="#8b8f96" stroke-width="2.6" stroke-linecap="round"/>`;
+      g += `<circle cx="34.6" cy="26.8" r="2.6" fill="none" stroke="#c07a2f" stroke-width="2"/>`;
+    }
+    /* 双手：最后绘制，压在桌面上 */
+    g += `<circle cx="16" cy="27.4" r="2.6" fill="${p.skin}"/><circle cx="42" cy="27.4" r="2.6" fill="${p.skin}"/>`;
+  }
+  return `<svg viewBox="${opt.crop || '0 0 58 44'}" aria-hidden="true">${g}</svg>`;
+}
+
+/* 站姿（viewBox 58×44，无桌子）：小人走到通道空地时用这个姿态，也是走动过程中的中间形体。
+   与坐姿共用 headSVG，因此同一个人站起来后长相不变；裤/鞋取中性色，不占自定义槽位。 */
+const PANTS = '#5a5e66', SHOE = '#2b2f37';
+function standSVG(p){
+  const sk = p.skin, tp = p.top;
+  let g = '';
+  g += `<ellipse cx="29" cy="42.4" rx="10.5" ry="2.2" fill="#1b1d21" opacity=".1"/>`;
+  /* 腿 + 鞋（先画，随后被躯干下摆盖住上端） */
+  g += `<rect x="24.2" y="28.4" width="4.6" height="11.6" rx="2.3" fill="${PANTS}"/>`;
+  g += `<rect x="29.2" y="28.4" width="4.6" height="11.6" rx="2.3" fill="${PANTS}"/>`;
+  g += `<rect x="22.9" y="39" width="7.2" height="3.6" rx="1.8" fill="${SHOE}"/>`;
+  g += `<rect x="27.9" y="39" width="7.2" height="3.6" rx="1.8" fill="${SHOE}"/>`;
+  /* 躯干（圆肩） */
+  g += `<path d="M21.6 21.4q0-4.8 4.8-4.8h5.2q4.8 0 4.8 4.8v7.6q0 2.8-2.8 2.8h-9.2q-2.8 0-2.8-2.8z" fill="${tp}"/>`;
+  /* 手臂 + 手 */
+  g += `<rect x="18.2" y="18.8" width="4.4" height="12.6" rx="2.2" fill="${tp}"/>`;
+  g += `<rect x="35.4" y="18.8" width="4.4" height="12.6" rx="2.2" fill="${tp}"/>`;
+  g += `<circle cx="20.4" cy="32.6" r="2.2" fill="${sk}"/><circle cx="37.6" cy="32.6" r="2.2" fill="${sk}"/>`;
+  /* 脖子 + 头 */
+  g += `<rect x="27" y="14.2" width="4" height="3.2" rx="1.6" fill="${sk}"/>`;
+  g += headSVG(p);
+  return `<svg viewBox="0 0 58 44" aria-hidden="true">${g}</svg>`;
+}
+
+/* ================= 平面图（13 列 × 11 行，每行严格 13 字符） =================
+   # 墙   . 通道   w 工位   s 储物柜   t 测试台   d 门   */
+const MAP = [
+  '#############',
+  '#d..........#',
+  '#.ss...ss...#',
+  '#.ww...ww...#',
+  '#.ww...ww...#',
+  '#...ttttt...#',
+  '#.ww...ww...#',
+  '#.ww...ww...#',
+  '#.ss...ss...#',
+  '#...........#',
+  '#############',
+];
+MAP.forEach((r,i)=>{ if(r.length!==13) console.error('MAP 行宽错误', i, r.length); });
+
+/* ================= 成员（演示数据） ================= */
+const meId = 'me';
+const members = {
+  me:{id:'me', name:'廖润林', seat:null, status:{key:'work',    text:'在改周报'},
+      character:{skin:'#eec096',hairStyle:'spike',hairColor:'#3a3f46',top:'#243E70',chair:'#9aa0a8',prop:'pc',glasses:true}, bubble:null},
+  m1:{id:'m1', name:'林一',   seat:null, status:{key:'debug',   text:'在跑电机闭环'},
+      character:{skin:'#f6d0ac',hairStyle:'bob',  hairColor:'#2e3648',top:'#3e6b5a',chair:'#6d747d',prop:'wrench',glasses:false}, bubble:null},
+  m2:{id:'m2', name:'陈默',   seat:null, status:{key:'meeting', text:'下午 3:00 组会，勿扰'},
+      character:{skin:'#d8a377',hairStyle:'flat', hairColor:'#1b1d21',top:'#6f7c8c',chair:'#b9a68a',prop:'book',glasses:true}, bubble:{text:'下午 3:00 组会'}},
+  m3:{id:'m3', name:'周野',   seat:null, status:{key:'rest',    text:'趴一会儿'},
+      character:{skin:'#f6d0ac',hairStyle:'cap',  hairColor:'#6a5a41',top:'#96603a',chair:'#9aa0a8',prop:'none',glasses:false}, bubble:{text:'求带瓶可乐'}},
+  m4:{id:'m4', name:'王琦',   seat:null, status:{key:'work',    text:'在写周报'},
+      character:{skin:'#eec096',hairStyle:'bob',  hairColor:'#3a3f46',top:'#6a4a7f',chair:'#b9a68a',prop:'pc',glasses:false}, bubble:null},
+  m5:{id:'m5', name:'赵青',   seat:null, status:{key:'out',     text:'取快递，马上回'},
+      character:{skin:'#c08a5e',hairStyle:'flat', hairColor:'#1b1d21',top:'#3e6b5a',chair:'#9aa0a8',prop:'none',glasses:true}, bubble:null},
+  m6:{id:'m6', name:'吴用',   seat:null, status:{key:'debug',   text:'在刷固件 v2.3'},
+      character:{skin:'#d8a377',hairStyle:'spike',hairColor:'#2e3648',top:'#243E70',chair:'#6d747d',prop:'wrench',glasses:false}, bubble:null},
+};
+const MEMBER = mid => members[mid];
+
+/* ================= 解析平面图 → 格子模型 + 占用表 ================= */
+const CELL = { rows:[], seats:[] };
+const cellByKey = {};                            // '行-列' → 格子
+const occ = {};                                  // '行-列' → memberId（每人最多占一格）
+let seatNo = 0;
+MAP.forEach((row, r) => {
+  CELL.rows[r] = [];
+  [...row].forEach((ch, c) => {
+    const kind = ch, key = r + '-' + c;
+    let label = null;
+    if (ch === 'w') {
+      seatNo++;
+      label = 'B-' + String(seatNo).padStart(2, '0');
+      CELL.seats.push({label, r, c, key});
+    }
+    const cell = {kind, label, r, c, key};
+    CELL.rows[r][c] = cell;
+    cellByKey[key] = cell;
+  });
+});
+document.getElementById('seat-total').textContent = CELL.seats.length;
+
+/* 可站立的格子：通道空地 + 工位（墙 / 储物柜 / 测试台 / 门 是家具，不可站） */
+const isWalkable = cell => cell.kind === '.' || cell.kind === 'w';
+const cellLabel = cell => (cell && cell.label) || '通道空地';
+
+/* 初始分配：本人 + 6 位同事，分散在四组工位 */
+['me','m1','m2','m6','m5','m3','m4'].forEach((mid, i) => {
+  const s = CELL.seats[i * 2 + 1] || CELL.seats[i];
+  members[mid].cell = s.key;
+  occ[s.key] = mid;
+});
+const myCell = () => cellByKey[MEMBER(meId).cell];
+const occupantCount = () => Object.keys(occ).length;
+
+/* ================= 渲染（每个格子显式定位，杜绝自动排列错位） ================= */
+const room = document.getElementById('room');
+let moveMode = false;
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function cellHTML(cell){
+  const {kind, label, r, c, key} = cell;
+  const gp = `grid-column:${c+1};grid-row:${r+1}`;
+  if (kind === '#')  return `<div class="cell c-wall" style="${gp}"></div>`;
+  if (kind === 's')  return `<div class="cell c-store" style="${gp}"></div>`;
+  if (kind === 't'){
+    /* 整段连续的测试台只在正中间格显示一次标签 */
+    let a = c, b = c;
+    while (CELL.rows[r][a - 1]?.kind === 't') a--;
+    while (CELL.rows[r][b + 1]?.kind === 't') b++;
+    const center = a + Math.floor((b - a) / 2);
+    return `<div class="cell c-bench" style="${gp}">${c === center ? '<span class="c-bench-label">测试台</span>' : ''}</div>`;
+  }
+  if (kind === 'd')  return `<div class="cell c-door" style="${gp}"><svg viewBox="0 0 58 58">
+      <path d="M4 54V14q0-10 10-10h40" fill="none" stroke="#dcdcd7" stroke-width="2"/>
+      <path d="M6 30h14" stroke="#243E70" stroke-width="2" stroke-linecap="round"/>
+      <path d="M16 26l4 4-4 4" fill="none" stroke="#243E70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>`;
+
+  /* ---- 可站立的格子：工位（桌前坐姿）/ 通道空地（站姿） ---- */
+  const mid = occ[key], m = mid ? MEMBER(mid) : null;
+  const mine = !!m && m.id === meId;
+  const isWk = kind === 'w';
+  /* 走动中的人由 walk-layer 承载，格子里先不画他（工位仍保留桌子） */
+  const person = m && !(mine && m.walking) ? m : null;
+  const canMove = isWalkable(cell) && !m;
+  const cls = ['cell', isWk ? 'c-wk' : 'c-floor'];
+  if (m) cls.push('occ');
+  if (mine) cls.push('me'); else if (m) cls.push('locked');
+  if (m && m.speaking) cls.push('speaking');
+  if (canMove && !isWk) cls.push('walkable');
+  if (canMove && moveMode) cls.push('movable');
+  const st = m ? stOf(m.status.key).color : 'transparent';
+  const fig = isWk
+    ? sceneSVG(person ? person.character : null, {seatNo: label})
+    : (person ? standSVG(person.character) : '');
+  return `<div class="${cls.join(' ')}" style="${gp};--st:${st}" data-cell="${key}" data-occ="${mid || ''}"
+    ${m ? `title="${esc(m.name)} · ${esc(stOf(m.status.key).label)} · ${esc(m.status.text)}"` : ''}>
+    ${m ? '<span class="ring"></span>' : ''}
+    ${fig ? `<div class="scene">${fig}</div>` : ''}
+    ${person ? `<span class="nm ${mine ? 'me' : ''}"><i class="sdot" style="background:${st}"></i><span>${esc(person.name)}</span></span>
+      ${person.bubble ? `<div class="bub" data-bub="${person.id}">${esc(person.bubble.text)}</div>` : ''}` : (isWk ? '<span class="ph"></span>' : '')}
+  </div>`;
+}
+
+function render(){
+  room.querySelectorAll('.cell').forEach(el => el.remove());
+  const frag = document.createDocumentFragment();
+  CELL.rows.forEach(row => row.forEach(cell => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = cellHTML(cell);
+    frag.appendChild(tmp.firstElementChild);
+  }));
+  room.appendChild(frag);
+  document.getElementById('on-count').textContent = occupantCount();
+}
+
+/* ================= 状态图例 ================= */
+document.getElementById('status-legend').innerHTML = STATUSES.map(s =>
+  `<span class="item"><i class="dot" style="background:${s.color}"></i>${s.label}</span>`).join('');
+
+/* ================= 自适应缩放（取整避免半像素模糊） ================= */
+const stage = document.getElementById('stage');
+function fit(){
+  /* 只按俯视图自己的可用区测量，不把右侧抽屉算进来 */
+  const wrap = document.getElementById('viewport');
+  const rw = room.offsetWidth, rh = room.offsetHeight;
+  const pad = wrap.clientWidth < 1100 ? 36 : 56;
+  const raw = Math.min(1, (wrap.clientWidth - pad) / rw, (wrap.clientHeight - 32) / rh);
+  const sc = Math.max(0.55, Math.floor(raw * 100) / 100);
+  room.style.transform = `scale(${sc})`;
+  stage.style.width  = Math.round(rw * sc) + 'px';
+  stage.style.height = Math.round(rh * sc) + 'px';
+}
+window.addEventListener('resize', fit);
+
+/* ================= 实验室大厅（公共聊天） ================= */
+const HALL = [];
+const hhmm = ts => new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false});
+const seed = [
+  {mid:'m2', text:'下午 3:00 组会，记得带周报', ago:46},
+  {mid:'m1', text:'谁那儿有 3.3V 的 LDO？我板子上那颗烧了', ago:33},
+  {mid:'me', text:'我抽屉里有几颗，一会儿拿给你', ago:30},
+  {mid:'m6', text:'固件 v2.3 刷完了，避障稳多了', ago:14},
+  {mid:'m3', text:'测试台那台示波器我占一会儿哈', ago:6},
+];
+seed.forEach(s => HALL.push({mid:s.mid, text:s.text, t: Date.now() - s.ago * 60000}));
+
+let chatOpen = false, chatUnread = 0, lastSendAt = 0;
+const speakTimers = {};
+
+function renderChat(){
+  const list = document.getElementById('chat-list');
+  list.innerHTML = HALL.map(m => {
+    const who = MEMBER(m.mid);
+    const mine = m.mid === meId;
+    return `<div class="msg ${mine ? 'me' : ''}">
+      <span class="mav">${sceneSVG(who.character, {crop:'21 0 16 15'})}</span>
+      <div class="mbody">
+        <div class="meta"><b>${esc(who.name)}</b>${mine ? '<i class="tagme">我</i>' : ''}<time>${hhmm(m.t)}</time></div>
+        <div class="mtext">${esc(m.text)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  list.scrollTop = list.scrollHeight;
+}
+function updateRail(){
+  const b = document.getElementById('rail-badge');
+  b.textContent = chatUnread > 9 ? '9+' : String(chatUnread);
+  b.classList.toggle('hide', chatUnread === 0);
+}
+/* 发言者的小人在俯视图上亮起淡琥珀描边 5 秒（状态挂在成员对象上，重绘不丢） */
+function markSpeaking(mid){
+  MEMBER(mid).speaking = true;
+  clearTimeout(speakTimers[mid]);
+  speakTimers[mid] = setTimeout(() => { MEMBER(mid).speaking = false; render(); }, 5000);
+}
+function toggleChat(){
+  chatOpen = !chatOpen;
+  document.getElementById('chat').classList.toggle('closed', !chatOpen);
+  if (chatOpen){ chatUnread = 0; updateRail(); renderChat(); }
+  setTimeout(fit, 240);
+}
+function sendChat(){
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text){ toast('先写点内容'); return; }
+  const now = Date.now();
+  if (now - lastSendAt < 3000){ toast('发太快了，缓一缓'); return; }
+  lastSendAt = now;
+  HALL.push({mid:meId, text, t:now});
+  inp.value = '';
+  if (document.getElementById('chat-bubble').checked)
+    sendBubble(meId, text.length > 24 ? text.slice(0, 24) + '…' : text);
+  markSpeaking(meId);
+  renderChat(); render();
+  toast('已发送到实验室大厅');
+}
+/* 演示：同事陆续发言，抽屉收起时累积未读 */
+renderChat(); updateRail();
+[['m5','快递取回来了，放储物柜 A2', 9], ['m1','LDO 收到了，谢！', 26]].forEach(([mid, text, delay]) => {
+  setTimeout(() => {
+    HALL.push({mid, text, t: Date.now()});
+    if (!chatOpen){ chatUnread++; updateRail(); }
+    markSpeaking(mid); renderChat();
+  }, delay * 1000);
+});
+
+/* ================= 弹窗 / toast ================= */
+const mask = document.createElement('div');
+mask.className = 'mask';
+mask.innerHTML = `<div class="modal">
+  <div class="modal-head"><h3 id="m-title"></h3><button class="x" id="m-close">✕</button></div>
+  <div class="modal-body" id="m-body"></div>
+  <div class="modal-foot" id="m-foot"></div>
+</div>`;
+document.body.appendChild(mask);
+const mTitle = mask.querySelector('#m-title'), mBody = mask.querySelector('#m-body'), mFoot = mask.querySelector('#m-foot');
+mask.addEventListener('click', e => { if (e.target === mask || e.target.closest('#m-close')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && mask.classList.contains('on')) closeModal(); });
+function fillModal(title, body, foot){ mTitle.textContent = title; mBody.innerHTML = body; mFoot.innerHTML = foot || ''; mask.classList.add('on'); }
+function closeModal(){ mask.classList.remove('on'); }
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 320); }, 2300);
+}
+
+/* ================= 面板 ================= */
+function ownPanel(){
+  const me = MEMBER(meId);
+  fillModal('我的位置 · ' + cellLabel(myCell()),
+    `<div class="pcard">
+       <div class="av">${sceneSVG(me.character)}</div>
+       <div class="info">
+         <div class="nm2">${esc(me.name)}<span class="mid2"> · 本人</span></div>
+         <div class="stat"><i class="dot" style="background:${stOf(me.status.key).color}"></i><b>${stOf(me.status.key).label}</b></div>
+         <div class="txt">${esc(me.status.text)}</div>
+         <div class="seatline">当前位置 ${esc(cellLabel(myCell()))} · 走开后原位立即空出</div>
+       </div>
+     </div>
+     <div class="menu" style="margin-top:16px">
+       <button class="menu-btn" data-act="op-status"><span>改状态</span><small>加点文字，让大家知道你在忙什么</small></button>
+       <button class="menu-btn" data-act="op-bubble"><span>冒条气泡</span><small>15 秒后自动消失，可点击提前关闭</small></button>
+       <button class="menu-btn" data-act="op-move"><span>高亮可去位置</span><small>把当前所有能过去的空位点亮</small></button>
+       <button class="menu-btn" data-act="op-char"><span>编辑形象</span><small>肤色 / 发型 / 衣着 / 配件</small></button>
+     </div>`,
+    `<button class="btn" data-act="op-close">关闭</button>`);
+}
+
+function statusForm(){
+  const me = MEMBER(meId);
+  fillModal('设置状态',
+    `<div class="status-row">${STATUSES.map(s =>
+      `<button class="chip ${s.key === me.status.key ? 'active' : ''}" data-key="${s.key}" data-act="pick-status">
+        <i class="dot" style="background:${s.color}"></i>${s.label}</button>`).join('')}</div>
+     <div class="field"><label>状态文字（≤ 30 字）</label>
+       <input type="text" id="st-text" maxlength="30" value="${esc(me.status.text)}" placeholder="例如：在跑电机闭环"></div>
+     <div class="hint">状态会持续到签退或下次修改，全员可见；格子边框与名字前的圆点取状态色。</div>`,
+    `<button class="btn" data-act="op-back">返回</button>
+     <button class="btn primary" data-act="op-save-status">保存状态</button>`);
+}
+
+function bubbleForm(){
+  fillModal('冒一条气泡',
+    `<div class="field" style="margin-top:0"><label>消息内容（≤ 50 字）</label>
+       <input type="text" id="bub-text" maxlength="50" placeholder="例如：去借万用表，马上回"></div>
+     <div class="hint">气泡浮在你的小人上方，15 秒后自动消失；点击气泡可提前关闭。</div>`,
+    `<button class="btn" data-act="op-back">返回</button>
+     <button class="btn primary" data-act="op-send-bubble">发送气泡</button>`);
+}
+
+/* ---------- 形象编辑器 ---------- */
+let draft = null;
+function charEditor(keepScroll){
+  if (!draft) draft = {...MEMBER(meId).character};
+  const scroll = keepScroll ? mBody.scrollTop : 0;
+  fillModal('编辑我的形象',
+    `<div class="mx">
+       <div class="prev" id="char-prev">${sceneSVG(draft)}</div>
+       <div class="mx-parts">
+         ${Object.keys(CHARACTER_BOOK).map(k =>
+           `<div class="part-row"><label>${PART_LABEL[k]}</label><div class="part-opts">${partOpts(k)}</div></div>`).join('')}
+       </div>
+     </div>
+     <div class="hint">形象由白名单部件拼装（不接收任意 SVG 上传），保存后所有人可见。</div>`,
+    `<button class="btn" data-act="op-back">返回</button>
+     <button class="btn primary" data-act="op-save-char">保存形象</button>`);
+  mBody.scrollTop = scroll;
+  mBody.onclick = onPartPick;
+}
+function partOpts(k){
+  if (k === 'glasses')
+    return [false, true].map(v =>
+      `<button class="pop text ${draft[k] === v ? 'active' : ''}" data-part="${k}" data-val="${v}">${v ? '有镜框' : '不戴'}</button>`).join('');
+  if (k === 'skin' || k === 'hairColor' || k === 'top' || k === 'chair')
+    return CHARACTER_BOOK[k].map(c =>
+      `<button class="pop swatch ${draft[k] === c ? 'active' : ''}" data-part="${k}" data-val="${c}" style="background:${c}" title="${c}"></button>`).join('');
+  if (k === 'hairStyle')
+    return CHARACTER_BOOK[k].map(v =>
+      `<button class="pop hair ${draft[k] === v ? 'active' : ''}" data-part="${k}" data-val="${v}">
+        ${sceneSVG({...draft, hairStyle:v}, {crop:'20 0 18 16'})}<span class="cap">${HAIR_LABEL[v]}</span></button>`).join('');
+  return CHARACTER_BOOK[k].map(v =>
+    `<button class="pop prop ${draft[k] === v ? 'active' : ''}" data-part="${k}" data-val="${v}">
+      ${sceneSVG({...draft, prop:v}, {crop:'14 24 30 16'})}<span class="cap">${PROP_LABEL[v]}</span></button>`).join('');
+}
+function onPartPick(e){
+  const b = e.target.closest('[data-part]');
+  if (!b) return;
+  const k = b.dataset.part;
+  draft[k] = k === 'glasses' ? b.dataset.val === 'true' : b.dataset.val;
+  document.getElementById('char-prev').innerHTML = sceneSVG(draft);
+  charEditor(true);                 /* 重绘选中态，保留滚动位置 */
+}
+
+/* ---------- 他人卡片 ---------- */
+function otherCard(m){
+  fillModal('',
+    `<div class="pcard">
+       <div class="av">${sceneSVG(m.character)}</div>
+       <div class="info">
+         <div class="nm2">${esc(m.name)}<span class="mid2"> · M${esc(m.id.slice(1).padStart(3,'0'))}</span></div>
+         <div class="stat"><i class="dot" style="background:${stOf(m.status.key).color}"></i><b>${stOf(m.status.key).label}</b></div>
+         <div class="txt">${esc(m.status.text)}</div>
+         <div class="seatline">当前位置 ${esc(cellLabel(cellByKey[m.cell]))} · 只能由本人移动</div>
+       </div>
+     </div>`,
+    `<button class="btn" data-act="op-close">关闭</button>
+     <button class="btn primary" data-act="chat-at" data-mid="${m.id}">在大厅 @ 他</button>`);
+}
+
+function chatAt(mid){
+  const m = MEMBER(mid);
+  closeModal();
+  if (!chatOpen) toggleChat();
+  const inp = document.getElementById('chat-input');
+  inp.value = '@' + m.name + ' ';
+  inp.focus();
+  toast('补完内容后 Enter 发送');
+}
+
+function helpModal(){
+  fillModal('使用说明（设计预览）',
+    `<ul style="font-size:12px;line-height:2;color:var(--text);padding-left:18px">
+      <li>打卡后小人出现在你的工位，签退后消失（演示为预置数据）</li>
+      <li>点<b>任意空位或通道</b> → 小人站起来平滑走过去，免确认；他人在座的位置不可占用</li>
+      <li>工位上是<b>桌前坐姿</b>，走到通道空地是<b>站姿</b>；走开原位立即空出</li>
+      <li>点<b>自己的小人</b> → 改状态 / 冒气泡 / 挪位 / 编辑形象</li>
+      <li>点<b>别人的小人</b> → 看他状态，可一键到大厅 @ 他</li>
+      <li>点<b>气泡</b>可提前关闭，否则 15 秒自动消失</li>
+      <li>右侧<b>实验室大厅</b>：公共频道，发送时可选同时在自己座位冒气泡</li>
+      <li>有人在大厅发言时，他的小人在俯视图上亮起琥珀描边（正在发言）</li>
+      <li>格子边框与名字前的圆点 = 当前状态色</li>
+     </ul>`,
+    `<button class="btn primary" data-act="op-close">知道了</button>`);
+}
+
+/* ================= 气泡 ================= */
+const bubbleTimers = {};
+function sendBubble(mid, text){
+  const m = MEMBER(mid);
+  m.bubble = {text};
+  clearTimeout(bubbleTimers[mid]);
+  bubbleTimers[mid] = setTimeout(() => { MEMBER(mid).bubble = null; render(); }, 15000);
+}
+
+/* ================= 走过去（免确认 + 平滑位移） ================= */
+const WALK_MS = 300;
+const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+function beginMove(){
+  /* 纯高亮提示：把当前所有可去的位置点亮，点击本身随时可用 */
+  moveMode = !moveMode;
+  render();
+  toast(moveMode ? '可去的位置已高亮，点任意一个走过去' : '已取消高亮');
+}
+/* 格子相对房间左上角的未缩放坐标（房间有 scale，offsetLeft 不受影响） */
+function cellOffset(key){
+  const el = room.querySelector(`[data-cell="${key}"]`);
+  return el ? {x: el.offsetLeft, y: el.offsetTop} : null;
+}
+function moveTo(key){
+  const me = MEMBER(meId);
+  const target = cellByKey[key];
+  if (!target || !isWalkable(target)) return;
+  const holder = occ[key];
+  if (holder === meId){ toast('你已经在这儿了'); return; }
+  if (holder){ toast('那一格有人，换个空位吧'); return; }
+
+  const from = me.cell;
+  const a = cellOffset(from), b = cellOffset(key);
+  if (!b) return;
+
+  /* 先落库再渲染：原位立即空出，目标格此帧先只画桌子（若在工位） */
+  delete occ[from];
+  occ[key] = meId;
+  me.cell = key;
+  me.walking = true;
+  moveMode = false;
+  closeModal();
+  render();
+
+  const label = cellLabel(target);
+  if (REDUCED || !a){                       // 无障碍降级：直接落位，不做位移
+    me.walking = false;
+    render();
+    toast('已到 ' + label);
+    return;
+  }
+  /* 走动层独占「本人」这一个行走形体，格子里的本人先隐藏 */
+  const layer = document.getElementById('walk-layer');
+  layer.innerHTML = `<div class="walker" style="transform:translate(${a.x}px,${a.y}px)">${standSVG(me.character)}</div>`;
+  const w = layer.firstElementChild;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    w.style.transform = `translate(${b.x}px,${b.y}px)`;
+  }));
+  setTimeout(() => {
+    me.walking = false;
+    layer.innerHTML = '';
+    render();
+    toast('已到 ' + label);
+  }, WALK_MS + 20);
+}
+function goMySeat(){
+  const el = room.querySelector(`[data-cell="${MEMBER(meId).cell}"]`);
+  if (!el) return;
+  el.style.boxShadow = '0 0 0 2.5px var(--amber)';
+  el.scrollIntoView({block:'center'});
+  setTimeout(() => { el.style.boxShadow = ''; }, 1500);
+}
+
+/* ================= 事件委托 ================= */
+document.addEventListener('click', e => {
+  /* 气泡：优先于格子 */
+  const bub = e.target.closest('.bub');
+  if (bub){
+    const m = MEMBER(bub.dataset.bub);
+    m.bubble = null; clearTimeout(bubbleTimers[m.id]); render();
+    return;
+  }
+  /* 可站立的格子（工位 / 通道空地） */
+  const wc = e.target.closest('[data-cell]');
+  if (wc){
+    const key = wc.dataset.cell, mid = wc.dataset.occ;
+    if (mid === meId){ if (moveMode){ moveMode = false; render(); } ownPanel(); return; }
+    if (mid){ otherCard(MEMBER(mid)); return; }
+    moveTo(key);                       /* 空格子：免确认，直接走过去 */
+    return;
+  }
+  /* 按钮 */
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act, mid = btn.dataset.mid;
+  switch (act){
+    case 'op-close': closeModal(); break;
+    case 'op-back': draft = null; ownPanel(); break;
+    case 'op-status': statusForm(); break;
+    case 'op-bubble': bubbleForm(); break;
+    case 'op-char': draft = null; charEditor(); break;
+    case 'op-move': closeModal(); beginMove(); break;
+    case 'chat-at': chatAt(mid); break;
+    case 'pick-status':
+      document.querySelectorAll('.chip[data-key]').forEach(c2 => c2.classList.toggle('active', c2 === btn));
+      break;
+    case 'op-save-status':{
+      const k = document.querySelector('.chip[data-key].active')?.dataset.key || 'custom';
+      const t = document.getElementById('st-text').value.trim();
+      MEMBER(meId).status = {key:k, text: t || stOf(k).label};
+      closeModal(); render(); toast('状态已更新');
+      break;
+    }
+    case 'op-send-bubble':{
+      const t = document.getElementById('bub-text').value.trim();
+      if (!t){ toast('先写点内容'); return; }
+      sendBubble(meId, t); closeModal(); render(); toast('气泡已发出');
+      break;
+    }
+    case 'op-save-char':
+      MEMBER(meId).character = {...draft}; draft = null;
+      closeModal(); render(); toast('形象已保存');
+      break;
+    case 'my-seat': closeModal(); goMySeat(); break;
+    case 'chat-toggle': toggleChat(); break;
+    case 'chat-send': sendChat(); break;
+    case 'edit-char': draft = null; charEditor(); break;
+    case 'help': helpModal(); break;
+  }
+});
+/* Enter 发送 */
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+});
+
+/* ================= 时钟 ================= */
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false});
+}, 1000);
+document.getElementById('clock').textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false});
+
+/* ================= 初始化 ================= */
+render();
+requestAnimationFrame(fit);
+setTimeout(() => { ['m2','m3'].forEach(id => { MEMBER(id).bubble = null; }); render(); }, 15000);
+</script>
+</body>
+</html>

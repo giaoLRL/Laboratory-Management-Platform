@@ -89,6 +89,10 @@ const CONFIG = {
   "log": {
     "id": "LOG-001", "actor": "林知远", "memberId": "m3",
     "text": "确认发放模块 · STM32F407 开发板", "at": "2026-09-21T01:00:00.000Z", "private": false
+  },
+  "checkin": {
+    "id": 1, "memberId": "m3", "created": "2026-09-20T02:30:00.000Z",
+    "latitude": 26.4502, "longitude": 111.6001, "photo": "/media/checkins/202609/xxx.jpg"
   }
 }
 ```
@@ -127,18 +131,19 @@ const CONFIG = {
 
 | 路径（均为 POST） | 请求字段 | 响应 |
 | --- | --- | --- |
-| `/members` | name, number, username, role, group, direction, contact, password（创建时必填） | `{"data":{"id":"m9"}}` |
-| `/members/:id/update` | name, number, username, role, group, direction, contact | `{"data":{"ok":true}}` |
-| `/members/me/update` | name, direction, contact, email | 同上；本人 `must_complete_profile` 置位时（新账号首次登录）direction/contact/email 必填，成功保存后清除该标记 |
+| `/members` | name, number, username, role, group, direction, contact, email, password（创建时必填） | `{"data":{"id":"m9"}}` |
+| `/members/:id/update` | name, number, username, role, group, direction, contact, email | `{"data":{"ok":true}}` |
+| `/members/me/update` | name, number, direction, contact, email | 同上；本人 `must_complete_profile` 置位时（新账号首次登录）number/contact/email 必填，成功保存后清除该标记 |
 | `/members/me/status` | status（空闲/忙碌）, note | 同上 |
 | `/members/:id/active` | active（布尔） | 同上 |
+| `/members/:id/reset-password` | `{}` | 返回一次性临时密码；重置后该成员下次登录强制改密 |
 | `/assets` | id, name, model, category, vendor, spec, location, note, datasheet, image | `{"data":{"id":"EM-019"}}` |
 | `/assets/:id/update` | 同上，资产编号不可修改 | `{"data":{"ok":true}}` |
 | `/assets/:id/image` | multipart 表单字段 `image`（≤10MB，jpg/png/webp 等） | `{"data":{"image":"/media/inventory/202609/xxx.png"}}` |
 | `/assets/:id/maintenance` | description | 同上 |
 | `/assets/:id/repair-complete` | `{}` | 同上 |
 | `/assets/:id/retire` | `{}` | 同上 |
-| `/loans` | assetIds（数组）, purpose, project, due | `{"data":{"id":"BR-007"}}` |
+| `/loans` | assetIds（数组）, purpose, project, due | `{"data":{"id":"BR-007"}}`；有逾期未归还模块时返回 409 |
 | `/loans/:id/review` | decision（approve/reject）, opinion | `{"data":{"ok":true}}` |
 | `/loans/:id/issue` | `{}` | 同上 |
 | `/loans/:id/cancel` | `{}` | 同上 |
@@ -147,9 +152,12 @@ const CONFIG = {
 | `/leaves` | start, end, reason | `{"data":{"id":"LV-003"}}` |
 | `/leaves/:id/review` | decision（approve/reject）, opinion | `{"data":{"ok":true}}` |
 | `/leaves/:id/cancel` | `{}` | 同上 |
+| `/leaves/:id/revert` | `{}` | 销假/到岗登记：仅本人、仅已批准且未结束的请假 |
 | `/competitions` | 下方比赛表单字段，不含 id、created、archived | `{"data":{"id":"COMP-004"}}` |
 | `/competitions/:id/update` | 下方比赛表单字段 | `{"data":{"ok":true}}` |
 | `/competitions/:id/archive` | archived（布尔） | 同上 |
+| `/checkins` | multipart：photo（现场照片，≤8MB）、latitude、longitude | `{"data":{"id":1,"created":...,"photo":"/media/..."}}`；同人同日打卡返回 409 |
+| `/points/manual` | memberId, points（整数 -100~100）, reason | `{"data":{"total":123}}`；`action:points.manual` |
 
 ## 新成员账号创建
 
@@ -212,6 +220,22 @@ const CONFIG = {
 | `/competitions/:id` | 无 | `{"data":{比赛完整对象}}` |
 | `/logs` | q, page, pageSize | `{"data":{"items":[],"total":0}}` |
 | `/stats` | 无 | `{"data":{"members":8,"assets":18,"available":10,"inUse":5,"maintenance":2,"overdue":1}}` |
+
+### CSV 导出（`action:export.csv`，管理角色）
+
+`GET /api/export/<kind>` 返回 CSV 附件（浏览器新开窗口直接下载）：
+
+| kind | 内容 |
+| --- | --- |
+| `members` | 成员台账（姓名/学号/角色/小组/邮箱/联系方式/状态/加入时间） |
+| `assets` | 资产台账（编号/名称/型号/类别/供应商/位置/状态/备注） |
+| `loans` | 借用记录（含损坏模块列、验收备注） |
+| `tasks` | 任务记录 |
+| `checkins` | 打卡记录 |
+| `points` | 积分流水（近 2000 条） |
+| `maintenance` | 维修记录 |
+| `loginlogs` | 登录日志 |
+| `logs` | 操作日志（近 1000 条） |
 
 ## 服务端必须保证的规则
 
@@ -309,8 +333,9 @@ const CONFIG = {
 | GET | `/email/logs` | 最近 100 条发送日志 | 登录 |
 
 - 模板占位符：`{name} {title} {id} {due} {result} {reason} {rejectReason} {start} {location}`。
-- 规则键：`task_due` 任务临期、`loan_overdue` 借用逾期、`competition_deadline` 报名截止、`competition_start` 开赛提醒（均 cron 扫描）；`leave_result` 请假审批、`loan_reviewed` 借用审批、`loan_issued` 借用发放、`asset_repaired` 维修完成、`task_assigned` 任务指派（均**即时发送**）；`custom` 自定义。
+- 规则键：`task_due` 任务临期、`task_overdue` 任务已逾期、`loan_overdue` 借用逾期、`competition_deadline` 报名截止、`competition_start` 开赛提醒（均 cron 扫描）；`leave_result` 请假审批、`loan_reviewed` 借用审批、`loan_issued` 借用发放、`asset_repaired` 维修完成、`task_assigned` 任务指派（均**即时发送**）；`custom` 自定义。
 - 发送引擎：`manage.py send_reminders`（宿主机 cron 每 30 分钟），扫描同时生成**站内通知**（不依赖邮件开关）；即时类规则由业务接口触发。SMTP 请用 465/SSL（阿里云封 25 端口）。
+- 借用逾期同时触发积分惩罚：积分规则 `loan_overdue_penalty`（默认 -10），每单仅一次（award 唯一约束去重）。
 
 ## 通知中心（站内通知契约）
 
@@ -320,7 +345,7 @@ const CONFIG = {
 | POST | `/notifications/<id>/read` | 单条已读（他人通知返回 404） | 登录 |
 | POST | `/notifications/read-all` | 全部已读 | 登录 |
 
-- 通知 kind：`loan_apply/loan_reviewed/loan_issued/loan_return_requested/loan_returned/loan_overdue`、`leave_apply/leave_reviewed`、`task_assigned/task_completed/task_scored/task_due/task_submitted/task_reviewed/task_rejected`、`competition_published/competition_deadline/competition_start`、`announcement_published`、`asset_repaired`、`points_changed`、`member_joined`。
+- 通知 kind：`loan_apply/loan_reviewed/loan_issued/loan_return_requested/loan_returned/loan_overdue`、`leave_apply/leave_reviewed`、`task_assigned/task_completed/task_scored/task_due/task_overdue/task_submitted/task_reviewed/task_rejected`、`competition_published/competition_deadline/competition_start`、`announcement_published`、`asset_repaired`、`points_changed`、`member_joined`。
 - 通知生成幂等（recipient+kind+ref 唯一），cron 每 30 分钟重复扫描不重复生成；`link` 为前端页面路由 id。
 
 ## 动态导航（路由配置下发）
@@ -346,3 +371,135 @@ const CONFIG = {
 | GET | `/openapi/assets` | 只读模块清单 | 令牌需 `read:assets` scope |
 | GET | `/openapi/loans` | 只读借用清单 | 令牌需 `read:loans` scope |
 | GET | `/openapi/tasks` | 只读任务清单 | 令牌需 `read:tasks` scope |
+
+## 技能关卡（进阶体系，P1 契约）
+
+**权限点**：`page:levels`（页面）、`action:level.manage`（管理关卡）、`action:level.review`（审核通过）、`action:level.comment`（关卡交流）。
+
+**workspace 快照新增键**：
+- `levels`：关卡数组（含每关 `my`：本人记录；`unlocked`：是否解锁；`activity`：冲刺活动开关；**画布字段 `posX/posY` 坐标、`requirePassId` 前置关卡、`flowNextId` 后续关卡**）。`flowNextId` 由 `require_pass` 反查得到（同一前置有多条后续时取 order 最小者），无后续时为 `null`——画布右端圆点据此显示 ＋/−。
+- `myProfile`：本人成长档案；同时 `members[*]` 增加 `exp`（累计经验值）。
+  - `{exp, rankTitle(学员/工匠/专家/大师), passCount, stars, firstPassCount, chains:{链:通过数}, badges:[{key,title,desc,tier,chain?,emblem?,earned,progress?}]}`。
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/levels` | 关卡列表（同快照 `levels` 结构） | 登录 |
+| GET | `/levels/mine` | 我的成长档案 + `recent[]`（近 6 条通过记录：levelId/title/chain/chapter/score/stars/firstPass/featured/reviewedAt） | 登录 |
+| GET | `/levels/member/<mid>/profile` | 指定成员的档案（同 `/levels/mine` 结构，不含隐私字段） | 登录 |
+| GET | `/levels/<id>/detail` | 关卡详情：`{level, wall[], tasks[]}`（通过墙 + 挂接任务） | 登录 |
+| POST | `/levels/create` | 创建关卡 `{title, chain, chapter, scoreLimit, starsRule, status, description, pos?, linkTo?}`；`pos:{x,y}` 画布坐标、`linkTo` 设为前置（画布四边圆点新增时带） | `action:level.manage` |
+| POST | `/levels/<id>/update` · `/levels/<id>/delete` | 关卡更新 / 删除 | `action:level.manage` |
+| POST | `/levels/positions` | 批量保存画布坐标 `{"positions":[{"id","x","y"}]}`（拖卡后的布局保存） | `action:level.manage` |
+| POST | `/levels/<id>/connect` | 连线：把 `<id>` 的**前置**设为 `targetId`（即形成 `targetId → <id>`，箭头指向 `<id>`）；画布拖拽连线时传「落点关卡」作 `<id>`、起点作 `targetId`；`{targetId:""}` 断开前置；带环路防护 | `action:level.manage` |
+| POST | `/levels/<id>/tasks` · `/levels/<id>/tasks/<tid>` | 挂接/移除关卡任务（kind: main/bonus） | `action:level.manage` |
+| POST | `/levels/<id>/submit` | 成员提交成果：FormData `{file?, note}`（图/视频 ≤100MB）→ 状态转 pending | 登录 |
+| POST | `/levels/<id>/review` | 审核：`{memberId, decision: pass\|reject, score?, opinion?, featured?}`；通过时结算**通过积分（按档位×规则分值，活动双倍）+ 首个通过加成 + EXP（档位×20，活动双倍）+ 通知 `level_passed`** | `action:level.review` |
+| POST | `/levels/<id>/reviewers` · `/levels/<id>/reviewers/<mid>` | 增删审核人 | `action:level.manage` |
+
+- 积分规则键（可在积分规则页配置）：`level_pass`（关卡通过·按档位，默认 10）、`level_first_bonus`（关卡首个通过加成，默认 50）。
+- 水平分段：0→学员、200→工匠、600→专家、1500→大师；标章/水平全员可见（成员详情「成长」tab 展示：水平·经验 / 荣誉标章 / 技能线进度 / 近期通过记录）。
+
+## 主页管理（官网内容编辑契约）
+
+营销官网首页（静态 HTML，`/opt/lab/homepage`）通过 `GET /api/homepage/public` 拉取已发布内容，按 `data-hp="<key>"`（文案）与 `data-hp-img="<key>"`（图片）替换页面元素；接口不可用时回退页面内置默认值。管理后台在管理平台「主页管理」页完成编辑/上传，仅 superadmin 可用（权限点 `page:homepage` + `action:homepage.edit`，属 MANAGE_KEYS）。
+
+| 方法 | 路径 | 说明 | 权限 |
+| --- | --- | --- | --- |
+| GET | `/homepage` | 回填：`{texts:[{key,label,value}], images:[{key,label,alt,seed,type,scale,url,uploaded}]}`；`type` 为 `image`/`video`，`scale` 为显示缩放（80–150，默认 100），未上传的 `url` 为 seed 静态路径，`uploaded=false` | `page:homepage` |
+| POST | `/homepage/texts` | `{"values":{"hero.title":"新标题"}}` 批量保存文案（仅允许预置 key，单条 ≤4000 字符）→ `{count}` | `action:homepage.edit` |
+| POST | `/homepage/scale` | `{"key":"work-01","scale":120}` 设置图位显示缩放（80–150 整数）→ `{scale}` | `action:homepage.edit` |
+| POST | `/homepage/images` | FormData `{key,media,alt?}` 上传/替换媒体（互斥：传图覆盖视频、传视频覆盖图）；图片 ≤10MB(jpg/png/webp)、视频 ≤40MB(mp4/webm，魔数校验) → `{url,kind}`（`url` 形如 `/media/public/homepage/…`，免登录） | `action:homepage.edit` |
+| POST | `/homepage/images/reset` | `{"key":"work-01"}` 恢复默认引用图 → `{url}`（seed 路径） | `action:homepage.edit` |
+| GET | `/homepage/public` | 无鉴权内容快照（`Cache-Control: max-age=300`）：`{text:{key:value…}, images:{key:{type,scale,url,alt}…}}`；`type` 供官网判断渲染 `<img>` 或 `<video>`，`scale` 供官网应用显示缩放 | 公开 |
+| GET | `/media/public/homepage/<path>` | 已上传配图/视频免登录直出（仅放行 `homepage/` 目录，生产 X-Accel 直发） | 公开 |
+
+- 文案 key（21）：`hero.title / demo.title / demo.subtitle / demo.cards.1~5 / uav.title / uav.subtitle / uav.tag / build.title / build.tag / works.title / works.subtitle / research.title / research.subtitle / news.title / news.subtitle / join.title / join.subtitle`
+- 图片 key（20）：`work-01~08 / demo-flight-ctrl / demo-iot / demo-edc / demo-car / demo-drone-nav / uav-nav / build / news-1~3 / join / qrcode`
+- 编辑保存后官网最多 5 分钟反映（公开接口 max-age=300）；营销首页 JS 对无版本参数的图片 URL 追加 `?v=<时间戳>` 强制刷新。已配置的图片与文案存于专用表，不走 workspace 快照。
+
+## 可视化座位（实验室俯视图）
+
+> 核心派生规则：**小人 = 今日已打卡且未签退**。`/workspace` 只下发「当前在席」的状态与「未过期」的气泡；聊天正文**不进快照**（无限增长会撑大每次 `/workspace`），改走独立分页接口。
+
+### 1. `/workspace` 快照新增字段
+
+```json
+{
+  "seatLayout": {
+    "id": "main", "name": "B 区 · 实验室平面", "rows": 11, "cols": 13,
+    "grid": ["#############", "#d..........#", "..."],
+    "labels": { "3-2": "B-01", "3-3": "B-02" },
+    "owners": { "3-2": "m3" },
+    "updated": "2026-09-25T08:00:00Z"
+  },
+  "seatPresence":  [{ "memberId": "m3", "row": 3, "col": 2 }],
+  "seatStatuses":  [{ "memberId": "m3", "statusKey": "debug", "text": "在跑电机闭环" }],
+  "seatCharacters":[{ "memberId": "m3", "parts": { "skin": "#eec096", "hairStyle": "spike",
+                     "hairColor": "#3a3f46", "top": "#243E70", "chair": "#9aa0a8",
+                     "prop": "pc", "glasses": true } }],
+  "seatBubbles":   [{ "memberId": "m3", "text": "去借万用表", "expiresAt": "2026-09-25T08:01:00Z" }],
+  "seatChatUnread": 3
+}
+```
+
+| 字段 | 说明 |
+|---|---|
+| `seatLayout` | 唯一启用布局。`grid` 是**行字符串数组**，每字符一格：`.` 通道空地 / `w` 工位 / `s` 储物柜 / `t` 测试台 / `d` 门口 / `#` 墙体。`labels`、`owners` 以 `"行-列"` 为键（避免编辑地图后主键失效）。管理员可在「地图编辑」界面改动 |
+| `seatPresence` | 在席成员当前所在格。解析顺序：用户挪位落库的 `SeatPresence` → 布局里的默认归属 → 空工位顺序补位。**只读派生结果，不是真值表**；该数组每份快照整体替换，不做按 id 增量合并（元素没有 `id`） |
+| `seatStatuses` | 仅在席成员的「状态 + 文字」，签退后不再下发 |
+| `seatCharacters` | 参数化形象部件（白名单键值）。**前端按同一份白名单二次过滤后才拼 SVG**，不接受任何用户提供的 SVG 文本 |
+| `seatBubbles` | 未过期气泡（服务端按 `expires_at` 过滤），前端另按 `expiresAt` 兜一层 |
+| `seatChatUnread` | 大厅未读数（整数，非数组）。按 `(user, room)` 的已读游标计数，不做逐条已读 |
+
+`seatChat` 正文**不出现在快照里**，请调用下方 `/seats/chat`。
+
+### 2. 座位接口
+
+| 方法 | 路径 | 请求体 | 说明 | 权限 |
+|---|---|---|---|---|
+| GET | `/seats/layout` | — | `{layout, presence, statuses, characters, bubbles, unread}`；座位页**轮询专用**（只拉座位状态，不拉整份快照），这 6 个字段与 workspace 快照里的 `seatLayout/seatPresence/seatStatuses/seatCharacters/seatBubbles/seatChatUnread` **逐字段一致**（`seat_state()` 一份逻辑两处共用）。前端每 15 秒轮询一次，页面不可见 / 正在编辑地图 / 正在走动 / 有弹窗时跳过 | `page:seats` |
+| POST | `/seats/move` | `{"row":3,"col":2}` | 只能移动**自己**（后端以 `request.user` 为准，不信任前端传的 memberId）；目标格须可站立且无人 → `{row,col}`。未打卡 409、占用 409、家具 400、越界 400 | `action:seats.move` |
+| POST | `/seats/status` | `{"statusKey":"debug","text":"在跑电机闭环"}` | 状态键：`work/debug/meeting/rest/out/custom`；`custom` 必须有文字；文字截断 30 字 → `{statusKey,text}` | `action:seats.status` |
+| POST | `/seats/character` | `{"parts":{"skin":"#eec096","hairStyle":"spike",…}}` | 逐槽位白名单校验，槽位外的键被忽略、非法取值 400 → `{parts}`。白名单：`skin(4) hairStyle(4) hairColor(4) top(5) chair(4) prop(4) glasses(2)` | `action:seats.status` |
+| POST | `/seats/bubble` | `{"text":"去借万用表"}` | 同一人 **60 秒**内只能发一条（429）；15 秒后服务端不再下发 | `action:seats.bubble` |
+| GET | `/seats/chat` | `?before=<消息号>` | 大厅分页，每页 30 条，返回**按时间正序** → `{messages:[{id,memberId,text,created}], hasMore}` | `page:seats` |
+| POST | `/seats/chat/send` | `{"text":"…","bubble":true}` | 大厅发言；`bubble` 为真时同时在自己座位冒气泡。**3 秒/条**、**20 条/分钟**（429）；发出即把本人已读游标推到自己这条 | `action:seats.chat` |
+| POST | `/seats/chat/read` | — | 未读游标推到当前时刻 → `{unread:0}` | `page:seats` |
+| POST | `/seats/chat/<cid>/delete` | — | 撤回大厅消息（软删除：`active=false`，保留审计） | `action:seats.manage` |
+| POST | `/seats/layout/save` | `{id,name,rows,cols,grid,labels,owners}` | 整份校验后原子替换：尺寸 3~40、每行长度、未知格子类型、座位号重复都返回 400。改小地图或把工位涂成家具时，站在上面的人退回自动分配 | `action:seats.manage` |
+
+### 3. 打卡签退（小人生灭的数据源）
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| POST | `/checkins/signout` | 置当天记录的 `signout_at`，**同时删除该成员的挪位记录**（下次打卡回到默认座位）→ `{id,signoutAt}`。当天未打卡 / 已签退 → 409 | `action:checkin.create` |
+
+打卡记录 `checkins[]` 新增两个字段：`signoutAt`（未签退为 `null`）、`onDuty`（= `signoutAt === null`）。
+
+### 4. 权限点（已并入 RBAC 矩阵「座位」分组）
+
+| 权限点 | 说明 | 默认授予 |
+|---|---|---|
+| `page:seats` | 座位图页入口 | member / teacher / manager |
+| `action:seats.move` | 移动自己的小人 | member / teacher / manager |
+| `action:seats.status` | 设置状态与形象 | member / teacher / manager |
+| `action:seats.bubble` | 冒气泡 | member / teacher / manager |
+| `action:seats.chat` | 在大厅发言 | member / teacher / manager |
+| `action:seats.manage` | 编辑实验室布局 + 撤回大厅消息 | teacher / manager |
+
+导航菜单 `seats`（「实验室座位」）由 `NavItem` 下发，`permission=page:seats`。
+
+### 5. 服务端必须保证的规则
+
+- 挪位只认 `request.user`，**绝不信任前端传的 memberId**；目标格必须「可站立（`.` / `w`）且无占用」。
+- 形象只存白名单部件键值，**不落任何 SVG/HTML 文本**；气泡、状态、大厅消息全部作为纯文本存储，由前端 `esc()` 渲染。
+- 大厅消息不进 `/workspace` 快照（否则每次快照随聊天量线性增长）。
+
+### 6. 前端刷新约定（座位页为什么不再「隔一会闪一下」）
+
+- 座位页**自己保持状态**：`seats.js` 每 15 秒打一次 `/seats/layout`（+ `/seats/chat`），拿到数据后先算签名
+  （布局 / 在席位置 / 状态 / 形象 / 气泡 / 消息 id 列表），**签名没变就一个 DOM 都不碰**；地图区与消息列表
+  分开做脏检查，别人只是说话时只重画消息列表，地图不重绘。
+- 页面上**没有「刷新」按钮**：状态是自动保持的，手动刷新只会让人以为要按一下才更新。
+- 全站那支 30 秒「状态签变了就重建 `#content`」的轮询（`features.js`）**跳过座位页**：否则整张地图
+  连同聊天列表会被整体重建一次，用户看到的就是「隔一会儿自动刷新一下」。离开座位页后第一拍仍会补一次全量刷新。

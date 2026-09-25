@@ -2,6 +2,7 @@ import re
 
 from django.contrib.auth import authenticate, get_user_model, login as dj_login, logout as dj_logout
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
@@ -18,11 +19,12 @@ PASSWORD_OK = re.compile(r'^(?=.*[A-Za-z])(?=.*\d).{8,64}$')
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 
-def _log(request, member, text, private=False):
+def _log(request, member, text, private=False, ref_type='', ref_id=''):
     """后端生成审计记录；不使用客户端自报的日志或身份。"""
     OperationLog.objects.create(
         actor=request.user if request.user.is_authenticated else None,
-        member=member, text=str(text)[:256], private=private)
+        member=member, text=str(text)[:256], private=private,
+        ref_type=str(ref_type)[:32], ref_id=str(ref_id)[:64])
 
 
 def _require_active(request):
@@ -51,10 +53,13 @@ def _client_info(request):
     return ip, str(request.META.get('HTTP_USER_AGENT', ''))[:256]
 
 
-def _record_login(user, success, ip, ua):
+def _record_login(user, success, ip, ua, username=''):
     from apps.accounts.models import LoginLog
     if user is not None and user.pk:
         LoginLog.objects.create(user=user, ip=ip, user_agent=ua, success=success)
+    elif not success and username:
+        # 未知用户名失败尝试也落审计（user 为空，账号名记入 username 字段）
+        LoginLog.objects.create(user=None, username=str(username)[:128], ip=ip, user_agent=ua, success=False)
 
 
 @api_view(['POST'])
@@ -64,9 +69,18 @@ def auth_login(request):
     username = str(d.get('username', '')).strip()
     password = str(d.get('password', ''))
     ip, ua = _client_info(request)
+    # 登录节流：15 分钟内同 IP 或同账号失败 ≥10 次则临时拒绝（防爆破）
+    from datetime import timedelta
+    from apps.accounts.models import LoginLog
+    cutoff = timezone.now() - timedelta(minutes=15)
+    if ip and LoginLog.objects.filter(ip=ip, success=False, at__gte=cutoff).count() >= 10:
+        return fail('尝试过于频繁，请 15 分钟后再试', 429)
+    if (LoginLog.objects.filter(username__iexact=username, success=False, at__gte=cutoff).count()
+            + LoginLog.objects.filter(user__username__iexact=username, success=False, at__gte=cutoff).count()) >= 10:
+        return fail('该账号尝试过于频繁，请 15 分钟后再试', 429)
     user = authenticate(request, username=username, password=password)
     if user is None:
-        _record_login(get_user_model().objects.filter(username__iexact=username).first(), False, ip, ua)
+        _record_login(get_user_model().objects.filter(username__iexact=username).first(), False, ip, ua, username=username)
         return fail('账号或密码不正确', 401)
     prof = getattr(user, 'member_profile', None)
     if prof is None:
@@ -159,7 +173,7 @@ def members_create(request):
     prof = MemberProfile.objects.create(
         user=user, name=name, number=number, role=role,
         group=group, direction=direction, contact=contact, email=email,
-        must_complete_profile=True)
+        must_complete_profile=True, must_change_password=True)  # 创建账号即强制首登改密
     _log(request, prof, f'创建成员账号 · {name}')
     from apps.notify.service import create_many, active_members
     create_many(active_members(exclude=request.user), 'member_joined',
@@ -340,8 +354,8 @@ def login_logs(request):
     me, e = _require_active(request)
     if e:
         return e
-    if not is_staff(request.user):
-        return fail('仅管理角色可查看登录日志', 403)
+    if (err := require(request.user, 'page:loginlogs', '仅可查看登录日志的管理角色可见')):
+        return err
     from apps.accounts.models import LoginLog
     qs = LoginLog.objects.select_related('user').order_by('-at')[:200]
     out = []
@@ -349,8 +363,9 @@ def login_logs(request):
         prof = getattr(lg.user, 'member_profile', None)
         out.append({
             'id': lg.pk,
-            'memberId': member_id(lg.user_id) if prof else '',
-            'name': prof.name if prof else lg.user.username,
+            'memberId': member_id(lg.user_id) if lg.user_id else '',
+            # 未知用户名尝试：user 为空，回退展示尝试账号名
+            'name': prof.name if prof else (lg.user.username if lg.user_id else lg.username or '未知账号'),
             'ip': lg.ip or '',
             'ua': lg.user_agent,
             'success': lg.success,
@@ -362,7 +377,7 @@ def login_logs(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def export_csv(request, kind):
-    """数据导出 CSV：members/loans/tasks/checkins/logs。仅管理角色。"""
+    """数据导出 CSV：members/loans/assets/maintenance/points/loginlogs/tasks/checkins/logs。仅管理角色。"""
     me, e = _require_active(request)
     if e:
         return e
@@ -371,41 +386,69 @@ def export_csv(request, kind):
     import csv
     from django.http import HttpResponse
     from django.utils import timezone
-    from apps.inventory.models import Loan
+    from apps.inventory.models import Asset, Loan, Maintenance
     from apps.tasksapp.models import Task
     from apps.checkins.models import CheckInRecord
     from apps.accounts.models import LoginLog
+    from apps.points.models import PointRecord
 
     resp = HttpResponse(content_type='text/csv; charset=utf-8')
     resp['Content-Disposition'] = f'attachment; filename="{kind}_{timezone.now():%Y%m%d_%H%M}.csv"'
     w = csv.writer(resp)
 
+    # 批量预取 user→显示名映射，避免导出循环内逐行查询（N+1）
+    name_map = {}
+    for mp in MemberProfile.objects.select_related('user').only('user_id', 'name').iterator():
+        name_map[mp.user_id] = mp.name
+    for u in User.objects.filter(member_profile__isnull=True).only('pk', 'username').iterator():
+        name_map[u.pk] = u.username
+
     def member_name(uid):
-        u = User.objects.filter(pk=uid).first()
-        return getattr(getattr(u, 'member_profile', None), 'name', u.username if u else '')
+        return name_map.get(uid, '')
 
     if kind == 'members':
         w.writerow(['姓名', '学号/工号', '角色', '小组', '邮箱', '联系方式', '状态', '加入时间'])
-        for mp in MemberProfile.objects.select_related('user').all():
+        for mp in MemberProfile.objects.select_related('user').iterator():
             w.writerow([mp.name, mp.number, mp.role, mp.group, mp.email, mp.contact,
                         '在籍' if mp.active else '停用', mp.joined])
     elif kind == 'loans':
-        w.writerow(['借用单号', '借用人', '模块', '用途', '状态', '借出时间', '应还时间', '归还时间'])
-        for l in Loan.objects.prefetch_related('items').all():
+        w.writerow(['借用单号', '借用人', '模块', '损坏模块', '用途', '状态', '借出时间', '应还时间', '归还时间', '验收备注'])
+        for l in Loan.objects.prefetch_related('items').iterator():
             w.writerow([l.id, member_name(l.member_id),
                         ' / '.join(l.items.values_list('asset_id', flat=True)),
-                        l.purpose, l.status, l.issued, l.due, l.received])
+                        ' / '.join(i.asset_id for i in l.items.all() if i.damaged),
+                        l.purpose, l.status, l.issued, l.due, l.received, l.note])
+    elif kind == 'assets':
+        w.writerow(['资产编号', '名称', '型号', '类别', '供应商', '位置', '状态', '备注', '创建时间'])
+        for a in Asset.objects.all().iterator():
+            w.writerow([a.id, a.name, a.model, a.category, a.vendor, a.location, a.status, a.note, a.created])
+    elif kind == 'maintenance':
+        w.writerow(['维修单号', '资产编号', '问题描述', '状态', '登记人', '登记时间'])
+        for m in Maintenance.objects.select_related('actor').all().iterator():
+            prof = getattr(m.actor, 'member_profile', None)
+            w.writerow([m.id, m.asset_id, m.description, m.status,
+                        prof.name if prof else (m.actor.username if m.actor else ''), m.created])
+    elif kind == 'points':
+        w.writerow(['成员', '规则', '分值', '说明', '时间'])
+        for pr in PointRecord.objects.select_related('user').order_by('-created')[:2000].iterator():
+            w.writerow([member_name(pr.user_id), pr.rule_key, pr.points, pr.reason, pr.created])
+    elif kind == 'loginlogs':
+        w.writerow(['账号/成员', '结果', 'IP', '设备', '时间'])
+        for lg in LoginLog.objects.select_related('user').order_by('-at')[:2000].iterator():
+            prof = getattr(lg.user, 'member_profile', None)
+            w.writerow([prof.name if prof else (lg.user.username if lg.user_id else lg.username or '未知账号'),
+                        '成功' if lg.success else '失败', lg.ip or '', lg.user_agent, lg.at])
     elif kind == 'tasks':
         w.writerow(['任务编号', '标题', '状态', '优先级', '负责人', '截止时间', '创建时间'])
-        for t in Task.objects.all():
+        for t in Task.objects.iterator():
             w.writerow([t.id, t.title, t.status, t.priority, member_name(t.assignee_id), t.due, t.created])
     elif kind == 'checkins':
         w.writerow(['姓名', '打卡时间', '纬度', '经度'])
-        for c in CheckInRecord.objects.select_related('user').all():
+        for c in CheckInRecord.objects.select_related('user').iterator():
             w.writerow([member_name(c.user_id), c.created, c.latitude, c.longitude])
     elif kind == 'logs':
         w.writerow(['操作人', '对象', '内容', '时间'])
-        for lg in OperationLog.objects.select_related('actor', 'member').order_by('-at')[:1000]:
+        for lg in OperationLog.objects.select_related('actor', 'member').order_by('-at')[:1000].iterator():
             w.writerow([lg.actor.username if lg.actor else '', lg.member.name if lg.member else '', lg.text, lg.at])
     else:
         return fail('不支持的导出类型', 404)
@@ -432,7 +475,8 @@ def members_active(request, mid):
         return fail('不能停用/启用自己的账号')
 
     d = request.data or {}
-    active = bool(d.get('active'))
+    # 表单/JSON 编码兼容：仅 '1'/'true'/'True' 视为启用
+    active = str(d.get('active')).lower() in ('1', 'true')
     if target.role != 'member' and me.role != 'teacher':
         return fail('负责人只能停用/启用普通成员', 403)
 
@@ -443,6 +487,10 @@ def members_active(request, mid):
             return fail('该成员尚有未完成借用，不能停用', 409)
         if has_pending_leave(target):
             return fail('该成员有待审批请假，请先处理', 409)
+        from apps.tasksapp.models import Task
+        if Task.objects.filter(assignee_id=target.user_id,
+                               status__in=(Task.STATUS_TODO, Task.STATUS_DOING)).exists():
+            return fail('该成员有未完成的任务，请先移交任务负责人', 409)
 
     target.active = active
     target.save()
@@ -490,7 +538,7 @@ def permissions_meta(request):
             'code': r.code, 'name': r.name,
             'builtin': r.builtin, 'superadmin': r.superadmin,
             # superadmin 角色不落权限数组，返回全量示意
-            'permissions': sorted(r.permissions) if r.superadmin else sorted(r.permissions),
+            'permissions': sorted(r.permissions),
         })
 
     return ok({

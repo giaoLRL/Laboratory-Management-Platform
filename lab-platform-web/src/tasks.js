@@ -278,6 +278,18 @@ function taskMediaWall(task, editable) {
   return `<section class="panel media-wall"><div class="panel-head"><div><h2>媒体墙</h2><p>${videos.length} 个视频 · ${images.length} 张图片${other.length ? ` · ${other.length} 个文件` : ''}，视频直接播放、图片点击放大</p></div>${uploadBtn}</div><div class="media-scroll">${videoHtml ? `<div class="media-videos">${videoHtml}</div>` : ''}${imgHtml ? `<div class="media-imgs">${imgHtml}</div>` : ''}${otherHtml ? `<div class="media-others">${otherHtml}</div>` : ''}</div></section>`;
 }
 
+// 任务示例图/示例视频（发布者提供）：展示与上传
+function taskMediaGallery(task, editable) {
+  const media = task.media || [];
+  const imgs = media.filter(_isImage);
+  const vids = media.filter(_isVideo);
+  if (!media.length && !editable) return '';
+  const upload = editable ? btn(`${icon('plus')} 上传示例`, 'task-image', '', `data-id="${esc(task.id)}"`) : '';
+  const thumbs = imgs.map((m) => `<button class="media-img" data-action="task-lightbox" data-url="${esc(_mediaUrl(m))}" title="${esc(m.name)}" style="background-image:url('${esc(_mediaUrl(m))}')"></button>`).join('');
+  const vh = vids.map((m) => `<div class="media-video"><video src="${esc(_mediaUrl(m))}" controls preload="metadata" playsinline style="height:96px"></video></div>`).join('');
+  return `<section class="panel task-media-gallery"><div class="panel-head"><div><h2>任务示例</h2><p>任务示意图 / 发布者提供的示例（点击放大）</p></div>${upload}</div><div class="media-scroll">${thumbs || ''}${vh || '<div class="empty small">${icon}暂无示例，可上传示意图帮助理解任务</div>'.replace('${icon}', icon('image'))}</div></section>`;
+}
+
 function taskLightbox(url) {
   const u = (url || '').startsWith('/') ? url : '/' + url;
   modal('媒体预览', `<div class="lightbox"><img src="${esc(u)}" alt="任务媒体"></div>`, '', null, '');
@@ -331,7 +343,7 @@ function taskDetailPage(tid) {
   const notePanel = `<section class="panel"><div class="panel-head"><div><h2>完成总结</h2><p>完成情况、成果与遗留问题</p></div>${editable ? btn(task.completionNote ? '编辑' : '填写总结', 'task-note', '', `data-id="${esc(task.id)}"`) : ''}</div><div class="panel-body">${task.completionNote ? `<p class="note-text">${esc(task.completionNote).replace(/\n/g, '<br>')}</p>` : `<p class="muted small">${task.status === 'done' ? '已完成，可填写总结归档。' : '尚未填写，任务完成后补充。'}</p>`}</div></section>`;
   const logPanel = `<section class="panel"><div class="panel-head"><div><h2>操作时间线</h2><p>与此任务相关的最新动态</p></div></div><div class="panel-body"><div class="full-log">${logs.map((l) => `<div class="activity-item"><strong>${esc(l.actor || '系统')}</strong> · ${esc(l.text)}<small>${fmt(l.at, true)}</small></div>`).join('') || `<p class="muted small">暂无操作记录</p>`}</div></div></section>`;
   const infoPanel = () => `<section class="panel"><div class="panel-head"><div><h2>基本信息</h2><p>任务关键字段一览</p></div></div><div class="panel-body">${info}</div></section>`;
-  return `<div class="page-fit task-detail-page">${head}<section class="panel task-detail-head"><div class="row" style="gap:10px;flex-wrap:wrap">${badge(taskStatusLabel(task.status))}${badge(taskPriorityLabel(task.priority))}${score ? `<span class="score-chip">${score}</span>` : ''}${scoreArea}</div><h1 style="font-size:22px;margin:12px 0 6px">${esc(task.title)}</h1><p class="muted small">${due.ok ? '' : `<b style="color:#d28370">`}${due.text}${due.ok ? '' : '</b>'}</p>${task.description ? `<p class="task-desc">${esc(task.description).replace(/\n/g, '<br>')}</p>` : ''}<div class="task-detail-actions">${actions}</div></section>${taskMediaWall(task, editable)}${uiTab('task-detail', [
+  return `<div class="page-fit task-detail-page">${head}<section class="panel task-detail-head"><div class="row" style="gap:10px;flex-wrap:wrap">${badge(taskStatusLabel(task.status))}${badge(taskPriorityLabel(task.priority))}${score ? `<span class="score-chip">${score}</span>` : ''}${scoreArea}</div><h1 style="font-size:22px;margin:12px 0 6px">${esc(task.title)}</h1><p class="muted small">${due.ok ? '' : `<b style="color:#d28370">`}${due.text}${due.ok ? '' : '</b>'}</p>${task.description ? `<p class="task-desc">${esc(task.description).replace(/\n/g, '<br>')}</p>` : ''}<div class="task-detail-actions">${actions}</div></section>${taskMediaGallery(task, editable)}${taskMediaWall(task, editable)}${uiTab('task-detail', [
     ['info', '基本信息', infoPanel],
     ['sub', '提交与审核', () => subPanel],
     ['note', '完成总结', () => notePanel],
@@ -625,14 +637,11 @@ function taskDeleteConfirm(id) {
   confirmation(
     '删除任务',
     `确认删除「${t.title}」？此操作不可恢复。`,
-    '',
+    `/tasks/${id}/delete`,
     {},
-    async () => {
-      await API.request(`/tasks/${id}/delete`, { method: 'POST', body: JSON.stringify({}) });
+    () => {
       audit(`删除任务 ${t.id} ${t.title.slice(0, 20)}`);
-      await API.load();
       _taskDetailCache = null;
-      render();
     },
   );
 }
@@ -666,6 +675,27 @@ const TASK_ACTIONS = {
   'task-lightbox': taskLightbox,
   'task-note': taskNoteForm,
   'task-attachment': taskAttachmentForm,
+  'task-image': (tid) => {
+    modal(
+      '上传任务示例',
+      `<div class="notice">上传任务示意图或示例视频（图片/视频，≤50MB），用于帮助学生理解任务。</div><div class="field" style="margin-top:14px"><label>选择文件 *</label><input type="file" name="file" id="task-image-file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,image/*,video/*"></div>`,
+      '上传',
+      async (f) => {
+        const file = f.get('file') || document.querySelector('#task-image-file')?.files?.[0];
+        requirePermission(file && file.name, '请选择文件');
+        requirePermission(file.size <= 50 * 1024 * 1024, '文件不能超过 50MB');
+        const fd = new FormData();
+        fd.append('file', file);
+        await API.request(`/tasks/${tid}/image`, { method: 'POST', body: fd });
+        audit(`上传任务示例 · ${file.name}`);
+        await API.load();
+        _taskDetailCache = null;
+        document.querySelector('#modal')?.close();
+        render();
+        toast('示例已上传');
+      },
+    );
+  },
   'task-score': (payload) => {
     const [tid, score] = String(payload).split(':');
     scoreTask(tid, Number(score));

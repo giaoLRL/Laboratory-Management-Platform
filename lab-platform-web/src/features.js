@@ -219,7 +219,7 @@ function leavesPage() {
       [esc(l.reason), ' style="max-width:190px;overflow:hidden;text-overflow:ellipsis"'],
       `${badge(l.status)}${l.status === '已通过' && Date.parse(l.start) <= Date.now() && Date.parse(l.end) >= Date.now() ? '<small style="color:#d29740">当前生效中</small>' : ''}`,
       l.reviewer ? esc(member(l.reviewer)?.name) : '—',
-      `${recordButton('详情', 'leave-detail', l.id)}${l.status === '待审批' && canReview(l) ? recordButton('审批', 'leave-review', l.id) : ''}${l.status === '待审批' && l.memberId === me().id ? recordButton('撤销', 'leave-cancel', l.id) : ''}`,
+      `${recordButton('详情', 'leave-detail', l.id)}${l.status === '待审批' && canReview(l) ? recordButton('审批', 'leave-review', l.id) : ''}${l.status === '待审批' && l.memberId === me().id ? recordButton('撤销', 'leave-cancel', l.id) : ''}${l.status === '已通过' && l.memberId === me().id && Date.parse(l.end) > Date.now() ? recordButton('销假到岗', 'leave-revert', l.id) : ''}`,
     ],
     ['暂无请假记录', '你的请假申请会显示在这里。'],
   )}</section><p class="privacy-note">请假原因和审批意见仅对本人及有审批权限的管理人员可见。成员列表只公开请假状态和生效时间。</p></div>`;
@@ -247,7 +247,7 @@ function profilePage() {
           u.id,
         )}</select></div><div style="margin-top:18px">${btn(`${icon('refresh')} 恢复演示数据`, 'reset', 'danger')}</div><p class="privacy-note">恢复操作会覆盖本浏览器里的演示修改。初始测试账号密码：Lab@123456。新账号使用创建时设置的密码。</p>`
       : ''
-  }</div></section></div></div>${typeof tokensPanel === 'function' ? tokensPanel() : ''}</div>`;
+  }</div></section>${can('action:export.csv') ? `<section class="panel"><div class="panel-head"><div><h2>数据导出</h2><p>期末汇报 / 审计用 CSV 台账</p></div></div><div class="export-grid">${['members', 'assets', 'loans', 'tasks', 'checkins', 'points', 'maintenance', 'loginlogs', 'logs'].map((k) => `<button class="btn outline small" data-action="export-${k}">${({ members: '成员', assets: '资产台账', loans: '借用', tasks: '任务', checkins: '打卡', points: '积分流水', maintenance: '维修', loginlogs: '登录日志', logs: '操作日志' })[k]}</button>`).join('')}</div></section>` : ''}</div></div>${typeof tokensPanel === 'function' ? tokensPanel() : ''}</div>`;
 }
 
 function memberForm(id, self = false) {
@@ -390,7 +390,7 @@ function assetForm(id) {
   const a = id ? asset(id) : null;
   modal(
     a ? '编辑模块' : '录入模块',
-    `<div class="form-grid">${field('资产编号 *', 'id', a?.id || `EM-${String(db.assets.length + 1).padStart(3, '0')}`, 'text', `required pattern="[A-Za-z0-9_-]{2,40}" title="2–40 位字母、数字、横线或下划线" ${a ? 'readonly' : ''}`)}${fields(a, { name: ['模块名称 *', 60], model: ['型号 *', 70] })}${field('分类 *', 'category', a?.category || '开发板', 'text', 'list="categories" maxlength="30"')}<datalist id="categories">${CATEGORIES.map((c) => `<option value="${c}">`).join('')}</datalist>${fields(a, { vendor: ['厂商', 60], location: ['存放位置 *', 60], spec: ['关键规格', 100], datasheet: ['数据手册链接', 'url', 'placeholder="https://…"'] })}${area('备注', 'note', a?.note || '', 300)}</div>${a ? '<p class="privacy-note">使用状态由借用流程自动管理。报废前必须完成归还，历史记录会保留。</p>' : ''}`,
+    `<div class="form-grid">${field('资产编号 *', 'id', a?.id || `EM-${String(db.assets.length + 1).padStart(3, '0')}`, 'text', `required pattern="[A-Za-z0-9_\\-]{2,40}" title="2–40 位字母、数字、横线或下划线" ${a ? 'readonly' : ''}`)}${fields(a, { name: ['模块名称 *', 60], model: ['型号 *', 70] })}${field('分类 *', 'category', a?.category || '开发板', 'text', 'list="categories" maxlength="30"')}<datalist id="categories">${CATEGORIES.map((c) => `<option value="${c}">`).join('')}</datalist>${fields(a, { vendor: ['厂商', 60], location: ['存放位置 *', 60], spec: ['关键规格', 100], datasheet: ['数据手册链接', 'url', 'placeholder="https://…"'] })}${area('备注', 'note', a?.note || '', 300)}</div>${a ? '<p class="privacy-note">使用状态由借用流程自动管理。报废前必须完成归还，历史记录会保留。</p>' : ''}`,
     '保存模块',
     async (f) => {
       const data = cleanFields(Object.fromEntries(f));
@@ -566,9 +566,10 @@ function returnForm(id) {
   ensureState(l, ['待确认归还']);
   modal(
     '验收归还模块',
-    `<div class="notice">确认收到全部实物后再提交。勾选损坏的模块，将自动转入维修中；未勾选的模块恢复空闲。</div><div class="field"><label>损坏模块（完好无需勾选）</label><div class="asset-picker">${l.assetIds.map((id) => `<label class="asset-option"><input type="checkbox" name="damagedIds" value="${id}"><span>${esc(asset(id).name)}<small>${esc(id)}</small></span></label>`).join('')}</div></div><div style="margin-top:18px">${area('验收备注', 'note', '', 'maxlength="200" placeholder="存在损坏时请描述问题"')}</div>`,
+    `<div class="notice">确认收到全部实物后再提交。勾选损坏的模块，将自动转入维修中；未勾选的模块恢复空闲。</div><div class="field"><label>损坏模块（完好无需勾选）</label><div class="asset-picker">${l.assetIds.map((id) => `<label class="asset-option"><input type="checkbox" name="damagedIds" value="${id}"><span>${esc(asset(id).name)}<small>${esc(id)}</small></span></label>`).join('')}</div></div><div style="margin-top:18px">${area('验收备注', 'note', '', 'maxlength="200" placeholder="存在损坏时请描述问题"')}</div><div style="margin-top:16px"><label class="check-label" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="receive-confirm" required style="width:auto">已当面清点全部模块并确认状态无误</label></div>`,
     '确认已收到实物',
     (f) => {
+      requirePermission(f.get('receive-confirm') || document.querySelector('#receive-confirm')?.checked, '请先当面清点并勾选确认');
       const data = { damagedIds: f.getAll('damagedIds'), note: f.get('note').trim() };
       requirePermission(!data.damagedIds.length || data.note, '请填写损坏情况');
       return save(`/loans/${id}/receive`, data, () => transitionLoan(id, 'receive', data), '归还已确认，库存已同步更新');
@@ -662,6 +663,8 @@ const FORM_ACTIONS = {
   'competition-edit': competitionForm,
   'competition-detail': competitionDetail,
   ...(window.TASK_ACTIONS || {}),
+  ...(window.LEVELS_ACTIONS || {}),
+  ...(window.SEATS_ACTIONS || {}),
   ...(window.CHECKIN_ACTIONS || {}),
   ...(window.AGENT_ACTIONS || {}),
   ...(window.PERMISSION_ACTIONS || {}),
@@ -671,6 +674,7 @@ const FORM_ACTIONS = {
   ...(window.EMAIL_ACTIONS || {}),
   ...(window.NOTIFY_ACTIONS || {}),
   ...(window.NEWS_ACTIONS || {}),
+  ...(window.HOMEPAGE_ACTIONS || {}),
 };
 // 登录页机甲骑士：每次点击换下一个词，由 CSS 的 .slashing 播放一次挥刀斩字。
 const MECHA_WORDS = ['困难', '懒惰', '命运', '他者', '过去', '压力'];
@@ -763,6 +767,21 @@ async function handleAction(type, b) {
     return;
   }
   if (['loan-cancel', 'loan-issue', 'loan-return', 'leave-cancel'].includes(type)) return confirmRequest(type, id);
+  if (type === 'leave-revert') {
+    // 销假/到岗登记：仅本人已批准且未结束的请假
+    const l = db.leaves.find((x) => x.id === id);
+    requirePermission(l && l.memberId === me().id && l.status === '已通过', '该请假不能销假');
+    return confirmation(
+      '销假到岗',
+      `确认已回到实验室到岗销假「${l.id}」？销假后该时段不再计为请假。`,
+      `/leaves/${id}/revert`,
+      {},
+      () => {
+        l.status = '已销假';
+        audit(`到岗销假 · ${l.id}`, l.memberId);
+      },
+    );
+  }
   if (type === 'member-toggle') {
     const m = member(id);
     requirePermission(editableMember(m) && m.id !== me().id);
@@ -909,6 +928,12 @@ async function syncOtherTab(e) {
 window.addEventListener('storage', syncOtherTab);
 let lastStatusSignature = '';
 setInterval(() => {
+  // 后台标签页不轮询，避免无谓请求与打断
+  if (document.hidden) return;
+  // 座位页自己按座位状态做细粒度刷新（seats.js 的 seatSyncTargets，没变化时一个 DOM 都不碰）。
+  // 这里一旦重建 #content，整张地图连同聊天列表会被整体重建一次 —— 用户看到的就是
+  // 「隔一会儿自动刷新一下」。故意不更新 lastStatusSignature：离开座位页后第一拍仍会补一次全量刷新。
+  if (view === 'seats') return;
   if (!me() || document.querySelector('#modal').open || document.activeElement?.matches('input,select,textarea')) return;
   const signature =
     db.members.map((m) => memberStatus(m)).join('|') +
@@ -916,7 +941,13 @@ setInterval(() => {
     db.competitions.map((c) => competitionStatus(c)).join('|');
   if (signature !== lastStatusSignature) {
     lastStatusSignature = signature;
-    render();
+    // 只重建内容区（保留侧边栏/顶栏），不打断用户阅读与滚动
+    API.load()
+      .then(() => {
+        const content = document.querySelector('#content');
+        if (content) content.innerHTML = renderView();
+      })
+      .catch(() => {});
   }
 }, 30000);
 // 支持 WebMCP 的浏览器可读取当前可见库存；不支持时不影响页面功能。

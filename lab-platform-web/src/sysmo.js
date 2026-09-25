@@ -2,6 +2,9 @@
 // 系统管理模块：公告、小组管理、登录日志、密码与数据导出。
 // 页面按左侧菜单分类接入权限矩阵（page:/action: 权限点见 rbac_defs）。
 
+// 令牌明文只在创建弹窗内存在（复制后置空），不暴露为全局属性，防止被同源脚本窃取。
+let _lastToken = '', _lastAi = '';
+
 /* ───────────────── 修改密码 ───────────────── */
 
 function changePasswordModal(force = false) {
@@ -10,12 +13,28 @@ function changePasswordModal(force = false) {
     `<div class="form-grid">${field('旧密码 *', 'oldPassword', '', 'password', 'autocomplete="current-password"')}${field('新密码 *', 'newPassword', '', 'password', 'autocomplete="new-password" placeholder="8-64 位，含字母和数字"')}${field('确认新密码 *', 'confirmPassword', '', 'password', 'autocomplete="new-password"')}</div>${force ? '<p class="privacy-note">管理员已重置你的密码，首次登录后必须修改。</p>' : ''}`,
     '确认修改',
     async (f) => {
+      const oldP = f.get('oldPassword'), newP = f.get('newPassword'), cf = f.get('confirmPassword');
+      if (CONFIG.mode === 'mock') {
+        // mock 演示：本地校验与更新密码（db.credentials），不请求后端
+        const m = me();
+        const cred = db.credentials?.[m.id];
+        const oldOk = cred ? await verifyCredential(oldP, cred) : oldP === 'Lab@123456';
+        requirePermission(oldOk, '旧密码不正确');
+        requirePermission(newP === cf, '两次输入的新密码不一致');
+        validatePassword(newP, cf);
+        db.credentials = { ...(db.credentials || {}), [m.id]: await makeCredential(newP) };
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        toast('密码已修改');
+        document.querySelector('#modal')?.close();
+        render();
+        return;
+      }
       await API.request('/members/me/password', {
         method: 'POST',
         body: JSON.stringify({
-          oldPassword: f.get('oldPassword'),
-          newPassword: f.get('newPassword'),
-          confirmPassword: f.get('confirmPassword'),
+          oldPassword: oldP,
+          newPassword: newP,
+          confirmPassword: cf,
         }),
       });
       toast('密码已修改');
@@ -199,7 +218,13 @@ async function groupDelete(id) {
 let _loginLogsCache = null;
 async function ensureLoginLogs() {
   if (_loginLogsCache) return;
-  _loginLogsCache = await API.request('/login-logs');
+  try {
+    _loginLogsCache = await API.request('/login-logs');
+  } catch (e) {
+    // 加载失败给出空态而非永久"加载中…"
+    _loginLogsCache = [];
+    toast(e.message, true);
+  }
 }
 function loginLogsPage() {
   if (!_loginLogsCache) {
@@ -255,7 +280,7 @@ window.SYS_ACTIONS = {
   'announcement-edit': announcementForm,
   'announcement-toggle': announcementToggle,
   'announcement-read': markAnnouncementRead,
-  'announcement-refresh': () => { API.load(); render(); },
+  'announcement-refresh': async () => { await API.load(); render(); },
   'group-new': () => groupForm(),
   'group-edit': groupForm,
   'group-delete': groupDelete,
@@ -265,7 +290,7 @@ window.SYS_ACTIONS = {
   'token-revoke': tokenRevoke,
   'token-copy': tokenCopy,
   'token-copy-ai': tokenCopyAi,
-  ...Object.fromEntries(['members', 'loans', 'tasks', 'checkins', 'logs'].map((k) => [`export-${k}`, () => exportCsv(k, k)])),
+  ...Object.fromEntries(['members', 'loans', 'assets', 'maintenance', 'points', 'loginlogs', 'tasks', 'checkins', 'logs'].map((k) => [`export-${k}`, () => exportCsv(k, k)])),
 };
 
 /* ───────────────── API 令牌（个人中心） ───────────────── */
@@ -300,12 +325,25 @@ function tokenNew() {
     async (f) => {
       const scopes = f.getAll('scope');
       requirePermission(scopes.length, '请至少选择一个授权范围');
-      const resp = await API.request('/tokens/create', { method: 'POST', body: JSON.stringify({ name: f.get('name').trim(), scopes }) });
+      let resp;
+      if (CONFIG.mode === 'mock') {
+        // mock 演示：本地生成令牌与 AI 指令，不请求后端
+        resp = {
+          token: 'lab_' + 'demo' + Math.random().toString(36).slice(2, 14),
+          expiresAt: new Date(Date.now() + 90 * 86400000).toISOString(),
+          aiInstruction: ['你是「具身智能实验室」管理平台的只读数据助手。', '这是一条演示用的 API 令牌（mock 模式，不能访问真实数据）。', '认证方式：请求头携带  Authorization: Bearer <令牌>', '', '可用接口（按授权范围）：', ...scopes.map((s) => `- GET https://wuyuan.me/api/openapi/${s.replace('read:', '')}  →  对应只读数据`)].join('\n'),
+        };
+        const list = _tokenCache || [];
+        list.unshift({ id: 'T' + Date.now(), name: f.get('name').trim(), scopes, active: true, expiresAt: resp.expiresAt });
+        _tokenCache = list;
+      } else {
+        resp = await API.request('/tokens/create', { method: 'POST', body: JSON.stringify({ name: f.get('name').trim(), scopes }) });
+      }
       _tokenCache = null;
       document.querySelector('#modal').innerHTML =
         `<div class="modal-header"><h2>令牌已创建</h2><button type="button" class="icon-btn" data-action="modal-close" aria-label="关闭">${icon('close')}</button></div><div class="modal-body"><div class="notice">令牌明文仅展示这一次，关闭后无法再次查看。AI 指令已内置令牌，直接粘贴给 AI 即可查询实验室数据。</div><p class="small muted" style="margin-top:14px">给 AI 的指令（已内置令牌）</p><div class="token-reveal mono" style="white-space:pre-wrap;line-height:1.7;max-height:230px;overflow:auto">${esc(resp.aiInstruction || '')}</div><p class="small muted" style="margin-top:14px">令牌明文</p><div class="token-reveal mono">${esc(resp.token)}</div><div class="controls-wrap">${btn('复制 AI 指令', 'token-copy-ai')}${btn('仅复制令牌', 'token-copy')}${btn('关闭', 'modal-close', 'primary')}</div></div>`;
-      window._lastToken = resp.token;
-      window._lastAi = resp.aiInstruction || '';
+      _lastToken = resp.token;
+      _lastAi = resp.aiInstruction || '';
       await API.load();
       render();
     },
@@ -327,9 +365,12 @@ function tokenRevoke(id) {
 }
 
 function tokenCopy() {
-  const text = window._lastToken || '';
-  const done = () => toast(text ? '已复制到剪贴板' : '没有可复制的令牌');
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => done());
+  const text = _lastToken || '';
+  const done = (ok) => {
+    if (ok) _lastToken = ''; // 复制成功即销毁内存中的明文
+    toast(ok ? '已复制到剪贴板' : '没有可复制的令牌');
+  };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(() => done(true)).catch(() => done(false));
   else {
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -337,14 +378,17 @@ function tokenCopy() {
     ta.select();
     document.execCommand('copy');
     ta.remove();
-    done();
+    done(true);
   }
 }
 
 function tokenCopyAi() {
-  const text = window._lastAi || '';
-  const done = () => toast(text ? '已复制 AI 指令' : '没有可复制的指令');
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => done());
+  const text = _lastAi || '';
+  const done = (ok) => {
+    if (ok) _lastAi = '';
+    toast(ok ? '已复制 AI 指令' : '没有可复制的指令');
+  };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(() => done(true)).catch(() => done(false));
   else {
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -352,6 +396,6 @@ function tokenCopyAi() {
     ta.select();
     document.execCommand('copy');
     ta.remove();
-    done();
+    done(true);
   }
 }

@@ -10,8 +10,8 @@ from apps.notify.models import Announcement, AnnouncementRead
 MAX_CONTENT = 20000
 
 
-def _announcement_dict(a, viewer_id=None):
-    read = bool(viewer_id and AnnouncementRead.objects.filter(announcement=a, user_id=viewer_id).exists())
+def _announcement_dict(a, viewer_id=None, read_ids=None):
+    read = bool(viewer_id and a.pk in (read_ids or set()))
     return {
         'id': a.id,
         'title': a.title,
@@ -30,12 +30,14 @@ def workspace_slice(profile, staff):
     """当前用户可见公告 + 未读数 + 最近通知/未读数。"""
     from apps.notify.models import visible_announcements, Notification
     items = visible_announcements(profile, staff)
-    unread = sum(1 for a in items if not AnnouncementRead.objects.filter(announcement=a, user=profile.user).exists())
+    read_ids = set(AnnouncementRead.objects.filter(
+        announcement__in=items[:50], user_id=profile.user_id).values_list('announcement_id', flat=True))
+    unread = sum(1 for a in items if a.pk not in read_ids)
     recent = Notification.objects.filter(recipient=profile.user)[:10]
     unread_n = Notification.objects.filter(recipient=profile.user, read=False).count()
     ts = [a.updated for a in items[:50]] + [n.created for n in recent]
     return {
-        'announcements': [_announcement_dict(a, profile.user_id) for a in items[:50]],
+        'announcements': [_announcement_dict(a, profile.user_id, read_ids) for a in items[:50]],
         'unread_announcements': unread,
         'notifications': [_notification_dict(n) for n in recent],
         'unread_notifications': unread_n,
@@ -47,8 +49,9 @@ def workspace_slice(profile, staff):
 @permission_classes([IsAuthenticated])
 def announcements_list(request):
     from apps.accounts.models import MemberProfile
+    from apps.common.rbac import can_manage
     profile = MemberProfile.objects.filter(user=request.user).first()
-    staff = profile.role in ('teacher', 'manager') if profile else False
+    staff = can_manage(request.user) if profile else False
     slice_data = workspace_slice(profile, staff)
     return ok({'announcements': slice_data['announcements'], 'unread': slice_data['unread_announcements']})
 

@@ -64,6 +64,7 @@ class MemberProfile(models.Model):
     must_change_password = models.BooleanField('强制改密', default=False)
     must_complete_profile = models.BooleanField('首次登录需完善资料', default=False)
     base_status = models.CharField('工作状态', max_length=16, choices=BASE_STATUS_CHOICES, default=STATUS_FREE)
+    level_exp = models.PositiveIntegerField('通关经验值 EXP', default=0)
     note = models.CharField('备注', max_length=256, blank=True, default='')
     joined = models.DateTimeField('加入时间', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
@@ -91,18 +92,27 @@ class OperationLog(models.Model):
     text = models.CharField('内容', max_length=256)
     at = models.DateTimeField('时间', auto_now_add=True)
     private = models.BooleanField('仅管理可见', default=False)
+    # 结构化关联：可回答"某对象（任务/借用/请假/资产…）的全部变更历史"，替代 text 模糊匹配
+    ref_type = models.CharField('对象类型', max_length=32, blank=True, default='')
+    ref_id = models.CharField('对象编号', max_length=64, blank=True, default='')
 
     class Meta:
         ordering = ['-at']
+        indexes = [models.Index(fields=['ref_type', 'ref_id'], name='idx_oplog_ref')]
 
     def __str__(self):
         return self.text
 
 
 class LoginLog(models.Model):
-    """登录日志：记录每次登录尝试的 IP / UA / 结果，用于安全审计与异常告警。"""
+    """登录日志：记录每次登录尝试的 IP / UA / 结果，用于安全审计与异常告警。
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_logs')
+    user 为空（null）时表示未知用户名尝试，账号名记录在 username 字段，
+    确保针对不存在账号的爆破也有审计痕迹。
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='login_logs')
+    username = models.CharField('尝试账号', max_length=128, blank=True, default='')
     ip = models.GenericIPAddressField('IP', null=True, blank=True)
     user_agent = models.CharField('UA', max_length=256, blank=True, default='')
     success = models.BooleanField('成功', default=True)

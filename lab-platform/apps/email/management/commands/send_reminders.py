@@ -43,7 +43,29 @@ class Command(BaseCommand):
                         }, 'task', task.id, [email])
                         rounds += 1
 
-        # ── 2. 借用已逾期 ──
+        # ── 2. 任务已逾期（截止时间已过且未完成）──
+        overdue_rule = _rule('task_overdue')
+        if overdue_rule:
+            from apps.tasksapp.models import Task
+            for task in Task.objects.filter(due__lt=now).exclude(status=Task.STATUS_DONE).select_related('assignee', 'assignee__member_profile'):
+                if not task.assignee_id:
+                    continue
+                from apps.notify.service import create
+                create(task.assignee, 'task_overdue', f'任务已逾期 · {task.title[:30]}',
+                       f'{task.id} · 已过截止 {timezone.localtime(task.due).strftime("%m-%d %H:%M")}，请尽快完成',
+                       ref_type='task', ref_id=task.id, link='tasks')
+                notified += 1
+                if overdue_rule.enabled:
+                    email = _member_email(task.assignee)
+                    if email:
+                        _trigger_by_rule(overdue_rule, {
+                            'name': task.assignee.member_profile.name if hasattr(task.assignee, 'member_profile') else '同学',
+                            'title': task.title, 'id': task.id,
+                            'due': timezone.localtime(task.due).strftime('%m-%d %H:%M'),
+                        }, 'task', task.id, [email])
+                        rounds += 1
+
+        # ── 3. 借用已逾期 ──
         rule = _rule('loan_overdue')
         if rule:
             from apps.inventory.models import Loan
@@ -62,8 +84,15 @@ class Command(BaseCommand):
                             'due': timezone.localtime(loan.due).strftime('%m-%d %H:%M'),
                         }, 'loan', loan.id, [email])
                         rounds += 1
+                # 逾期惩罚扣分：每单一次（award 唯一约束保证不重复追罚）
+                from apps.points.models import PointRule
+                penalty = PointRule.objects.filter(key='loan_overdue_penalty', enabled=True).first()
+                if penalty:
+                    from apps.points.service import award
+                    award(loan.member, 'loan_overdue_penalty', ref_type='loan', ref_id=loan.id,
+                          points=penalty.points, reason=f'{loan.id} 逾期未归还')
 
-        # ── 3. 比赛报名截止 ──
+        # ── 4. 比赛报名截止 ──
         rule = _rule('competition_deadline')
         if rule:
             from apps.competitions.models import Competition

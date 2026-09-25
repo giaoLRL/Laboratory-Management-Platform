@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from apps.agent.models import Conversation, AgentMessage
 from apps.agent.service import chat, llm_ready
-from apps.common.ids import next_code
+from apps.common.ids import create_with_code, next_code
 from apps.common.rbac import require
 from apps.common.response import ok, fail
 
@@ -60,8 +60,8 @@ def agent_chat(request):
         if not conv:
             return fail('会话不存在', 404)
     else:
-        conv = Conversation.objects.create(id=next_code(Conversation, 'CONV'),
-                                           user=request.user, title=message[:32])
+        conv = create_with_code(Conversation, 'CONV',
+                                user=request.user, title=message[:32])
         if not conv.title:
             conv.title = '新对话'
             conv.save()
