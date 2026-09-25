@@ -661,6 +661,9 @@ dialog[open] { animation: enter 0.16s ease; }
 .sub-head small { font-size: 11px; color: var(--muted); }
 .sub-head .text-btn { margin-left: auto; }
 .member-task-list { display: flex; flex-direction: column; gap: 8px; }
+/* 成员详情「任务」列表：行内容与面板标题左右对齐（18px），状态徽章与「查看」靠右（此前贴边 + 右侧大片死白） */
+#tab-body-member-detail > .panel > .member-task-list { padding: 0 18px 4px; }
+#tab-body-member-detail > .panel > .member-task-list .todo > .row { margin-left: auto; }
 
 /* 成员详情页：图表与热力 */
 .chart-body { padding: 6px 2px 2px; }
