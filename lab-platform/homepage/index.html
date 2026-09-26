@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>具身智能实验室 · 湖南科技学院</title>
+<meta name="description" content="湖南科技学院具身智能实验室官方主页——以赛促学、软硬结合，深耕物联网、电子设计与无人机智能导航三大赛道。">
+<meta name="keywords" content="具身智能实验室,湖南科技学院,电子设计竞赛,物联网竞赛,智能导航大赛,无人机,嵌入式">
+<meta property="og:title" content="具身智能实验室 · 湖南科技学院">
+<meta property="og:description" content="以赛促学、软硬结合，深耕物联网、电子设计与无人机智能导航三大赛道。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wuyuan.me/">
+<meta property="og:image" content="https://wuyuan.me/assets/img/hero.webp">
+<meta name="theme-color" content="#0a0c12">
+<link rel="icon" type="image/png" href="./assets/img/school-badge.png">
+<link rel="preload" as="image" href="./assets/img/hero.webp">
+<link rel="stylesheet" href="/assets/site.css?v=2">
+<noscript>
+  <style>
+    /* JS 不可用时的兜底：确保内容可见 */
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .hero-text, .hero .button-group { opacity: 1 !important; transform: none !important; animation: none !important; }
+    .line-path { stroke-dashoffset: 0 !important; }
+    .line-dot { opacity: 1 !important; }
+    .bar-fill { width: 100% !important; }
+  </style>
+</noscript>
+</head>
+<body>
+<!--
+  ═══════════ 部署素材清单（放到本文件同目录的 assets/ 下） ═══════════
+  assets/img/  （均为真实拍摄插图，webp q80，已压缩；hero.webp 为视频海报帧）
+    hero.webp             Hero 视频海报帧（原版）  1918×1080 114KB
+    school-logo.png       学校官方组合标（白色版）327×78（已提取自学校官网）
+    school-badge.png      圆形校徽裁剪           78×78（已生成，用作 favicon）
+    demo-drone-nav.webp   展示区A-主演示（视觉导航调试屏） 1400×1866
+    demo-flight-ctrl.webp 展示区A-飞控调试（微型无人机）   900×1600
+    demo-iot.webp         展示区A-物联网（ESP32 开发板）  1400×1866
+    demo-edc.webp         展示区A-电赛作品（智能小车）    1400×1866
+    demo-car.webp         展示区A-智能小车调试           900×1200
+    uav-nav.webp          展示区B（四旋翼无人机调试）     1080×1920
+    build.webp            展示区C（机械臂装配调试）      1920×1440
+    work-01…08.webp       作品集（视觉识别/训练场/机械臂/焊接工位等 8 张实拍）
+    news-1…3.webp          最新动态配图（竞赛答辩现场 / 实验室日常开发）
+    join.webp             加入我们配图（实验室日常开发场景） 1200×900
+    qrcode.png            招新群二维码      480×480（真实群码）
+  assets/video/
+    hero.mp4              Hero 背景视频（保持原版） 1.3MB（1080p/8s/无声/≤2Mbps/faststart）
+  assets/audio/
+    bgm.mp3               背景音乐（科幻氛围乐 16s 循环 251KB，已生成；可替换为授权曲目 ≤128kbps）
+  说明：Hero 保持视频；其余配图均为真实拍摄，支持点击查看大图（灯箱）。
+  更新图片后请同步递增 src 后的 ?v= 版本参数，强制浏览器缓存失效。
+  ═════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════ Hero（固定全屏媒体 + 顶部透明导航 + 底部标题块） ═══════════ -->
+<header class="hero" id="top">
+  <!-- Hero 背景视频（保持原版）：静音自动循环；更换素材时保持 muted + playsinline，码率 ≤2Mbps -->
+  <div class="hero-media">
+    <video class="bg" src="./assets/video/hero.mp4" poster="./assets/img/hero.webp"
+           autoplay muted loop playsinline preload="auto"></video>
+  </div>
+
+  <!-- 顶部导航（透明，随页滚动） -->
+  <div class="top-bar">
+    <a class="brand" href="#top">
+      <!-- 学校官方组合标（白色版，提取自学校官网），深色导航上直接使用 -->
+      <img class="school-logo" src="./assets/img/school-logo.png" alt="湖南科技学院">
+      <span class="divider"></span>
+      具身智能实验室
+    </a>
+    <nav class="nav-links">
+      <a href="#top">首页</a>
+      <a href="#demo">作品展示</a>
+      <a href="#research">技术方向</a>
+      <a href="#bench">行业前景</a>
+      <a href="#join">加入我们</a>
+    </nav>
+    <div class="nav-right">
+      <a class="nav-pill" href="/login/">进入管理系统
+        <svg viewBox="0 0 8 5" fill="none"><path d="M1 1L4 4L7 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <button class="nav-burger" id="navBurger" aria-label="打开菜单">
+        <svg viewBox="0 0 28 24" fill="none"><path d="M14 16C14.5523 16 15 16.4477 15 17C15 17.5523 14.5523 18 14 18H9C8.44772 18 8 17.5523 8 17C8 16.4477 8 16 9 16H14ZM19 11C19.5523 11 20 11.4477 20 12C20 12.5523 19.5523 13 19 13H9C8.44772 13 8 12.5523 8 12C8 11.4477 8 11 9 11H19ZM19 6C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8H9C8.44772 8 8 7.55228 8 7C8 6.44772 8 6 9 6H19Z" fill="currentColor" fill-opacity="0.8"/></svg>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#top">首页 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#demo">作品展示 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#research">技术方向 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#bench">行业前景 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#join">加入我们 <svg viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </div>
+
+  <!-- 中部空隙（露出固定视频） -->
+  <div class="hero-spacer"></div>
+
+  <!-- 底部标题块 -->
+  <div class="hero-content">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 data-hp="hero.title">具身智能实验室</h1>
+        <div class="description">围绕全国大学生电子设计竞赛、物联网设计竞赛与智能导航大赛，以赛促学、以赛代练，在真实工程问题中打磨硬技术。<br>我们深耕<span class="rotator"><i>物联网</i><i>无人机</i><i>嵌入式</i><i>智能导航</i><i>物联网</i></span></div>
+      </div>
+      <div class="button-group">
+        <a class="btn" href="#demo">作品展示<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+        <a class="btn" href="#research">技术方向<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+        <a class="btn" href="#bench">行业前景<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+        <a class="btn" href="#join">加入我们<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><path d="m27.728 11.27 12.728 12.728-12.728 12.728M5 24h34.295"/></svg></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 背景音乐启动卡（按键型磨砂玻璃，点击解除静音后消失） -->
+  <div class="bgm-gate" id="bgmGate" role="button" tabindex="0" aria-label="解除静音，开启背景音乐">
+    <div class="bgm-gate-row">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+      <span class="tx">解除静音</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════ 主内容（浅灰底，盖过固定视频层） ═══════════ -->
+<main class="main-container">
+
+<!-- ─── 展示区 A：三大赛道（横向轮播） ─── -->
+<section id="demo" class="showcase">
+  <div class="sec-head reveal">
+    <div>
+      <h2 data-hp="demo.title">从电路板到蓝天</h2>
+      <p data-hp="demo.subtitle">三大赛道，一个实验室：物联网系统、电子设计、无人机自主导航——所有作品都由成员从零打磨，在赛场上接受检验。</p>
+    </div>
+    <div class="arrow-group">
+      <button class="arrow-btn" id="sc-prev" disabled aria-label="上一个"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.7071 4.29289C13.0976 4.68342 13.0976 5.31658 12.7071 5.70711L7.41421 11H19C19.5523 11 20 11.4477 20 12C20 12.5523 19.5523 13 19 13H7.41421L12.7071 18.2929C13.0976 18.6834 13.0976 19.3166 12.7071 19.7071C12.3166 20.0976 11.6834 20.0976 11.2929 19.7071L4.29289 12.7071C3.90237 12.3166 3.90237 11.6834 4.29289 11.2929L11.2929 4.29289C11.6834 3.90237 12.3166 3.90237 12.7071 4.29289Z"/></svg></button>
+      <button class="arrow-btn" id="sc-next" aria-label="下一个"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.2929 4.29289C11.6834 3.90237 12.3166 3.90237 12.7071 4.29289L19.7071 11.2929C20.0976 11.6834 20.0976 12.3166 19.7071 12.7071L12.7071 19.7071C12.3166 20.0976 11.6834 20.0976 11.2929 19.7071C10.9024 19.3166 10.9024 18.6834 11.2929 18.2929L16.5858 13H5C4.44772 13 4 12.5523 4 12C4 11.4477 4.44772 11 5 11H16.5858L11.2929 5.70711C10.9024 5.31658 10.9024 4.68342 11.2929 4.29289Z"/></svg></button>
+    </div>
+  </div>
+  <div class="showcase-track" id="sc-track" style="padding: 0 var(--content-margin);">
+    <!-- 配图卡：点击图片可查看大图 -->
+    <div class="showcase-card sc-wide reveal">
+      <img data-hp-img="work-05" class="lightboxable" src="./assets/img/work-05.webp?v=2" alt="机器视觉检测系统运行界面">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.1">主演示 · 机器视觉检测系统</div>
+    </div>
+    <div class="showcase-card sc-tall reveal">
+      <img data-hp-img="demo-flight-ctrl" class="lightboxable" src="./assets/img/demo-flight-ctrl.webp?v=2" alt="飞控调试">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.2">飞控与遥控调试</div>
+    </div>
+    <div class="showcase-card sc-tall reveal">
+      <img data-hp-img="demo-iot" class="lightboxable" src="./assets/img/demo-iot.webp?v=2" alt="物联网开发板">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.3">物联网系统 · ESP32 开发板</div>
+    </div>
+    <div class="showcase-card sc-wide reveal">
+      <img data-hp-img="demo-edc" class="lightboxable" src="./assets/img/demo-edc.webp?v=2" alt="电赛作品">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.4">电赛作品 · 智能小车</div>
+    </div>
+    <div class="showcase-card sc-tall reveal">
+      <img data-hp-img="demo-car" class="lightboxable" src="./assets/img/demo-car.webp?v=2" alt="智能小车">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="demo.cards.5">智能小车调试</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 展示区 B：无人机自主导航 ─── -->
+<section id="vla" style="padding-top: 0;">
+  <div class="sec-head reveal">
+    <div>
+      <h2 data-hp="uav.title">智启导航：让无人机自主飞行</h2>
+      <p data-hp="uav.subtitle">飞控调参、SLAM 建图、路径规划、视觉避障——智能导航大赛（无人机赛道）核心技术，从室内定点巡航到复杂任务的全自主飞行。</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="showcase-card sc-wide sc-fluid reveal">
+      <img data-hp-img="uav-nav" class="lightboxable" src="./assets/img/uav-nav.webp?v=2" alt="四旋翼无人机调试">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="uav.tag">四旋翼无人机 · 动力与飞控调试</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 展示区 C：从想法到实物 ─── -->
+<section id="sim2real" style="padding-top: 0;">
+  <div class="sec-head reveal">
+    <div>
+      <h2 data-hp="build.title">从想法到实物</h2>
+      <p>方案设计、电路搭建、固件开发、联调测试——每一件参赛作品都要走完完整的工程链路，这也是竞赛教给我们最重要的事。</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="showcase-card sc-wide sc-fluid reveal">
+      <img data-hp-img="build" class="lightboxable" src="./assets/img/build.webp?v=2" alt="机械臂工程调试">
+      <div class="v-mask"></div>
+      <div class="v-tag" data-hp="build.tag">作品诞生记 · 机械臂装配调试</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 行业前景 ═══════════ -->
+<section id="bench" class="bench-section">
+  <div class="bench-header reveal">
+    <div>
+      <h2>行业前景</h2>
+      <p>具身智能与物联网产业高速发展，人才需求持续攀升——现在加入，正是站上风口。</p>
+    </div>
+  </div>
+  <div class="bench-title-block reveal">
+    <h3>人才缺口与产业趋势</h3>
+    <p>你在这里练就的嵌入式、物联网与无人机导航技术，正是产业最紧缺的技能。</p>
+  </div>
+  <div class="charts-row" id="chartsRow">
+    <div class="chart-card reveal">
+      <h4>相关领域人才缺口（万人）</h4>
+      <div class="chart-bars">
+        <div class="bar-row">
+          <div class="bar-label">物联网</div>
+          <div class="bar-track"><div class="bar-fill" data-w="100"></div></div>
+          <div class="bar-val">1600</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">机器人与智能制造</div>
+          <div class="bar-track"><div class="bar-fill" data-w="28"></div></div>
+          <div class="bar-val">450</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">无人机应用</div>
+          <div class="bar-track"><div class="bar-fill" data-w="7"></div></div>
+          <div class="bar-val">100</div>
+        </div>
+      </div>
+      <p class="chart-desc">* 数据综合自人社部等公开行业报告口径，发布前请核实并标注来源</p>
+    </div>
+    <div class="chart-card reveal">
+      <h4>具身智能市场规模预测（十亿美元 · 示例曲线）</h4>
+      <div class="line-wrap" id="marketLine">
+        <svg viewBox="0 0 320 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(77,125,255,.28)"/>
+              <stop offset="100%" stop-color="rgba(77,125,255,0)"/>
+            </linearGradient>
+          </defs>
+          <path class="line-area" fill="url(#areaGrad)" d="M10,168 L60,150 L110,124 L160,94 L210,62 L260,34 L310,12 L310,200 L10,200 Z"/>
+          <path class="line-path" pathLength="1" style="stroke-dasharray:1; stroke-dashoffset:1;" d="M10,168 L60,150 L110,124 L160,94 L210,62 L260,34 L310,12"/>
+          <circle class="line-dot" cx="310" cy="12" r="5"/>
+        </svg>
+        <div class="year-labels">
+          <span>2024</span><span>2025</span><span>2026</span><span>2027</span><span>2028</span><span>2029</span><span>2030</span>
+        </div>
+      </div>
+      <p class="chart-desc">* 示意曲线，请替换为权威机构预测数据并标注来源</p>
+    </div>
+    <div class="chart-card reveal">
+      <h4>毕业去向与岗位</h4>
+      <ul class="career-list">
+        <li>嵌入式软件工程师<small>STM32 / RTOS / 驱动开发，电赛经历的直接对口岗位</small></li>
+        <li>物联网系统工程师<small>传感器网络 / 云平台 / 边缘网关</small></li>
+        <li>无人机飞控与导航算法<small>飞控调参 / SLAM / 路径规划，行业高薪稀缺岗</small></li>
+        <li>硬件电路工程师<small>原理图 / PCB / 电源设计</small></li>
+        <li>升学深造<small>机器人、人工智能、电子信息等方向考研加分项</small></li>
+      </ul>
+      <p class="chart-desc">竞赛获奖经历是这些岗位简历上的硬通货</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 作品集（瀑布流） ═══════════ -->
+<section id="gallery" class="gallery-section">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2 data-hp="works.title">我们的作品</h2>
+        <p data-hp="works.subtitle">历年参赛与训练作品实拍。</p>
+      </div>
+    </div>
+    <div class="gallery-masonry">
+      <div class="g-item reveal">
+        <img data-hp-img="work-01" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-01.webp?v=2" alt="机器视觉识别系统">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">机器视觉识别系统</span><span class="idx">智能导航大赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="work-02" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-02.webp?v=2" alt="无人机竞速训练场">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">无人机竞速训练场</span><span class="idx">智能导航大赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="work-03" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-03.webp?v=2" alt="视觉识别算法调试">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">视觉识别算法调试</span><span class="idx">电赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="work-04" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-04.webp?v=2" alt="机械臂搬运系统">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">机械臂搬运系统</span><span class="idx">校内选拔</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="demo-drone-nav" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/demo-drone-nav.webp?v=2" alt="工件视觉检测系统">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">工件视觉检测系统</span><span class="idx">物联网竞赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="work-06" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-06.webp?v=2" alt="视觉云台平台">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">视觉云台平台</span><span class="idx">智能导航大赛</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="work-07" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-07.webp?v=2" alt="双机械臂系统">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">双机械臂系统</span><span class="idx">校内选拔</span></div>
+      </div>
+      <div class="g-item reveal">
+        <img data-hp-img="work-08" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-08.webp?v=2" alt="元件器材库">
+        <div class="v-mask"></div>
+        <div class="v-cap"><span class="name">元件器材库</span><span class="idx">日常备赛</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 技术方向 ═══════════ -->
+<section id="research">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2 data-hp="research.title">技术方向</h2>
+        <p data-hp="research.subtitle">围绕"感知 — 决策 — 行动"技术链，覆盖三大赛道的核心技能栈</p>
+      </div>
+    </div>
+    <div class="research-grid">
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/><circle cx="12" cy="6" r="2"/></svg></div>
+        <h3>物联网系统<small>IoT Systems</small></h3>
+        <p>传感器网络、MQTT 与云平台、低功耗组网——做一套真正能落地的智慧系统。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2M9 9h6v6H9z"/></svg></div>
+        <h3>嵌入式开发<small>Embedded</small></h3>
+        <p>STM32 / TI MCU、RTOS、外设驱动与 PCB 设计，电赛的看家本领。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l3 4h-6l3-4zM4 13l4-5v6l-4-1zM20 13l-4-5v6l4-1zM12 12v6M12 18l-2 3h4l-2-3z"/></svg></div>
+        <h3>无人机导航<small>UAV Navigation</small></h3>
+        <p>飞控调参与航迹规划、SLAM 建图与自主避障，智能导航大赛的核心。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg></div>
+        <h3>智能感知<small>Perception</small></h3>
+        <p>视觉识别、多传感器融合，让机器看得懂环境、跟得上目标。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>
+        <h3>电路与电源<small>Circuit &amp; Power</small></h3>
+        <p>模拟/数字电路、电源设计与信号处理，电赛硬件题的硬功夫。</p>
+      </div>
+      <div class="r-card reveal">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c1.7 1 3 3 3 5a6 6 0 01-4 5.7V19a3 3 0 01-6 0v-2.3A6 6 0 015 11c0-2 1.3-4 3-5a4 4 0 014-4z"/><path d="M12 8v4"/></svg></div>
+        <h3>边缘智能<small>Edge AI</small></h3>
+        <p>目标检测与自主决策跑在边缘设备上，为作品装上"大脑"。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 最新动态 ═══════════ -->
+<section id="news">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2 data-hp="news.title">最新动态</h2>
+        <p data-hp="news.subtitle">获奖、招新与备赛资讯</p>
+      </div>
+    </div>
+    <div class="news-wrap">
+      <div class="news-item reveal">
+        <div class="news-date">2026-09</div><div class="dot"></div>
+        <div class="news-body">
+          <div class="meta"><span class="n-tag n-award">获奖</span></div>
+          <h4>第十届湖南省大学生物联网应用创新设计竞赛 · 技能赛斩获两项省级一等奖</h4>
+          <p>实验室两支队伍在技能赛中均获省级一等奖。从方案设计、电路搭建到联调测试，队员们在真实赛场上完成了完整工程链路的检验。</p>
+          <div class="news-photos">
+            <img data-hp-img="news-1" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/news-1.webp?v=3" alt="获奖队合影">
+            <img data-hp-img="news-2" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/news-2.webp?v=3" alt="获奖队合影">
+            <img data-hp-img="news-3" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/news-3.webp?v=3" alt="实验室全体成员合影">
+          </div>
+        </div>
+      </div>
+      <div class="news-item reveal">
+        <div class="news-date">2026-09</div><div class="dot"></div>
+        <div class="news-body">
+          <div class="meta"><span class="n-tag n-join">招新</span></div>
+          <h4>实验室 2026 级招新正式启动</h4>
+          <p>物联网、电子设计、智能导航三个方向同步开放报名，面向全校大一大二同学，老带新培训，欢迎加入。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 团队 ═══════════ -->
+<section id="team">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2>团队</h2>
+        <p>以老带新，共同成长（示例名单，请替换为真实成员信息）</p>
+      </div>
+    </div>
+    <div class="leader-card reveal">
+      <div class="avatar">张</div>
+      <div class="leader-info">
+        <h3>张 老师（示例，请替换）</h3>
+        <div class="title">指导老师 · 实验室负责人</div>
+        <p>长期指导大学生电子设计竞赛、物联网设计竞赛与智能导航大赛，主持多项教改与科研项目，累计指导获奖数十项。</p>
+        <a class="mail" href="mailto:lab@example.edu.cn">lab@example.edu.cn</a>
+      </div>
+    </div>
+    <div class="team-grid">
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#4D7DFF,#3DE0FF)">李</div><h4>李 同学</h4><div class="role">队长 · 物联网方向</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#3DE0FF,#4D7DFF)">王</div><h4>王 同学</h4><div class="role">队长 · 电子设计</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#7B5CD9,#4D7DFF)">赵</div><h4>赵 同学</h4><div class="role">队长 · 无人机导航</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#C97A2E,#FFA657)">陈</div><h4>陈 同学</h4><div class="role">队员 · 硬件电路</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#3DE0FF,#7B5CD9)">刘</div><h4>刘 同学</h4><div class="role">队员 · 导航算法</div></div>
+      <div class="member reveal"><div class="avatar" style="background:linear-gradient(135deg,#4D7DFF,#C97A2E)">杨</div><h4>杨 同学</h4><div class="role">队员 · 嵌入式软件</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 加入我们 ═══════════ -->
+<section id="join">
+  <div class="container">
+    <div class="sec-head reveal">
+      <div>
+        <h2 data-hp="join.title">加入我们</h2>
+        <p data-hp="join.subtitle">从零基础到国赛领奖台，这条路我们已经走过很多遍</p>
+      </div>
+    </div>
+    <div class="join-flex">
+      <div class="join-text reveal">
+        <p>实验室每年面向<b style="color:var(--text)">全校大一大二同学</b>招新，不限专业——只要你肯动手、愿坚持。老队员一对一带你，从第一块面包板到省赛、国赛赛场。</p>
+        <ul>
+          <li>培养路径：基础培训（C 语言 / 电路 / 焊接）→ 校内选拔 → 省赛 → 国赛</li>
+          <li>不设门槛：零基础可加入，兴趣驱动比起点更重要</li>
+          <li>方向自选：物联网 / 电子设计 / 无人机导航，随兴趣自由选择</li>
+        </ul>
+        <a class="btn-solid" href="mailto:lab@example.edu.cn">联系我们：lab@example.edu.cn</a>
+      </div>
+      <div class="join-img reveal">
+        <img data-hp-img="join" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/join.webp?v=2" alt="实验室日常开发场景">
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<!-- ═══════════ Footer ═══════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand-col">
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="footer-brand">
+            <!-- 学校官方组合标：浅色背景用 invert 反色为深色 -->
+            <img class="school-logo inv" src="./assets/img/school-logo.png" alt="湖南科技学院">
+            <span class="divider"></span>
+            具身智能实验室
+          </div>
+          <div class="footer-slogan">以赛促学
+知行合一</div>
+        </div>
+        <div class="footer-qr">
+          <div class="qr-box"><img data-hp-img="qrcode" class="lightboxable" src="./assets/img/qrcode.png?v=2" alt="招新群二维码"></div>
+          <div class="qr-note">扫码加入实验室招新群</div>
+        </div>
+      </div>
+      <nav class="footer-nav">
+        <div class="footer-col">
+          <div class="col-title">三大赛道</div>
+          <div class="col-links">
+            <a href="#demo">作品展示</a>
+            <a href="#vla">无人机导航</a>
+            <a href="#research">技术方向</a>
+            <a href="#gallery">作品集</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <div class="col-title">了解更多</div>
+          <div class="col-links">
+            <a href="#bench">行业前景</a>
+            <a href="#news">最新动态</a>
+            <a href="#join">加入我们</a>
+            <a href="/login/">管理系统</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 具身智能实验室 · 湖南科技学院</span>
+      <span>湖南科技学院 · 地址待补充 &nbsp;|&nbsp; <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">X ICP备2026XXXXXX号（请替换）</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- 背景音乐开关（浏览器禁止带声自动播放，需用户点击开启） -->
+<button id="bgmBtn" class="bgm-btn" title="背景音乐" aria-label="背景音乐开关">
+  <svg class="ic-on" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/><path d="M4.5 13.5c1-1.5 1-3.5 0-5M7.5 15.5c1.8-2.3 1.8-6.7 0-9" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+  <svg class="ic-off" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+</button>
+<audio id="bgm" src="./assets/audio/bgm.mp3?v=3" loop preload="none"></audio>
+
+<div id="toast" role="status"></div>
+
+<!-- 图片 / 视频灯箱 -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="媒体查看">
+  <img id="lightboxImg" src="" alt="">
+  <video id="lightboxVideo" controls muted playsinline></video>
+  <button class="lb-close" aria-label="关闭">&times;</button>
+</div>
+
+<script src="/assets/site.js?v=2"></script>
+</body>
+</html>
