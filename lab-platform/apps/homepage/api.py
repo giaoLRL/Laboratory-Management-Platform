@@ -22,13 +22,16 @@ from apps.homepage.defaults import (
     FOCUS_MIN,
     IMAGE_DEFAULTS,
     TEXT_DEFAULTS,
+    WORK_MAX,
+    WORK_SPEC,
     ZOOM_MAX,
     ZOOM_MIN,
 )
-from apps.homepage.models import HomePageImage, HomePageText
+from apps.homepage.models import HomePageImage, HomePageText, HomePageWork
 
 MAX_IMG = 10 * 1024 * 1024
 MAX_VID = 40 * 1024 * 1024
+MAX_SRC = 20 * 1024 * 1024   # 原图另存上限（超出就只留裁剪结果，不阻断上传）
 VIDEO_EXTS = {'.mp4', '.webm'}
 SCALE_MIN, SCALE_MAX = 80, 150
 
@@ -60,6 +63,27 @@ def _media_url(row):
     if row.image:
         return '/media/public/' + row.image.name
     return row.seed
+
+
+def _work_url(row):
+    """作品图公开访问 URL：上传图优先，否则回退 seed（可能为空 = 该条暂不上官网）。"""
+    if row.image:
+        return '/media/public/' + row.image.name
+    return row.seed
+
+
+def _keep_source(row, request):
+    """把原图另存到 source 字段（后台裁剪层「重新裁剪」要用）。
+
+    只有带 source 字段的模型（媒体位）才保留原图；作品集图不存原图、超限或非图片也静默跳过。
+    """
+    if not hasattr(row, 'source'):
+        return
+    src = request.FILES.get('source')
+    if not src or src.size > MAX_SRC or not (src.content_type or '').lower().startswith('image/'):
+        return
+    _drop(row.source)
+    row.source = src
 
 
 def _is_video_file(photo):
@@ -100,7 +124,7 @@ def homepage_get(request):
                 'key': key, 'label': label, 'alt': alt, 'seed': seed,
                 'type': 'image', 'url': seed, 'uploaded': False,
                 'fit': spec['fit'], 'focus_x': spec['focus'][0], 'focus_y': spec['focus'][1],
-                'zoom': 100, 'spec': spec,
+                'zoom': 100, 'spec': spec, 'source_url': '',
             })
             continue
         images.append({
@@ -108,8 +132,14 @@ def homepage_get(request):
             'type': row.kind, 'url': _media_url(row), 'uploaded': bool(row.image or row.video),
             'fit': row.fit, 'focus_x': row.focus_x, 'focus_y': row.focus_y, 'zoom': row.zoom,
             'spec': spec,
+            'source_url': ('/media/public/' + row.source.name) if row.source else '',
         })
-    return ok({'texts': texts, 'images': images})
+    works = [
+        {'id': w.pk, 'title': w.title, 'tag': w.tag, 'alt': w.alt, 'seed': w.seed,
+         'url': _work_url(w), 'uploaded': bool(w.image), 'visible': w.visible}
+        for w in HomePageWork.objects.all()
+    ]
+    return ok({'texts': texts, 'images': images, 'works': works, 'workSpec': WORK_SPEC})
 
 
 @api_view(['POST'])
@@ -229,6 +259,7 @@ def homepage_image_upload(request):
         _drop(row.image)
         row.image = media
         row.kind = 'image'
+        _keep_source(row, request)  # 后台裁剪层会把原图一起带上，便于日后重新裁剪
     else:
         return fail('仅支持图片（jpg/png/webp）或视频（mp4/webm）')
     alt = str((request.data or {}).get('alt', '')).strip()
@@ -236,7 +267,8 @@ def homepage_image_upload(request):
         row.alt = alt[:256]
     row.save()
     _log(request, f'更新主页{"视频" if row.kind == "video" else "图片"} · {key}')
-    return ok({'url': _media_url(row), 'kind': row.kind})
+    return ok({'url': _media_url(row), 'kind': row.kind,
+               'source_url': ('/media/public/' + row.source.name) if row.source else ''})
 
 
 @api_view(['POST'])
@@ -255,6 +287,8 @@ def homepage_image_reset(request):
         else:
             _drop(row.image)
             row.image = None
+        _drop(row.source)
+        row.source = None
         spec = IMAGE_DEFAULTS[key][3]
         row.kind = 'image'
         row.scale = 100
@@ -265,6 +299,109 @@ def homepage_image_reset(request):
         row.save()
     _log(request, f'重置主页媒体 · {key}')
     return ok({'url': IMAGE_DEFAULTS[key][1]})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def homepage_works_save(request):
+    """整表保存作品集：按数组顺序重排，带 id 的更新、无 id 的新增、缺席的删除。
+
+    一次请求覆盖增删/排序/改名/隐藏，避免多条小接口各自维护顺序（顺序天然由下标决定）。
+    """
+    if (err := require(request.user, 'action:homepage.edit', '没有编辑主页内容的权限')):
+        return err
+    items = (request.data or {}).get('works')
+    if not isinstance(items, list):
+        return fail('参数格式不正确')
+    if len(items) > WORK_MAX:
+        return fail(f'作品集最多 {WORK_MAX} 条')
+    seen = []
+    for idx, it in enumerate(items):
+        if not isinstance(it, dict):
+            return fail('参数格式不正确')
+        raw = it.get('id')
+        row = None
+        if raw not in (None, '', 0):
+            row = HomePageWork.objects.filter(pk=raw).first()
+            if row is None:
+                return fail('作品条目不存在，请刷新后重试')
+        else:
+            row = HomePageWork()
+        row.title = str(it.get('title') or '')[:128]
+        row.tag = str(it.get('tag') or '')[:64]
+        row.alt = str(it.get('alt') or it.get('title') or '')[:256]
+        row.visible = bool(it.get('visible', True))
+        row.sort = idx  # 顺序即数组下标，前端拖动排序后整表提交
+        row.save()
+        seen.append(row.pk)
+    removed = HomePageWork.objects.exclude(pk__in=seen)
+    n_removed = removed.count()
+    for row in removed:
+        _drop(row.image)
+        row.delete()
+    _log(request, f'保存主页作品集 · {len(items)} 条（删除 {n_removed}）')
+    works = [
+        {'id': w.pk, 'title': w.title, 'tag': w.tag, 'alt': w.alt, 'seed': w.seed,
+         'url': _work_url(w), 'uploaded': bool(w.image), 'visible': w.visible}
+        for w in HomePageWork.objects.all()
+    ]
+    return ok({'works': works})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def homepage_work_image(request):
+    """上传/替换某条作品的图片（作品图按 4:3 网格展示，前台一律 cover，故不设裁切参数）。"""
+    if (err := require(request.user, 'action:homepage.edit', '没有编辑主页作品的权限')):
+        return err
+    d = request.data or {}
+    try:
+        wid = int(d.get('id'))
+    except (TypeError, ValueError):
+        return fail('作品标识不合法')
+    row = HomePageWork.objects.filter(pk=wid).first()
+    if row is None:
+        return fail('作品条目不存在，请刷新后重试')
+    media = request.FILES.get('media') or request.FILES.get('image')
+    if not media:
+        return fail('请选择图片文件')
+    if media.size > MAX_IMG:
+        return fail('图片不能超过 10MB')
+    from PIL import Image
+    try:
+        Image.open(media).verify()
+    except Exception:
+        return fail('仅支持有效图片文件（jpg/png/webp 等）')
+    _drop(row.image)
+    row.image = media
+    _keep_source(row, request)
+    if not row.alt:
+        row.alt = row.title or '实验室作品'
+    row.save()
+    _log(request, f'更新主页作品图 · #{wid}')
+    return ok({'url': _work_url(row), 'id': row.pk})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def homepage_work_reset(request):
+    """把某条作品的图片恢复为默认引用图（seed）。"""
+    if (err := require(request.user, 'action:homepage.edit', '没有编辑主页作品的权限')):
+        return err
+    try:
+        wid = int((request.data or {}).get('id'))
+    except (TypeError, ValueError):
+        return fail('作品标识不合法')
+    row = HomePageWork.objects.filter(pk=wid).first()
+    if row is None:
+        return fail('作品条目不存在，请刷新后重试')
+    _drop(row.image)
+    row.image = None
+    _drop(row.source)
+    row.source = None
+    row.save()
+    _log(request, f'重置主页作品图 · #{wid}')
+    return ok({'url': _work_url(row), 'id': row.pk})
 
 
 @api_view(['GET'])
@@ -280,14 +417,20 @@ def homepage_public(request):
     for key, (_, val) in TEXT_DEFAULTS.items():
         texts.setdefault(key, val)
     images = {}
-    for i in HomePageImage.objects.all():
+    # 只发仍存在的位：作品集迁走后遗留的 work-01~04/demo-drone-nav/work-06~08 行要忽略
+    for i in HomePageImage.objects.filter(key__in=list(IMAGE_DEFAULTS)):
         images[i.key] = {'type': i.kind, 'url': _media_url(i), 'alt': i.alt,
                          'fit': i.fit, 'focus_x': i.focus_x, 'focus_y': i.focus_y, 'zoom': i.zoom}
     for key, (_, seed, alt, spec) in IMAGE_DEFAULTS.items():
         images.setdefault(key, {'type': 'image', 'url': seed, 'alt': alt,
                                 'fit': spec['fit'], 'focus_x': spec['focus'][0],
                                 'focus_y': spec['focus'][1], 'zoom': 100})
-    return ok({'text': texts, 'images': images})
+    # 作品集：只发上官网的（visible），顺序即 sort；url 为空前台跳过该条
+    works = [
+        {'url': _work_url(w), 'title': w.title, 'tag': w.tag, 'alt': w.alt}
+        for w in HomePageWork.objects.filter(visible=True)
+    ]
+    return ok({'text': texts, 'images': images, 'works': works})
 
 
 @api_view(['GET'])

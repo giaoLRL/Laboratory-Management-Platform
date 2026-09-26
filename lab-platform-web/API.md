@@ -403,22 +403,27 @@ const CONFIG = {
 
 ## 主页管理（官网内容编辑契约）
 
-营销官网首页（静态 HTML，`/opt/lab/homepage`）通过 `GET /api/homepage/public` 拉取已发布内容，按 `data-hp="<key>"`（文案）与 `data-hp-img="<key>"`（图片）替换页面元素；接口不可用时回退页面内置默认值。管理后台在管理平台「主页管理」页完成编辑/上传，仅 superadmin 可用（权限点 `page:homepage` + `action:homepage.edit`，属 MANAGE_KEYS）。
+营销官网首页（静态 HTML，`/opt/lab/homepage`）通过 `GET /api/homepage/public` 拉取已发布内容，按 `data-hp="<key>"`（文案）与 `data-hp-img="<key>"`（媒体位）替换页面元素，作品集 `#worksGrid` 整块按 `works[]` 重渲染（接口不可用或禁用 JS 时回退页面内置的静态 8 格）。管理后台在管理平台「主页管理」页完成编辑/上传，仅 superadmin 可用（权限点 `page:homepage` + `action:homepage.edit`，属 MANAGE_KEYS）。
 
 | 方法 | 路径 | 说明 | 权限 |
 | --- | --- | --- | --- |
-| GET | `/homepage` | 回填：`{texts:[{key,label,value}], images:[{key,label,alt,seed,type,url,uploaded,fit,focus_x,focus_y,zoom,spec}]}`；`type` 为 `image`/`video`，未上传的 `url` 为 seed 静态路径（无静态兜底的位为空串）、`uploaded=false`；`spec={ar:[w,h],fit,focus:[x,y],min:[w,h],fitLocked}` 是该位的固定规格（`ar` 目标比例、`min` 建议最小素材尺寸、`fitLocked=true` 表示裁切方式写死不给切），`fit/focus_x/focus_y/zoom` 为当前生效值 | `page:homepage` |
+| GET | `/homepage` | 回填：`{texts:[{key,label,value}], images:[{key,label,alt,seed,type,url,uploaded,fit,focus_x,focus_y,zoom,spec,source_url}], works:[{id,title,tag,alt,seed,url,uploaded,visible}], workSpec=spec}`；`source_url` 是「重新裁剪」可用的原图（空串=没留原图）；`type` 为 `image`/`video`，未上传的 `url` 为 seed 静态路径（无静态兜底的位为空串）、`uploaded=false`；`spec={ar:[w,h],fit,focus:[x,y],min:[w,h],fitLocked}` 是该位的固定规格（`ar` 目标比例、`min` 建议最小素材尺寸、`fitLocked=true` 表示裁切方式写死不给切），`fit/focus_x/focus_y/zoom` 为当前生效值 | `page:homepage` |
 | POST | `/homepage/texts` | `{"values":{"hero.title":"新标题"}}` 批量保存文案（仅允许预置 key，单条 ≤4000 字符）→ `{count}` | `action:homepage.edit` |
 | POST | `/homepage/frame` | `{"key":"uav-nav","fit":"cover","focus_x":50,"focus_y":40,"zoom":100}` 保存构图（`fit` 仅 `cover`/`contain`，焦点 0–100，`zoom` 100–150）→ `{fit,focus_x,focus_y,zoom}` | `action:homepage.edit` |
 | POST | `/homepage/scale` | 旧接口，保留兼容：`{"key":"work-01","scale":120}` 设置图位显示缩放（80–150 整数）→ `{scale}`（后台已不再使用，改存 `zoom`） | `action:homepage.edit` |
-| POST | `/homepage/images` | FormData `{key,media,alt?}` 上传/替换媒体（互斥：传图覆盖视频、传视频覆盖图）；图片 ≤10MB(jpg/png/webp)、视频 ≤40MB(mp4/webm，魔数校验) → `{url,kind}`（`url` 形如 `/media/public/homepage/…`，免登录） | `action:homepage.edit` |
+| POST | `/homepage/images` | FormData `{key,media,alt?,source?}` 上传/替换媒体（互斥：传图覆盖视频、传视频覆盖图）；图片 ≤10MB(jpg/png/webp)、视频 ≤40MB(mp4/webm，魔数校验)；`source` 为原图（≤20MB，后台裁剪层会自动带上，供「重新裁剪」用） → `{url,kind,source_url}`（`url` 形如 `/media/public/homepage/…`，免登录） | `action:homepage.edit` |
 | POST | `/homepage/images/reset` | `{"key":"work-01"}` 恢复默认引用图（同时把 fit/focus/zoom 复位到该位 spec）→ `{url}`（seed 路径） | `action:homepage.edit` |
-| GET | `/homepage/public` | 无鉴权内容快照（`Cache-Control: max-age=300`）：`{text:{key:value…}, images:{key:{type,url,alt,fit,focus_x,focus_y,zoom}…}}`；`type` 供官网判断渲染 `<img>` 或 `<video>`，`fit/focus_*/zoom` 供官网写 CSS 变量（`--hp-fit/--hp-focus-x/--hp-focus-y/--hp-zoom`） | 公开 |
-| GET | `/media/public/homepage/<path>` | 已上传配图/视频免登录直出（仅放行 `homepage/` 目录，生产 X-Accel 直发） | 公开 |
+| POST | `/homepage/works` | `{"works":[{id?,title,tag,visible}]}` **整表保存**：按数组顺序重排，带 `id` 的更新、无 `id` 的新增、缺席的删除（≤60 条）→ `{works:[…]}` | `action:homepage.edit` |
+| POST | `/homepage/works/image` | FormData `{id,media}` 上传/替换某条作品图（图片 ≤10MB，作品格一律 4:3 cover，故无裁切参数；作品图不另存原图）→ `{url,id}` | `action:homepage.edit` |
+| POST | `/homepage/works/reset` | `{"id":3}` 把作品图恢复为默认引用图 → `{url,id}` | `action:homepage.edit` |
+| GET | `/homepage/public` | 无鉴权内容快照（`Cache-Control: max-age=300`）：`{text:{key:value…}, images:{key:{type,url,alt,fit,focus_x,focus_y,zoom}…}, works:[{url,title,tag,alt}…]}`；`type` 供官网判断渲染 `<img>` 或 `<video>`，`fit/focus_*/zoom` 供官网写 CSS 变量（`--hp-fit/--hp-focus-x/--hp-focus-y/--hp-zoom`）；`works` 只含 `visible` 条目且按 `sort` 排序，`url` 为空的前台跳过 | 公开 |
+| GET | `/media/public/homepage/<path>` | 已上传配图/视频/原图免登录直出（仅放行 `homepage/` 目录，生产 X-Accel 直发） | 公开 |
 
 - 文案 key（21）：`hero.title / demo.title / demo.subtitle / demo.cards.1~5 / uav.title / uav.subtitle / uav.tag / build.title / build.tag / works.title / works.subtitle / research.title / research.subtitle / news.title / news.subtitle / join.title / join.subtitle`
-- 图片 key（21）：`hero.portrait / work-01~08 / demo-flight-ctrl / demo-iot / demo-edc / demo-car / demo-drone-nav / uav-nav / build / news-1~3 / join / qrcode`。`hero.portrait` 是手机 Hero 竖版素材位（≤767px 顶替横版视频），无静态兜底：未上传时官网不注入该元素，CSS 回退 `contain` 完整显示横版。
-- 每位有固定的 `spec.ar`（目标比例，与首页 CSS 的 `--hp-ar` 一致）：`hero.portrait`/`demo-flight-ctrl`/`demo-iot`/`demo-car` 为 9:16，`work-05`/`demo-edc`/`uav-nav`/`build` 为 16:9，作品集九宫格为 4:3，`news-*`/`join` 为 3:2，`qrcode` 为 1:1（固定 `contain`，绝不裁切）。
+- 图片 key（13）：`hero.portrait / work-05 / demo-flight-ctrl / demo-iot / demo-edc / demo-car / uav-nav / build / news-1~3 / join / qrcode`。`hero.portrait` 是手机 Hero 竖版素材位（≤767px 顶替横版视频），无静态兜底：未上传时官网不注入该元素，CSS 回退 `contain` 完整显示横版。原作品集 8 个位（`work-01~04 / demo-drone-nav / work-06~08`）已迁入 `/homepage/works` 列表，遗留 DB 行由迁移 0005 清理。
+- 每位有固定的 `spec.ar`（目标比例，与首页 CSS 的 `--hp-ar` 一致）：`hero.portrait`/`demo-flight-ctrl`/`demo-iot`/`demo-car` 为 9:16，`work-05`/`demo-edc`/`uav-nav`/`build` 为 16:9，作品集格为 4:3，`news-*`/`join` 为 3:2，`qrcode` 为 1:1（固定 `contain`，绝不裁切）。
+- 官网上传的图片一律走后台**裁剪层**：取景框比例 = 该位 `spec.ar`，导出 webp(q0.9、长边 ≤2560)，因此线上不会再出现「素材被裁」；同时把原图（`source`）另存，供「重新裁剪」免重选文件。
+- 官网 `site.js` 在 `/?preview=1` 下进入**预览态**：不拉接口，等管理端 `postMessage({type:'hp-preview', images, text, works, focusKey})` 下发草稿并套用同一套 CSS 变量，被编辑的位加 `.hp-hl` 描边。预览通道只传展示参数、目标窗口用 `'*'`（管理端 iframe 与官网同源，仅此一个 iframe）。
 - 编辑保存后官网最多 5 分钟反映（公开接口 max-age=300）；营销首页 JS 对无版本参数的图片 URL 追加 `?v=<时间戳>` 强制刷新。已配置的图片与文案存于专用表，不走 workspace 快照。
 
 ## 可视化座位（实验室俯视图）

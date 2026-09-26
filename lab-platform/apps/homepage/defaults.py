@@ -51,19 +51,11 @@ _HERO_P = _spec((9, 16), (1080, 1920))   # 手机 Hero 竖版素材
 # hero.portrait 无静态兜底（seed 为空串）：未上传时前台不注入竖版元素，CSS 回退 contain。
 IMAGE_DEFAULTS = OrderedDict([
     ('hero.portrait', ('Hero 竖版素材（手机）', '', '手机端 Hero 竖版素材', _HERO_P)),
-    ('work-01', ('作品 01', '/assets/img/work-01.webp?v=2', '机器视觉识别系统', _GRID)),
-    ('work-02', ('作品 02', '/assets/img/work-02.webp?v=2', '无人机竞速训练场', _GRID)),
-    ('work-03', ('作品 03', '/assets/img/work-03.webp?v=2', '视觉识别算法调试', _GRID)),
-    ('work-04', ('作品 04', '/assets/img/work-04.webp?v=2', '机械臂搬运系统', _GRID)),
     ('work-05', ('作品主图', '/assets/img/work-05.webp?v=2', '机器视觉检测系统运行界面', _WIDE)),
-    ('work-06', ('作品 06', '/assets/img/work-06.webp?v=2', '视觉云台平台', _GRID)),
-    ('work-07', ('作品 07', '/assets/img/work-07.webp?v=2', '双机械臂系统', _GRID)),
-    ('work-08', ('作品 08', '/assets/img/work-08.webp?v=2', '元件器材库', _GRID)),
     ('demo-flight-ctrl', ('轮播卡2 飞控调试图', '/assets/img/demo-flight-ctrl.webp?v=2', '飞控调试', _TALL)),
     ('demo-iot', ('轮播卡3 物联网图', '/assets/img/demo-iot.webp?v=2', '物联网开发板', _TALL)),
     ('demo-edc', ('轮播卡4 电赛作品图', '/assets/img/demo-edc.webp?v=2', '电赛作品', _WIDE)),
     ('demo-car', ('轮播卡5 智能小车图', '/assets/img/demo-car.webp?v=2', '智能小车', _TALL)),
-    ('demo-drone-nav', ('作品5 工件检测图', '/assets/img/demo-drone-nav.webp?v=2', '工件视觉检测系统', _GRID)),
     ('uav-nav', ('无人机导航图', '/assets/img/uav-nav.webp?v=2', '四旋翼无人机调试', _WIDE)),
     ('build', ('实物装配图', '/assets/img/build.webp?v=2', '机械臂工程调试', _WIDE)),
     ('news-1', ('动态图1', '/assets/img/news-1.webp?v=3', '获奖队合影', _PHOTO)),
@@ -72,6 +64,23 @@ IMAGE_DEFAULTS = OrderedDict([
     ('join', ('招新配图', '/assets/img/join.webp?v=2', '实验室日常开发场景', _PHOTO)),
     ('qrcode', ('招新群二维码', '/assets/img/qrcode.png?v=2', '招新群二维码', _QR)),
 ])
+
+# 作品集：数据驱动（可增删/排序/隐藏），seed 指向原来的静态图，未上传时前台照旧显示。
+# 与 IMAGE_DEFAULTS 分离：作品集是可增长的列表，媒体位是固定槽位。
+# -> (作品名, 赛事标签, 默认引用 seed, alt)
+WORK_DEFAULTS = [
+    ('机器视觉识别系统', '智能导航大赛', '/assets/img/work-01.webp?v=2', '机器视觉识别系统'),
+    ('无人机竞速训练场', '智能导航大赛', '/assets/img/work-02.webp?v=2', '无人机竞速训练场'),
+    ('视觉识别算法调试', '电赛', '/assets/img/work-03.webp?v=2', '视觉识别算法调试'),
+    ('机械臂搬运系统', '校内选拔', '/assets/img/work-04.webp?v=2', '机械臂搬运系统'),
+    ('工件视觉检测系统', '物联网竞赛', '/assets/img/demo-drone-nav.webp?v=2', '工件视觉检测系统'),
+    ('视觉云台平台', '智能导航大赛', '/assets/img/work-06.webp?v=2', '视觉云台平台'),
+    ('双机械臂系统', '校内选拔', '/assets/img/work-07.webp?v=2', '双机械臂系统'),
+    ('元件器材库', '日常备赛', '/assets/img/work-08.webp?v=2', '元件器材库'),
+]
+
+WORK_MAX = 60  # 作品集条目上限，防止误操作把快照撑爆
+WORK_SPEC = _GRID  # 作品集格是统一的 4:3 网格（上传裁剪按这个比例出图）
 
 FIT_CHOICES = ('cover', 'contain')
 ZOOM_MIN, ZOOM_MAX = 100, 150

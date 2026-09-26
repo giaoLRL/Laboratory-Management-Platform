@@ -251,7 +251,8 @@
   (function () {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isTouch = matchMedia('(hover: none)').matches; // 触屏设备保留原生滚动
-    if (reduced || isTouch) return;
+    // 后台实时预览的 iframe 里不能抢滚轮，否则管理员没法浏览要对照的板块
+    if (reduced || isTouch || /[?&]preview=1/.test(location.search)) return;
 
     // 动画期间禁用 CSS 平滑滚动（避免与 rAF 动画叠加打架）
     document.documentElement.style.scrollBehavior = 'auto';
@@ -387,6 +388,98 @@
   }
   if (heroMQ.addEventListener) heroMQ.addEventListener('change', paintHeroPortrait);
 
+  function applyText(map) {
+    if (!map) return;
+    Object.keys(map).forEach(function (k) {
+      var el = document.querySelector('[data-hp="' + k + '"]');
+      if (el && typeof map[k] === 'string') el.textContent = map[k];
+    });
+  }
+
+  // 媒体位：url/type 走 src 替换，fit/focus/zoom 走 CSS 变量（与后台预览盒同一套）
+  function applyImages(map, v) {
+    if (!map) return;
+    Object.keys(map).forEach(function (k) {
+      var m = map[k] || {};
+      if (!m.url) return; // 空 URL = 该位没有素材（如未上传的 hero.portrait），保持页面默认
+      // 无条件剥离旧 ?v= 再追加本次加载时间戳：seed 的 ?v=2、上传图裸 URL 一起覆盖，
+      // 避免命中浏览器对 /assets/(30 天) 或边缘按 path 的旧缓存
+      var u = m.url.split('?')[0] + '?v=' + v;
+      if (k === 'hero.portrait') { heroPortrait = { m: m, u: u }; paintHeroPortrait(); return; }
+      var node = document.querySelector('[data-hp-img="' + k + '"]');
+      if (!node) return;
+      if (m.type === 'video') {
+        if (node.tagName === 'IMG') {
+          // 图片位替换为视频位（静音循环自动播放，点击可放大带声播放）
+          var vd = document.createElement('video');
+          vd.className = node.className + ' lightboxable';
+          vd.muted = true; vd.autoplay = true; vd.loop = true;
+          vd.playsInline = true; vd.preload = 'metadata';
+          vd.setAttribute('src', u);
+          node.parentNode.replaceChild(vd, node);
+          node = vd;
+        } else if (node.tagName === 'VIDEO') {
+          if (node.getAttribute('src') !== u) node.setAttribute('src', u);
+        }
+      } else if (node.tagName !== 'VIDEO') {
+        if (node.getAttribute('src') !== u) node.setAttribute('src', u);
+        if (m.alt) node.setAttribute('alt', m.alt);
+      }
+      applyFrame(node, m);
+    });
+  }
+
+  // 作品集：整块重渲染（顺序/增删/隐藏都由后台数据决定）；
+  // 空数组或全部无图 → 保留 HTML 里的静态 8 格兜底
+  function renderWorks(list, v) {
+    var grid = document.getElementById('worksGrid');
+    if (!grid || !list || !list.length) return;
+    var html = '';
+    list.forEach(function (w) {
+      if (!w || !w.url) return;
+      var u = w.url.split('?')[0] + '?v=' + v;
+      html += '<div class="g-item reveal"><img class="lightboxable" loading="lazy" decoding="async" src="' + u +
+        '" alt="' + esc(w.alt || w.title || '实验室作品') + '">' +
+        '<div class="v-mask"></div><div class="v-cap"><span class="name">' + esc(w.title || '') +
+        '</span><span class="idx">' + esc(w.tag || '') + '</span></div></div>';
+    });
+    if (!html) return;
+    grid.innerHTML = html;
+    // 新节点要重新挂入场动画观察器（io 是本文件顶层创建的）
+    grid.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // 后台「实时预览」：把正在编辑的那个位描边并滚到视野里，便于对照
+  function highlightSlot(key) {
+    var node = key === 'hero.portrait'
+      ? document.querySelector('.hero-media')
+      : document.querySelector('[data-hp-img="' + key + '"]');
+    document.querySelectorAll('.hp-hl').forEach(function (el) { el.classList.remove('hp-hl'); });
+    if (!node) return;
+    var frame = (node.closest && node.closest(FRAME_SEL)) || node;
+    frame.classList.add('hp-hl');
+    if (frame.scrollIntoView) frame.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  // 预览态：等后台 postMessage 下发草稿（不自己拉接口，免得草稿被服务端数据覆盖）
+  if (/[?&]preview=1/.test(location.search)) {
+    document.documentElement.classList.add('hp-preview');
+    addEventListener('message', function (e) {
+      var d = e.data;
+      if (!d || d.type !== 'hp-preview') return;
+      var v = Date.now();
+      applyText(d.text);
+      applyImages(d.images, v);
+      renderWorks(d.works, v);
+      if (d.focusKey) highlightSlot(d.focusKey);
+    });
+    return;
+  }
+
   var ctl, t;
   try { ctl = new AbortController(); } catch (e) { return; }
   t = setTimeout(function () { try { ctl.abort(); } catch (e) {} }, 8000);
@@ -398,38 +491,9 @@
       d = d && d.data ? d.data : d;
       if (!d || !d.text) return;
       var v = Date.now();
-      Object.keys(d.text || {}).forEach(function (k) {
-        var el = document.querySelector('[data-hp="' + k + '"]');
-        if (el && typeof d.text[k] === 'string') el.textContent = d.text[k];
-      });
-      Object.keys(d.images || {}).forEach(function (k) {
-        var m = d.images[k] || {};
-        if (!m.url) return; // 空 URL = 该位没有素材（如未上传的 hero.portrait），保持页面默认
-        // 无条件剥离旧 ?v= 再追加本次加载时间戳：seed 的 ?v=2、上传图裸 URL 一起覆盖，
-        // 避免命中浏览器对 /assets/(30 天) 或边缘按 path 的旧缓存
-        var u = m.url.split('?')[0] + '?v=' + v;
-        if (k === 'hero.portrait') { heroPortrait = { m: m, u: u }; paintHeroPortrait(); return; }
-        var node = document.querySelector('[data-hp-img="' + k + '"]');
-        if (!node) return;
-        if (m.type === 'video') {
-          if (node.tagName === 'IMG') {
-            // 图片位替换为视频位（静音循环自动播放，点击可放大带声播放）
-            var vd = document.createElement('video');
-            vd.className = node.className + ' lightboxable';
-            vd.muted = true; vd.autoplay = true; vd.loop = true;
-            vd.playsInline = true; vd.preload = 'metadata';
-            vd.setAttribute('src', u);
-            node.parentNode.replaceChild(vd, node);
-            node = vd;
-          } else if (node.tagName === 'VIDEO') {
-            if (node.getAttribute('src') !== u) node.setAttribute('src', u);
-          }
-        } else if (node.tagName !== 'VIDEO') {
-          if (node.getAttribute('src') !== u) node.setAttribute('src', u);
-          if (m.alt) node.setAttribute('alt', m.alt);
-        }
-        applyFrame(node, m);
-      });
+      applyText(d.text);
+      applyImages(d.images, v);
+      renderWorks(d.works, v);
     })
     .catch(function () { clearTimeout(t); }); // 失败/超时静默，保持页面默认内容
 })();

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#0a0c12">
 <link rel="icon" type="image/png" href="./assets/img/school-badge.png">
 <link rel="preload" as="image" href="./assets/img/hero.webp">
-<link rel="stylesheet" href="/assets/site.css?v=2">
+<link rel="stylesheet" href="/assets/site.css?v=3">
 <noscript>
   <style>
     /* JS 不可用时的兜底：确保内容可见 */
@@ -276,44 +276,46 @@
         <p data-hp="works.subtitle">历年参赛与训练作品实拍。</p>
       </div>
     </div>
-    <div class="gallery-masonry">
+    <!-- 作品集：内容接口可用时由 site.js 按后台数据整体重渲染（可增删/排序/隐藏）；
+         下面 8 格是静态兜底（接口不可用 / 禁用 JS 时照旧显示），同时兼作首屏与 SEO 内容 -->
+    <div class="gallery-masonry" id="worksGrid">
       <div class="g-item reveal">
-        <img data-hp-img="work-01" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-01.webp?v=2" alt="机器视觉识别系统">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-01.webp?v=2" alt="机器视觉识别系统">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">机器视觉识别系统</span><span class="idx">智能导航大赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="work-02" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-02.webp?v=2" alt="无人机竞速训练场">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-02.webp?v=2" alt="无人机竞速训练场">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">无人机竞速训练场</span><span class="idx">智能导航大赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="work-03" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-03.webp?v=2" alt="视觉识别算法调试">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-03.webp?v=2" alt="视觉识别算法调试">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">视觉识别算法调试</span><span class="idx">电赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="work-04" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-04.webp?v=2" alt="机械臂搬运系统">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-04.webp?v=2" alt="机械臂搬运系统">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">机械臂搬运系统</span><span class="idx">校内选拔</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="demo-drone-nav" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/demo-drone-nav.webp?v=2" alt="工件视觉检测系统">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/demo-drone-nav.webp?v=2" alt="工件视觉检测系统">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">工件视觉检测系统</span><span class="idx">物联网竞赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="work-06" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-06.webp?v=2" alt="视觉云台平台">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-06.webp?v=2" alt="视觉云台平台">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">视觉云台平台</span><span class="idx">智能导航大赛</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="work-07" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-07.webp?v=2" alt="双机械臂系统">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-07.webp?v=2" alt="双机械臂系统">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">双机械臂系统</span><span class="idx">校内选拔</span></div>
       </div>
       <div class="g-item reveal">
-        <img data-hp-img="work-08" class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-08.webp?v=2" alt="元件器材库">
+        <img class="lightboxable" loading="lazy" decoding="async" src="./assets/img/work-08.webp?v=2" alt="元件器材库">
         <div class="v-mask"></div>
         <div class="v-cap"><span class="name">元件器材库</span><span class="idx">日常备赛</span></div>
       </div>
@@ -520,6 +522,6 @@
   <button class="lb-close" aria-label="关闭">&times;</button>
 </div>
 
-<script src="/assets/site.js?v=2"></script>
+<script src="/assets/site.js?v=3"></script>
 </body>
 </html>

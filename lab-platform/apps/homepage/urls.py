@@ -8,6 +8,9 @@ urlpatterns = [
     path('homepage/images', api.homepage_image_upload),
     path('homepage/images/reset', api.homepage_image_reset),
     path('homepage/frame', api.homepage_frame_save),
+    path('homepage/works', api.homepage_works_save),
+    path('homepage/works/image', api.homepage_work_image),
+    path('homepage/works/reset', api.homepage_work_reset),
     path('homepage/scale', api.homepage_scale_save),
     path('homepage/public', api.homepage_public),
 ]

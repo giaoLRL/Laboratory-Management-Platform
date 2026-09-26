@@ -57,6 +57,9 @@
     object-fit: var(--hp-fit, cover);
     object-position: var(--hp-focus-x, 50%) var(--hp-focus-y, 50%);
   }
+  /* 后台「实时预览」态（/?preview=1）：隐藏背景音乐启动卡，被编辑的位加虚线描边 */
+  .hp-preview .bgm-gate { display: none; }
+  .hp-hl { outline: 3px dashed #3DE0FF; outline-offset: 3px; }
   /* 手机竖版 Hero 素材（hero.portrait）：脚本注入，仅在 ≤767px 顶替横版；
      未上传时元素不存在，回退下面的 contain。基准规则必须先于媒体查询，否则被 display:none 压掉 */
   .hero-media .hp-portrait { display: none; }
