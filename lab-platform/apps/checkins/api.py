@@ -2,6 +2,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
+from apps.checkins import codes
 from apps.checkins.models import CheckInRecord
 from apps.common.rbac import require
 from apps.common.response import ok, fail
@@ -14,6 +15,17 @@ def _checkin_dict(c, with_photo=True):
     if with_photo:
         d['photo'] = c.photo.url
     return d
+
+
+def _coord(raw, lo, hi):
+    """可选坐标：没传返回 None；传了但不合法抛 ValueError。"""
+    value = (raw or '').strip()
+    if not value:
+        return None
+    number = float(value)
+    if not lo <= number <= hi:
+        raise ValueError
+    return number
 
 
 def today_record(user):
@@ -33,6 +45,25 @@ def workspace_slice(profile, staff):
     return {'checkins': out, '_ts': ts}
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def checkins_code(request):
+    """当前签到码 + 二维码（管理角色在实验室屏幕上展示用）。"""
+    if (err := require(request.user, 'action:checkin.qrcode', '没有展示签到二维码的权限')):
+        return err
+    info = codes.current()
+    url = request.build_absolute_uri('/') + f'?c={info["code"]}#checkins'
+    resp = ok({**info, 'url': url, 'qr': _qr_data_uri(url)})
+    resp['Cache-Control'] = 'no-store'
+    return resp
+
+
+def _qr_data_uri(text):
+    """签到码二维码：SVG data URI，前端用 <img> 展示（不经 innerHTML）。"""
+    import segno
+    return segno.make(text, error='m').svg_data_uri(scale=8, border=2)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def checkins_create(request):
@@ -43,12 +74,12 @@ def checkins_create(request):
         return fail('打卡必须上传现场照片')
     if photo.size > 8 * 1024 * 1024:
         return fail('照片不能超过 8MB')
+    if not codes.verify(request.POST.get('code')):
+        return fail('签到码无效或已过期，请扫描实验室屏幕上的最新二维码')
     try:
-        lat = float(request.POST.get('latitude', ''))
-        lng = float(request.POST.get('longitude', ''))
+        lat = _coord(request.POST.get('latitude'), -90, 90)
+        lng = _coord(request.POST.get('longitude'), -180, 180)
     except ValueError:
-        return fail('请提供 GPS 定位信息')
-    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
         return fail('GPS 坐标不合法')
 
     now = timezone.localtime()

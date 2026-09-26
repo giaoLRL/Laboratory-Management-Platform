@@ -92,10 +92,11 @@ const CONFIG = {
   },
   "checkin": {
     "id": 1, "memberId": "m3", "created": "2026-09-20T02:30:00.000Z",
-    "latitude": 26.4502, "longitude": 111.6001, "photo": "/media/checkins/202609/xxx.jpg"
+    "latitude": 26.4502, "longitude": 111.6001, "photo": "/media/checkins/202609/xxx.jpg",
+    "signoutAt": null, "onDuty": true
   }
-}
 ```
+（扫码签到后 `latitude/longitude` 可能为 `null`：位置是可选的补充信息，前端显示为「未记录位置」，CSV 导出留空。）
 
 资产状态在当前前端由有效借用记录优先推导为“使用中”；其他状态来自 asset.status。后端也应保持占用关系一致。成员“请假”由当前时间落在已通过请假记录的 start/end 内计算，其他时间显示 baseStatus。
 
@@ -156,7 +157,8 @@ const CONFIG = {
 | `/competitions` | 下方比赛表单字段，不含 id、created、archived | `{"data":{"id":"COMP-004"}}` |
 | `/competitions/:id/update` | 下方比赛表单字段 | `{"data":{"ok":true}}` |
 | `/competitions/:id/archive` | archived（布尔） | 同上 |
-| `/checkins` | multipart：photo（现场照片，≤8MB）、latitude、longitude | `{"data":{"id":1,"created":...,"photo":"/media/..."}}`；同人同日打卡返回 409 |
+| `/checkins` | multipart：photo（现场照片，≤8MB）、code（8 位签到码，**必填**）、latitude/longitude（**可选**，取不到可不传） | `{"data":{"id":1,"created":...,"photo":"/media/..."}}`；签到码无效/过期返回 400「签到码无效或已过期，请扫描实验室屏幕上的最新二维码」；同人同日打卡返回 409 |
+| `/checkins/code` | GET，无参数 | `{"data":{"code":"8UYRY37F","step":90,"secondsLeft":37,"validSeconds":217,"url":"https://…/?c=8UYRY37F#checkins","qr":"data:image/svg+xml;charset=utf-8,…"}}`；`action:checkin.qrcode`；响应 `Cache-Control: no-store` |
 | `/points/manual` | memberId, points（整数 -100~100）, reason | `{"data":{"total":123}}`；`action:points.manual` |
 
 ## 新成员账号创建
@@ -475,6 +477,16 @@ const CONFIG = {
 | POST | `/checkins/signout` | 置当天记录的 `signout_at`，**同时删除该成员的挪位记录**（下次打卡回到默认座位）→ `{id,signoutAt}`。当天未打卡 / 已签退 → 409 | `action:checkin.create` |
 
 打卡记录 `checkins[]` 新增两个字段：`signoutAt`（未签退为 `null`）、`onDuty`（= `signoutAt === null`）。
+
+### 3.1 扫码签到（GPS 已降级为可选）
+
+打卡不再要求浏览器定位 —— 成员大量使用微信 / QQ 内置浏览器，这些 WebView 不向普通网页开放 `navigator.geolocation`，且网页自身也无法调用摄像头（`getUserMedia` 同样要 JS-SDK），所以扫码动作交给外部扫码能力，平台只做三件事：
+
+1. `GET /checkins/code` 取当前签到码与二维码，管理角色（`action:checkin.qrcode`）在实验室屏幕上全屏展示，前端按 `secondsLeft` 到点自动换码；
+2. 二维码编码的链接形如 `https://<host>/?c=<code>#checkins`，成员扫码打开后前端把 `?c=` 收进 `sessionStorage`（键 `lab.checkin.code`，本地 15 分钟 TTL）并抹掉地址栏参数；未登录则先登录，登录成功后自动跳打卡页并弹出打卡窗口；
+3. `POST /checkins` 带上 `code`（可手输兜底），服务端校验时间窗后落库。
+
+签到码规则：`HMAC-SHA256(SECRET_KEY, "checkin:<窗口号>")`，字符集 `23456789ABCDEFGHJKMNPQRSTUVWXYZ`（去掉易混的 0/O/1/I/L），窗口默认 90 秒（`LAB_CHECKIN_CODE_STEP`），可容忍前 2 个窗口（`LAB_CHECKIN_CODE_TOLERANCE`），即一个码实际有效约 1.5 ~ 4.5 分钟。不落库、不需要定时任务。
 
 ### 4. 权限点（已并入 RBAC 矩阵「座位」分组）
 

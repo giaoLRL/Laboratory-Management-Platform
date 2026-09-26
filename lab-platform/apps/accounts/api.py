@@ -445,7 +445,9 @@ def export_csv(request, kind):
     elif kind == 'checkins':
         w.writerow(['姓名', '打卡时间', '纬度', '经度'])
         for c in CheckInRecord.objects.select_related('user').iterator():
-            w.writerow([member_name(c.user_id), c.created, c.latitude, c.longitude])
+            w.writerow([member_name(c.user_id), c.created,
+                        c.latitude if c.latitude is not None else '',
+                        c.longitude if c.longitude is not None else ''])
     elif kind == 'logs':
         w.writerow(['操作人', '对象', '内容', '时间'])
         for lg in OperationLog.objects.select_related('actor', 'member').order_by('-at')[:1000].iterator():

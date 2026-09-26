@@ -789,6 +789,19 @@ dialog[open] { animation: enter 0.16s ease; }
 .gps-status { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--canvas); border-radius: 10px; border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 .gps-status.ok { color: var(--green); border-color: #c8ead8; background: #f4fbf7; }
 .gps-status.err { color: var(--red); border-color: #f2d2d6; background: #fdf4f5; }
+/* 实验室签到二维码：全屏投屏展示（管理角色打开后放在实验室屏幕上，到点自动换码） */
+dialog.qr-board { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #fff; }
+dialog.qr-board::backdrop { background: rgba(20, 24, 35, 0.5); }
+.qr-board-inner { height: 100%; display: flex; flex-direction: column; padding: 26px 34px 30px; }
+.qr-board-head { flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.qr-board-head h2 { font-size: 22px; letter-spacing: -0.5px; }
+.qr-board-head p { margin-top: 8px; max-width: 640px; font-size: 12px; line-height: 1.8; }
+.qr-board-body { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+.qr-holder { display: grid; place-items: center; padding: 16px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.qr-holder img { display: block; width: min(48vh, 400px); height: auto; }
+.qr-code-text { text-align: center; }
+.qr-code-text .mono { display: block; font-size: clamp(24px, 3.6vw, 40px); font-weight: 700; letter-spacing: 8px; color: #1b1d21; }
+.qr-code-text small { display: block; margin-top: 8px; font-size: 12px; color: var(--muted); }
 
 /* 智能体记忆与待确认操作 */
 .agent-memory { border-top: 1px solid var(--line); padding: 12px 14px; }

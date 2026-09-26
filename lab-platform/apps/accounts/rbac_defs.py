@@ -92,6 +92,7 @@ PERMISSION_POINTS = [
     # ── 打卡 ──
     ('page:checkins', '打卡页', False),
     ('action:checkin.create', '打卡', False),
+    ('action:checkin.qrcode', '展示签到二维码', False),
     ('action:checkin.refresh', '刷新打卡', True),
 
     # ── 比赛 ──

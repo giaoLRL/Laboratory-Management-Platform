@@ -151,6 +151,7 @@ document.addEventListener('submit', async (e) => {
       await API.login(form.get('username').trim(), form.get('password'));
       go('dashboard');
       checkFirstLoginGates();
+      maybeOpenScannedCheckin(); // 扫码进来但未登录：登录后直接接着打卡
     } else await modalSubmit(form);
   } catch (err) {
     document.querySelector(login ? '#login-error' : '#modal-error').textContent = err.message;
@@ -186,6 +187,7 @@ async function action(type, b) {
   return handleAction(type, b);
 }
 async function init() {
+  captureScanCode(); // 扫码进入：先收起 ?c=（此时可能还没登录）
   try {
     await API.load();
     const [base, param] = location.hash.slice(1).split('/');
@@ -199,6 +201,7 @@ async function init() {
     }
     render();
     checkFirstLoginGates();
+    maybeOpenScannedCheckin();
   } catch (e) {
     document.querySelector('#app').innerHTML =
       `<div class="loading"><h2>暂时无法读取数据</h2><p style="margin:15px">${esc(e.message)}</p>${btn('重试', 'reload')}${CONFIG.mode === 'mock' ? btn('恢复演示数据', 'reset') : ''}</div>`;

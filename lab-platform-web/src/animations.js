@@ -35,14 +35,21 @@ function initAnimations() {
     });
   }
   function animateNumber(el) {
-    const raw = el.childNodes[0]?.textContent || '';
-    const target = parseFloat(raw.replace(/[^\d.]/g, '')) || 0;
+    const node = el.childNodes[0];
+    const raw = (node?.textContent || '').trim();
+    // 文本型统计值（如「已打卡 / 未扫码」）不做数字滚动：否则 parseFloat 得到 NaN，
+    // 会被兜底成 0 覆盖掉原文案
+    if (!/^\d+(\.\d+)?$/.test(raw)) {
+      el.classList.add('in');
+      return;
+    }
+    const target = parseFloat(raw);
     const start = performance.now();
     const dur = 550;
     function tick(t) {
       const p = Math.min(1, (t - start) / dur);
       const val = Math.round(target * (1 - Math.pow(1 - p, 3)));
-      el.childNodes[0].textContent = String(val);
+      node.textContent = String(val);
       if (p < 1) requestAnimationFrame(tick);
       else el.classList.add('in');
     }
