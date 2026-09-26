@@ -16,7 +16,15 @@ from rest_framework.permissions import IsAuthenticated
 from apps.accounts.models import OperationLog
 from apps.common.rbac import require
 from apps.common.response import fail, ok
-from apps.homepage.defaults import IMAGE_DEFAULTS, TEXT_DEFAULTS
+from apps.homepage.defaults import (
+    FIT_CHOICES,
+    FOCUS_MAX,
+    FOCUS_MIN,
+    IMAGE_DEFAULTS,
+    TEXT_DEFAULTS,
+    ZOOM_MAX,
+    ZOOM_MIN,
+)
 from apps.homepage.models import HomePageImage, HomePageText
 
 MAX_IMG = 10 * 1024 * 1024
@@ -81,12 +89,26 @@ def homepage_get(request):
         {'key': t.key, 'label': t.label, 'value': t.value}
         for t in HomePageText.objects.all()
     ]
-    images = [
-        {'key': i.key, 'label': i.label, 'alt': i.alt, 'seed': i.seed,
-         'type': i.kind, 'scale': i.scale, 'url': _media_url(i),
-         'uploaded': bool(i.image or i.video)}
-        for i in HomePageImage.objects.all()
-    ]
+    # 以 IMAGE_DEFAULTS 为准逐位输出（缺行说明该位还没被编辑过，按默认值回填，
+    # 这样新增的媒体位无需数据迁移就会出现在后台编辑器里）
+    rows = {i.key: i for i in HomePageImage.objects.all()}
+    images = []
+    for key, (label, seed, alt, spec) in IMAGE_DEFAULTS.items():
+        row = rows.get(key)
+        if row is None:
+            images.append({
+                'key': key, 'label': label, 'alt': alt, 'seed': seed,
+                'type': 'image', 'url': seed, 'uploaded': False,
+                'fit': spec['fit'], 'focus_x': spec['focus'][0], 'focus_y': spec['focus'][1],
+                'zoom': 100, 'spec': spec,
+            })
+            continue
+        images.append({
+            'key': key, 'label': row.label or label, 'alt': row.alt or alt, 'seed': row.seed or seed,
+            'type': row.kind, 'url': _media_url(row), 'uploaded': bool(row.image or row.video),
+            'fit': row.fit, 'focus_x': row.focus_x, 'focus_y': row.focus_y, 'zoom': row.zoom,
+            'spec': spec,
+        })
     return ok({'texts': texts, 'images': images})
 
 
@@ -112,6 +134,42 @@ def homepage_scale_save(request):
     )
     _log(request, f'设置主页{key}缩放 · {scale}%')
     return ok({'scale': scale})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def homepage_frame_save(request):
+    """保存媒体位构图参数：裁切方式 + 焦点 + 微缩放（后台预览与线上同一套变量）。"""
+    if (err := require(request.user, 'action:homepage.edit', '没有编辑主页内容的权限')):
+        return err
+    d = request.data or {}
+    key = str(d.get('key', '')).strip()
+    if key not in IMAGE_DEFAULTS:
+        return fail('媒体标识不合法')
+    spec = IMAGE_DEFAULTS[key][3]
+    fit = str(d.get('fit') or spec['fit']).strip().lower()
+    if fit not in FIT_CHOICES:
+        return fail('裁切方式仅支持 cover / contain')
+    if spec.get('fitLocked'):
+        fit = spec['fit']  # 裁切方式写死的位（如二维码）忽略入参，保证线上不会被越权裁掉
+    try:
+        fx = int(d.get('focus_x', spec['focus'][0]))
+        fy = int(d.get('focus_y', spec['focus'][1]))
+        zoom = int(d.get('zoom', 100))
+    except (TypeError, ValueError):
+        return fail('焦点与缩放必须为整数')
+    if not (FOCUS_MIN <= fx <= FOCUS_MAX and FOCUS_MIN <= fy <= FOCUS_MAX):
+        return fail(f'焦点范围需在 {FOCUS_MIN}%–{FOCUS_MAX}% 之间')
+    if not (ZOOM_MIN <= zoom <= ZOOM_MAX):
+        return fail(f'缩放范围需在 {ZOOM_MIN}%–{ZOOM_MAX}% 之间')
+    HomePageImage.objects.update_or_create(
+        pk=key,
+        defaults={'label': IMAGE_DEFAULTS[key][0], 'seed': IMAGE_DEFAULTS[key][1],
+                  'alt': IMAGE_DEFAULTS[key][2],
+                  'fit': fit, 'focus_x': fx, 'focus_y': fy, 'zoom': zoom},
+    )
+    _log(request, f'设置主页{key}构图 · {fit} 焦点{fx}/{fy} 缩放{zoom}%')
+    return ok({'fit': fit, 'focus_x': fx, 'focus_y': fy, 'zoom': zoom})
 
 
 @api_view(['POST'])
@@ -197,8 +255,12 @@ def homepage_image_reset(request):
         else:
             _drop(row.image)
             row.image = None
+        spec = IMAGE_DEFAULTS[key][3]
         row.kind = 'image'
         row.scale = 100
+        row.zoom = 100
+        row.fit = spec['fit']
+        row.focus_x, row.focus_y = spec['focus']
         row.alt = IMAGE_DEFAULTS[key][2]
         row.save()
     _log(request, f'重置主页媒体 · {key}')
@@ -219,9 +281,12 @@ def homepage_public(request):
         texts.setdefault(key, val)
     images = {}
     for i in HomePageImage.objects.all():
-        images[i.key] = {'type': i.kind, 'scale': i.scale, 'url': _media_url(i), 'alt': i.alt}
-    for key, (_, seed, alt) in IMAGE_DEFAULTS.items():
-        images.setdefault(key, {'type': 'image', 'scale': 100, 'url': seed, 'alt': alt})
+        images[i.key] = {'type': i.kind, 'url': _media_url(i), 'alt': i.alt,
+                         'fit': i.fit, 'focus_x': i.focus_x, 'focus_y': i.focus_y, 'zoom': i.zoom}
+    for key, (_, seed, alt, spec) in IMAGE_DEFAULTS.items():
+        images.setdefault(key, {'type': 'image', 'url': seed, 'alt': alt,
+                                'fit': spec['fit'], 'focus_x': spec['focus'][0],
+                                'focus_y': spec['focus'][1], 'zoom': 100})
     return ok({'text': texts, 'images': images})
 
 

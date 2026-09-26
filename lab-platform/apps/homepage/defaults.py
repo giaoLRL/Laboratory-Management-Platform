@@ -30,26 +30,54 @@ TEXT_DEFAULTS = OrderedDict([
     ('join.subtitle', ('加入·副标题', '从零基础到国赛领奖台，这条路我们已经走过很多遍')),
 ])
 
-# key -> (label, 默认引用 seed, 默认 alt)
+def _spec(ar, min_size, fit='cover', locked=False):
+    """媒体位规格：ar 目标比例 / min 建议最小素材尺寸 / fit 默认裁切方式 / focus 默认焦点。
+
+    ar 是容器侧的固定比例（与首页 CSS 的 --hp-ar 一致，后台预览盒与线上同参，不可改）；
+    fit / focus 是可控项，后台保存后覆盖；老师若不上传素材，前台按此回退。
+    locked=True 表示该位的裁切方式写死（二维码必须完整显示才扫得出来），后台不给切换。
+    """
+    return {'ar': list(ar), 'fit': fit, 'focus': [50, 50], 'min': list(min_size), 'fitLocked': locked}
+
+
+_WIDE = _spec((16, 9), (1280, 720))      # 轮播宽卡 / 整幅宽图卡
+_TALL = _spec((9, 16), (720, 1280))      # 轮播竖卡
+_GRID = _spec((4, 3), (800, 600))        # 作品集格
+_PHOTO = _spec((3, 2), (900, 600))       # 动态 / 招新配图
+_QR = _spec((1, 1), (300, 300), fit='contain', locked=True)   # 二维码：绝不裁切（裁切方式写死）
+_HERO_P = _spec((9, 16), (1080, 1920))   # 手机 Hero 竖版素材
+
+# key -> (label, 默认引用 seed, 默认 alt, spec)
+# hero.portrait 无静态兜底（seed 为空串）：未上传时前台不注入竖版元素，CSS 回退 contain。
 IMAGE_DEFAULTS = OrderedDict([
-    ('work-01', ('作品 01', '/assets/img/work-01.webp?v=2', '机器视觉识别系统')),
-    ('work-02', ('作品 02', '/assets/img/work-02.webp?v=2', '无人机竞速训练场')),
-    ('work-03', ('作品 03', '/assets/img/work-03.webp?v=2', '视觉识别算法调试')),
-    ('work-04', ('作品 04', '/assets/img/work-04.webp?v=2', '机械臂搬运系统')),
-    ('work-05', ('作品主图', '/assets/img/work-05.webp?v=2', '机器视觉检测系统运行界面')),
-    ('work-06', ('作品 06', '/assets/img/work-06.webp?v=2', '视觉云台平台')),
-    ('work-07', ('作品 07', '/assets/img/work-07.webp?v=2', '双机械臂系统')),
-    ('work-08', ('作品 08', '/assets/img/work-08.webp?v=2', '元件器材库')),
-    ('demo-flight-ctrl', ('轮播卡2 飞控调试图', '/assets/img/demo-flight-ctrl.webp?v=2', '飞控调试')),
-    ('demo-iot', ('轮播卡3 物联网图', '/assets/img/demo-iot.webp?v=2', '物联网开发板')),
-    ('demo-edc', ('轮播卡4 电赛作品图', '/assets/img/demo-edc.webp?v=2', '电赛作品')),
-    ('demo-car', ('轮播卡5 智能小车图', '/assets/img/demo-car.webp?v=2', '智能小车')),
-    ('demo-drone-nav', ('作品5 工件检测图', '/assets/img/demo-drone-nav.webp?v=2', '工件视觉检测系统')),
-    ('uav-nav', ('无人机导航图', '/assets/img/uav-nav.webp?v=2', '四旋翼无人机调试')),
-    ('build', ('实物装配图', '/assets/img/build.webp?v=2', '机械臂工程调试')),
-    ('news-1', ('动态图1', '/assets/img/news-1.webp?v=3', '获奖队合影')),
-    ('news-2', ('动态图2', '/assets/img/news-2.webp?v=3', '获奖队合影')),
-    ('news-3', ('动态图3', '/assets/img/news-3.webp?v=3', '实验室全体成员合影')),
-    ('join', ('招新配图', '/assets/img/join.webp?v=2', '实验室日常开发场景')),
-    ('qrcode', ('招新群二维码', '/assets/img/qrcode.png?v=2', '招新群二维码')),
+    ('hero.portrait', ('Hero 竖版素材（手机）', '', '手机端 Hero 竖版素材', _HERO_P)),
+    ('work-01', ('作品 01', '/assets/img/work-01.webp?v=2', '机器视觉识别系统', _GRID)),
+    ('work-02', ('作品 02', '/assets/img/work-02.webp?v=2', '无人机竞速训练场', _GRID)),
+    ('work-03', ('作品 03', '/assets/img/work-03.webp?v=2', '视觉识别算法调试', _GRID)),
+    ('work-04', ('作品 04', '/assets/img/work-04.webp?v=2', '机械臂搬运系统', _GRID)),
+    ('work-05', ('作品主图', '/assets/img/work-05.webp?v=2', '机器视觉检测系统运行界面', _WIDE)),
+    ('work-06', ('作品 06', '/assets/img/work-06.webp?v=2', '视觉云台平台', _GRID)),
+    ('work-07', ('作品 07', '/assets/img/work-07.webp?v=2', '双机械臂系统', _GRID)),
+    ('work-08', ('作品 08', '/assets/img/work-08.webp?v=2', '元件器材库', _GRID)),
+    ('demo-flight-ctrl', ('轮播卡2 飞控调试图', '/assets/img/demo-flight-ctrl.webp?v=2', '飞控调试', _TALL)),
+    ('demo-iot', ('轮播卡3 物联网图', '/assets/img/demo-iot.webp?v=2', '物联网开发板', _TALL)),
+    ('demo-edc', ('轮播卡4 电赛作品图', '/assets/img/demo-edc.webp?v=2', '电赛作品', _WIDE)),
+    ('demo-car', ('轮播卡5 智能小车图', '/assets/img/demo-car.webp?v=2', '智能小车', _TALL)),
+    ('demo-drone-nav', ('作品5 工件检测图', '/assets/img/demo-drone-nav.webp?v=2', '工件视觉检测系统', _GRID)),
+    ('uav-nav', ('无人机导航图', '/assets/img/uav-nav.webp?v=2', '四旋翼无人机调试', _WIDE)),
+    ('build', ('实物装配图', '/assets/img/build.webp?v=2', '机械臂工程调试', _WIDE)),
+    ('news-1', ('动态图1', '/assets/img/news-1.webp?v=3', '获奖队合影', _PHOTO)),
+    ('news-2', ('动态图2', '/assets/img/news-2.webp?v=3', '获奖队合影', _PHOTO)),
+    ('news-3', ('动态图3', '/assets/img/news-3.webp?v=3', '实验室全体成员合影', _PHOTO)),
+    ('join', ('招新配图', '/assets/img/join.webp?v=2', '实验室日常开发场景', _PHOTO)),
+    ('qrcode', ('招新群二维码', '/assets/img/qrcode.png?v=2', '招新群二维码', _QR)),
 ])
+
+FIT_CHOICES = ('cover', 'contain')
+ZOOM_MIN, ZOOM_MAX = 100, 150
+FOCUS_MIN, FOCUS_MAX = 0, 100
+
+
+def spec_of(key):
+    """取某媒体位的规格（含 label/seed/alt 之外的 ar/fit/focus/min）。"""
+    return dict(IMAGE_DEFAULTS[key][3])

@@ -959,12 +959,25 @@ dialog.qr-board::backdrop { background: rgba(20, 24, 35, 0.5); }
 .hp-row .hp-val:focus { outline: none; border-color: var(--blue); }
 .hp-gallery { padding: 14px 18px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; align-content: start; flex: 1; min-height: 0; overflow-y: auto; }
 .hp-img-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 8px; background: #fff; position: relative; }
-.hp-thumb-wrap { position: relative; display: block; overflow: hidden; }
-.hp-thumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: #f3f3f1; border: 1px solid var(--line); display: block; transform: scale(var(--pscale, 100%)); transform-origin: center; }
+/* 预览盒 = 官网容器：比例/裁切/焦点/缩放全部按该位的 spec 走，线上长什么样这里就长什么样 */
+.hp-thumb-wrap { position: relative; display: block; overflow: hidden; aspect-ratio: var(--hp-ar, 4 / 3); border-radius: 6px; background: #f3f3f1; border: 1px solid var(--line); }
+.hp-thumb { width: 100%; height: 100%; object-fit: var(--hp-fit, cover); object-position: var(--hp-focus-x, 50%) var(--hp-focus-y, 50%); display: block; transform: scale(var(--hp-zoom, 1)); transform-origin: center; }
+.hp-thumb-empty { display: grid; place-items: center; width: 100%; height: 100%; padding: 8px; font-size: 10.5px; line-height: 1.5; color: #a0a0a0; text-align: center; }
 .hp-video-badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 10px; color: #fff; background: rgba(20, 24, 35, .72); border-radius: 5px; padding: 2px 7px; }
-.hp-scale-row { gap: 6px; align-items: center; }
-.hp-scale-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--blue, #243E70); height: 16px; }
-.hp-scale-val { font-size: 10px; color: #7a7a78; width: 34px; text-align: right; }
+.hp-spec { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: #7a7a78; }
+.hp-spec .hp-see.warn { color: #b2761a; }
+.hp-frame { display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--line); padding-top: 7px; }
+.hp-frame-row { display: flex; align-items: center; gap: 8px; }
+.hp-frame-label { flex-shrink: 0; }
+.hp-fit-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.hp-fit-switch button { border: 0; background: #fff; font-size: 11px; padding: 3px 10px; cursor: pointer; color: #6b6f78; font-family: inherit; }
+.hp-fit-switch button.active { background: #eef2fa; color: var(--blue, #243E70); font-weight: 600; }
+.hp-focus-grid { display: grid; grid-template-columns: repeat(3, 18px); gap: 3px; }
+.hp-focus-grid button { position: relative; width: 18px; height: 18px; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: #fff; cursor: pointer; }
+.hp-focus-grid button.active { border-color: var(--blue, #243E70); background: var(--blue, #243E70); }
+.hp-focus-grid button.active::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: #fff; }
+.hp-frame-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--blue, #243E70); height: 16px; }
+.hp-zoom-val { font-size: 10px; color: #7a7a78; width: 34px; text-align: right; }
 .hp-img-meta { display: flex; flex-direction: column; gap: 2px; }
 .hp-img-meta .mono { font-size: 11px; color: #43474f; }
 .hp-alt { width: 100%; padding: 5px 8px; font-size: 11px; border: 1px solid var(--line); border-radius: 6px; background: #fff; box-sizing: border-box; }
@@ -1163,6 +1176,91 @@ dialog.qr-board::backdrop { background: rgba(20, 24, 35, 0.5); }
 .seat-bubble::after { content: ""; position: absolute; left: 50%; bottom: -5px; margin-left: -4.5px; width: 9px; height: 9px; background: #fff; border-right: 1px solid var(--blue); border-bottom: 1px solid var(--blue); transform: rotate(45deg); }
 .seat-room.hl .seat-cell.free { background: #eef2f8; box-shadow: 0 0 0 1.5px var(--blue) inset; }
 .seat-walk { position: absolute; inset: 0; z-index: 12; pointer-events: none; }
+/* 格子层与小人分成两层：.seat-grid 用 display:contents 继续参与外层网格布局，
+   小人单独一层才能对 transform 做过渡 —— 别人挪位是「滑过去」，而不是整层重画后闪现。 */
+.seat-grid { display: contents; }
+/* z-index 7：要高过格子 hover 的 6，否则鼠标划过时格子的白底会把小人盖住 */
+.seat-people { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+.seat-person { position: absolute; left: 0; top: 0; width: 64px; height: 64px; pointer-events: auto; cursor: pointer; transition: transform .32s cubic-bezier(.4, 0, .2, 1); }
+.seat-person.hop { transition: none; }
+.seat-person.hidden { opacity: 0; }
+.seat-person:hover .seat-name { border-color: var(--blue); }
+
+/* ───────── 座位状态动画 ─────────
+   每一档动作都对应该状态的含义：调试=猛敲键盘、开会=站着比划、休息=闭眼靠椅背。
+   全部只动 transform / opacity（走合成层，不触发布局），且起点用 --fig-delay 按成员错相 ——
+   否则整屋人会整齐划一地敲键盘，既假又吵。 */
+.seat-fig [class^="p-"], .seat-fig [class*=" p-"] { transform-box: fill-box; }
+.seat-fig .p-head { transform-origin: center 72%; }
+.seat-fig .p-torso { transform-origin: center bottom; }
+.seat-fig .p-arm-l, .seat-fig .p-arm-r { transform-origin: 50% 8%; }
+.seat-fig .p-hand-l, .seat-fig .p-hand-r { transform-origin: center; }
+.seat-fig .p-screen-alert { opacity: 0; }
+.seat-fig .p-eye-shut { opacity: 0; }
+/* 注意：错相必须写在每条 animation 简写里 —— 简写会把 animation-delay 重置为 0，
+   单独写一条 animation-delay 规则会被它覆盖（踩过一次：整屋人同步敲键盘）。 */
+
+/* 工作中：小幅交替敲键盘 + 偶尔看屏幕 */
+@keyframes seat-work-l { 0%,100% { transform: translateY(0) } 42% { transform: translateY(-1.8px) } }
+@keyframes seat-work-r { 0%,100% { transform: translateY(-1.8px) } 58% { transform: translateY(0) } }
+@keyframes seat-work-head { 0%,72%,100% { transform: rotate(0) } 80%,90% { transform: rotate(-3deg) } }
+@keyframes seat-work-fx { 0%,100% { opacity: .1 } 50% { opacity: .26 } }
+.st-work .p-hand-l { animation: seat-work-l 1.15s cubic-bezier(.4,0,.6,1) var(--fig-delay, 0s) infinite; }
+.st-work .p-hand-r { animation: seat-work-r 1.15s cubic-bezier(.4,0,.6,1) var(--fig-delay, 0s) infinite; }
+.st-work .p-head { animation: seat-work-head 5.5s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-work .p-screen-alert { fill: #3f6ea8; animation: seat-work-fx 2.6s ease-in-out var(--fig-delay, 0s) infinite; }
+
+/* 调试中：高速交替敲击 + 点头 + 报错闪屏 */
+@keyframes seat-dbg-l { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-2.8px) } }
+@keyframes seat-dbg-r { 0%,100% { transform: translateY(-2.8px) } 50% { transform: translateY(0) } }
+@keyframes seat-dbg-nod { 0%,100% { transform: rotate(0) translateY(0) } 50% { transform: rotate(-2.2deg) translateY(.7px) } }
+@keyframes seat-dbg-alert { 0%,100% { opacity: 0 } 45%,60% { opacity: .85 } }
+.st-debug .p-hand-l { animation: seat-dbg-l .3s steps(2, end) var(--fig-delay, 0s) infinite; }
+.st-debug .p-hand-r { animation: seat-dbg-r .3s steps(2, end) var(--fig-delay, 0s) infinite; }
+.st-debug .p-head { animation: seat-dbg-nod .6s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-debug .p-screen-alert { fill: #b8453a; animation: seat-dbg-alert 1.1s ease-in-out var(--fig-delay, 0s) infinite; }
+
+/* 开会中：站起来讲解，右手抬起比划 + 缓慢扫视。
+   坐姿的手臂画在身体下层，抬臂会被身体遮住 —— 所以坐姿改用「手抬到胸前比划」来表达。 */
+@keyframes seat-mtg-arm { 0%,100% { transform: rotate(0) } 30%,55% { transform: rotate(42deg) } }
+@keyframes seat-mtg-arm-seat { 0%,100% { transform: rotate(0) } 30%,55% { transform: rotate(26deg) } }
+@keyframes seat-mtg-hand { 0%,100% { transform: translate(0,0) } 28%,55% { transform: translate(-7px,-11px) } }
+@keyframes seat-mtg-head { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-7deg) } 70% { transform: rotate(6deg) } }
+.st-meeting.pose-stand .p-arm-r { animation: seat-mtg-arm 1.9s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-meeting.pose-seat .p-arm-r { animation: seat-mtg-arm-seat 1.9s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-meeting.pose-seat .p-hand-r { animation: seat-mtg-hand 1.9s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-meeting .p-head { animation: seat-mtg-head 5s ease-in-out var(--fig-delay, 0s) infinite; }
+
+/* 休息中：闭眼、靠椅背、屏幕压暗 */
+@keyframes seat-rest-torso { 0%,100% { transform: rotate(0) translateY(0) } 50% { transform: rotate(-1.6deg) translateY(.5px) } }
+@keyframes seat-rest-head { 0%,100% { transform: rotate(-4deg) } 50% { transform: rotate(-6.5deg) translateY(.6px) } }
+@keyframes seat-rest-dim { 0%,100% { opacity: .2 } 50% { opacity: .36 } }
+.st-rest .p-torso { animation: seat-rest-torso 3.6s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-rest .p-head { animation: seat-rest-head 3.6s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-rest .p-eye { opacity: 0; }
+.st-rest .p-eye-shut { opacity: 1; }
+.st-rest .p-screen-alert { fill: #1b1d21; animation: seat-rest-dim 4.2s ease-in-out var(--fig-delay, 0s) infinite; }
+
+/* 实验室外：位子空着，只剩待机呼吸灯与轻晃的椅子 */
+@keyframes seat-out-idle { 0%,100% { opacity: .07 } 50% { opacity: .2 } }
+@keyframes seat-out-chair { 0%,100% { transform: rotate(0) } 50% { transform: rotate(-.6deg) } }
+.st-out .p-screen-alert { fill: #2f4a6b; animation: seat-out-idle 3.4s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-out .p-chair { animation: seat-out-chair 6s ease-in-out var(--fig-delay, 0s) infinite; }
+
+/* 自定义 / 通道上站着的人：只有呼吸与轻微摆头 */
+@keyframes seat-cus-breathe { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-.6px) } }
+@keyframes seat-cus-head { 0%,100% { transform: rotate(0) } 30% { transform: rotate(-2.4deg) } 65% { transform: rotate(2deg) } }
+.st-custom .p-torso, .st-stand .p-torso { animation: seat-cus-breathe 3.8s ease-in-out var(--fig-delay, 0s) infinite; }
+.st-custom .p-head, .st-stand .p-head { animation: seat-cus-head 6s ease-in-out var(--fig-delay, 0s) infinite; }
+
+/* 头像（聊天列表）与形象编辑器预览不挂状态：几十个一起动既吵又费 */
+.seat-chat .seat-mav .seat-fig *, .seat-char-prev .seat-fig * { animation: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .seat-fig * { animation: none !important; }
+  .seat-fig .p-screen-alert, .seat-fig .p-eye-shut { opacity: 0; }
+  .st-rest .p-eye { opacity: 1; }
+}
 .seat-walker { position: absolute; left: 0; top: 0; width: 64px; height: 64px; padding-bottom: 1px; display: flex; align-items: flex-end; justify-content: center; transition: transform .3s cubic-bezier(.4,0,.2,1); }
 .seat-walker svg { width: 58px; height: 44px; display: block; }
 

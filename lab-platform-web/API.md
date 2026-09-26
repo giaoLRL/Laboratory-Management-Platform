@@ -407,16 +407,18 @@ const CONFIG = {
 
 | 方法 | 路径 | 说明 | 权限 |
 | --- | --- | --- | --- |
-| GET | `/homepage` | 回填：`{texts:[{key,label,value}], images:[{key,label,alt,seed,type,scale,url,uploaded}]}`；`type` 为 `image`/`video`，`scale` 为显示缩放（80–150，默认 100），未上传的 `url` 为 seed 静态路径，`uploaded=false` | `page:homepage` |
+| GET | `/homepage` | 回填：`{texts:[{key,label,value}], images:[{key,label,alt,seed,type,url,uploaded,fit,focus_x,focus_y,zoom,spec}]}`；`type` 为 `image`/`video`，未上传的 `url` 为 seed 静态路径（无静态兜底的位为空串）、`uploaded=false`；`spec={ar:[w,h],fit,focus:[x,y],min:[w,h],fitLocked}` 是该位的固定规格（`ar` 目标比例、`min` 建议最小素材尺寸、`fitLocked=true` 表示裁切方式写死不给切），`fit/focus_x/focus_y/zoom` 为当前生效值 | `page:homepage` |
 | POST | `/homepage/texts` | `{"values":{"hero.title":"新标题"}}` 批量保存文案（仅允许预置 key，单条 ≤4000 字符）→ `{count}` | `action:homepage.edit` |
-| POST | `/homepage/scale` | `{"key":"work-01","scale":120}` 设置图位显示缩放（80–150 整数）→ `{scale}` | `action:homepage.edit` |
+| POST | `/homepage/frame` | `{"key":"uav-nav","fit":"cover","focus_x":50,"focus_y":40,"zoom":100}` 保存构图（`fit` 仅 `cover`/`contain`，焦点 0–100，`zoom` 100–150）→ `{fit,focus_x,focus_y,zoom}` | `action:homepage.edit` |
+| POST | `/homepage/scale` | 旧接口，保留兼容：`{"key":"work-01","scale":120}` 设置图位显示缩放（80–150 整数）→ `{scale}`（后台已不再使用，改存 `zoom`） | `action:homepage.edit` |
 | POST | `/homepage/images` | FormData `{key,media,alt?}` 上传/替换媒体（互斥：传图覆盖视频、传视频覆盖图）；图片 ≤10MB(jpg/png/webp)、视频 ≤40MB(mp4/webm，魔数校验) → `{url,kind}`（`url` 形如 `/media/public/homepage/…`，免登录） | `action:homepage.edit` |
-| POST | `/homepage/images/reset` | `{"key":"work-01"}` 恢复默认引用图 → `{url}`（seed 路径） | `action:homepage.edit` |
-| GET | `/homepage/public` | 无鉴权内容快照（`Cache-Control: max-age=300`）：`{text:{key:value…}, images:{key:{type,scale,url,alt}…}}`；`type` 供官网判断渲染 `<img>` 或 `<video>`，`scale` 供官网应用显示缩放 | 公开 |
+| POST | `/homepage/images/reset` | `{"key":"work-01"}` 恢复默认引用图（同时把 fit/focus/zoom 复位到该位 spec）→ `{url}`（seed 路径） | `action:homepage.edit` |
+| GET | `/homepage/public` | 无鉴权内容快照（`Cache-Control: max-age=300`）：`{text:{key:value…}, images:{key:{type,url,alt,fit,focus_x,focus_y,zoom}…}}`；`type` 供官网判断渲染 `<img>` 或 `<video>`，`fit/focus_*/zoom` 供官网写 CSS 变量（`--hp-fit/--hp-focus-x/--hp-focus-y/--hp-zoom`） | 公开 |
 | GET | `/media/public/homepage/<path>` | 已上传配图/视频免登录直出（仅放行 `homepage/` 目录，生产 X-Accel 直发） | 公开 |
 
 - 文案 key（21）：`hero.title / demo.title / demo.subtitle / demo.cards.1~5 / uav.title / uav.subtitle / uav.tag / build.title / build.tag / works.title / works.subtitle / research.title / research.subtitle / news.title / news.subtitle / join.title / join.subtitle`
-- 图片 key（20）：`work-01~08 / demo-flight-ctrl / demo-iot / demo-edc / demo-car / demo-drone-nav / uav-nav / build / news-1~3 / join / qrcode`
+- 图片 key（21）：`hero.portrait / work-01~08 / demo-flight-ctrl / demo-iot / demo-edc / demo-car / demo-drone-nav / uav-nav / build / news-1~3 / join / qrcode`。`hero.portrait` 是手机 Hero 竖版素材位（≤767px 顶替横版视频），无静态兜底：未上传时官网不注入该元素，CSS 回退 `contain` 完整显示横版。
+- 每位有固定的 `spec.ar`（目标比例，与首页 CSS 的 `--hp-ar` 一致）：`hero.portrait`/`demo-flight-ctrl`/`demo-iot`/`demo-car` 为 9:16，`work-05`/`demo-edc`/`uav-nav`/`build` 为 16:9，作品集九宫格为 4:3，`news-*`/`join` 为 3:2，`qrcode` 为 1:1（固定 `contain`，绝不裁切）。
 - 编辑保存后官网最多 5 分钟反映（公开接口 max-age=300）；营销首页 JS 对无版本参数的图片 URL 追加 `?v=<时间戳>` 强制刷新。已配置的图片与文案存于专用表，不走 workspace 快照。
 
 ## 可视化座位（实验室俯视图）
@@ -440,7 +442,8 @@ const CONFIG = {
                      "hairColor": "#3a3f46", "top": "#243E70", "chair": "#9aa0a8",
                      "prop": "pc", "glasses": true } }],
   "seatBubbles":   [{ "memberId": "m3", "text": "去借万用表", "expiresAt": "2026-09-25T08:01:00Z" }],
-  "seatChatUnread": 3
+  "seatChatUnread": 3,
+  "push": { "url": "" }
 }
 ```
 
@@ -452,6 +455,7 @@ const CONFIG = {
 | `seatCharacters` | 参数化形象部件（白名单键值）。**前端按同一份白名单二次过滤后才拼 SVG**，不接受任何用户提供的 SVG 文本 |
 | `seatBubbles` | 未过期气泡（服务端按 `expires_at` 过滤），前端另按 `expiresAt` 兜一层 |
 | `seatChatUnread` | 大厅未读数（整数，非数组）。按 `(user, room)` 的已读游标计数，不做逐条已读 |
+| `push` | 实时推送入口 `{url}`：**空串表示同源**（前端连 `${origin}/events`，生产由 nginx 反代）；本地开发下发给推送进程的绝对地址。见下节 |
 
 `seatChat` 正文**不出现在快照里**，请调用下方 `/seats/chat`。
 
@@ -459,7 +463,7 @@ const CONFIG = {
 
 | 方法 | 路径 | 请求体 | 说明 | 权限 |
 |---|---|---|---|---|
-| GET | `/seats/layout` | — | `{layout, presence, statuses, characters, bubbles, unread}`；座位页**轮询专用**（只拉座位状态，不拉整份快照），这 6 个字段与 workspace 快照里的 `seatLayout/seatPresence/seatStatuses/seatCharacters/seatBubbles/seatChatUnread` **逐字段一致**（`seat_state()` 一份逻辑两处共用）。前端每 15 秒轮询一次，页面不可见 / 正在编辑地图 / 正在走动 / 有弹窗时跳过 | `page:seats` |
+| GET | `/seats/layout` | — | `{layout, presence, statuses, characters, bubbles, unread}`；座位页**兜底轮询专用**（只拉座位状态，不拉整份快照），这 6 个字段与 workspace 快照里的 `seatLayout/seatPresence/seatStatuses/seatCharacters/seatBubbles/seatChatUnread` **逐字段一致**（`seat_state()` 一份逻辑两处共用）。轮询频率由推送状态决定：推送可用时 60 秒扫一次防漏事件，推送不可用时回到 15 秒；页面不可见 / 正在编辑地图 / 正在走动 / 有弹窗时跳过 | `page:seats` |
 | POST | `/seats/move` | `{"row":3,"col":2}` | 只能移动**自己**（后端以 `request.user` 为准，不信任前端传的 memberId）；目标格须可站立且无人 → `{row,col}`。未打卡 409、占用 409、家具 400、越界 400 | `action:seats.move` |
 | POST | `/seats/status` | `{"statusKey":"debug","text":"在跑电机闭环"}` | 状态键：`work/debug/meeting/rest/out/custom`；`custom` 必须有文字；文字截断 30 字 → `{statusKey,text}` | `action:seats.status` |
 | POST | `/seats/character` | `{"parts":{"skin":"#eec096","hairStyle":"spike",…}}` | 逐槽位白名单校验，槽位外的键被忽略、非法取值 400 → `{parts}`。白名单：`skin(4) hairStyle(4) hairColor(4) top(5) chair(4) prop(4) glasses(2)` | `action:seats.status` |
@@ -470,7 +474,39 @@ const CONFIG = {
 | POST | `/seats/chat/<cid>/delete` | — | 撤回大厅消息（软删除：`active=false`，保留审计） | `action:seats.manage` |
 | POST | `/seats/layout/save` | `{id,name,rows,cols,grid,labels,owners}` | 整份校验后原子替换：尺寸 3~40、每行长度、未知格子类型、座位号重复都返回 400。改小地图或把工位涂成家具时，站在上面的人退回自动分配 | `action:seats.manage` |
 
-### 3. 打卡签退（小人生灭的数据源）
+### 3. 实时推送（SSE）
+
+座位与大厅消息不再依赖 15 秒轮询：写操作发生时服务端**主动推一条 delta**，浏览器本地合并后就地更新，
+延迟从 0~15 秒降到 **百毫秒级**（实测座位 35~65ms、状态 27ms、聊天 40~83ms）。
+
+推送进程是独立的小进程（`lab-platform/labpush/server.py`）：**纯标准库、不引 Django、不碰数据库**，
+只做「长连接 + 广播」，常驻内存约 25MB。它不在时前端自动降级回轮询，功能不倒退。
+
+**为什么用短期票据而不是会话 Cookie**：推送进程不引 Django 就解析不了 session。票据由主 API 用共享密钥
+（`LAB_PUSH_SECRET`，默认复用 `SECRET_KEY`；两边必须一致）签发，推送进程用 hmac 独立校验，5 分钟有效，
+前端在过期前换新票重连。
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | `/push/ticket` | 签发推送票据 → `{ticket, ttl:300, url}`；`url` 为**空串表示同源**（生产 nginx 反代 `/events`），本地开发下发给推送进程地址 | 登录 |
+| GET | `/events?ticket=<票据>` | **SSE 长连接**，**不在 `/api/` 前缀下**（生产由 nginx 的 `location /events` 反代到推送进程，且必须 `proxy_buffering off`）。先发 `event: ready`，之后每条 `data: <JSON>`；每 25 秒一条 `: ping` 注释保活。票据无效/过期 → 401 | 票据 |
+
+**事件（delta）格式**，按 `type` 区分：
+
+| type | 载荷 | 前端处理 |
+|---|---|---|
+| `seat.move` | `{memberId,row,col}` | 只改那一个 DOM 节点的 transform（CSS 过渡 → 滑过去），不重画整图 |
+| `seat.status` | `{memberId,statusKey,text}` | 更新该格状态环与该人名字的色点 |
+| `seat.char` | `{memberId,parts}` | 只重画该人的小人 SVG |
+| `seat.bubble` | `{memberId,text,expiresAt}` | 显示气泡，到 `expiresAt` 由前端自己收起 |
+| `seat.refresh` | — | 打卡 / 签退 / 改布局这类**聚合变化**不发 delta（事件里表达不全），前端收到后拉一次 `/seats/layout` |
+| `chat.new` | `{message:{id,memberId,text,created}}` | 就地追加到列表并跟随滚动（不重画整表、不顶掉正在翻看的旧消息） |
+| `chat.del` | `{id}` | 从列表精确摘除该条 |
+
+前端 `src/push.js` 负责取票、连接、退避重连与换票；`src/seats.js` 注册各 type 的本地合并处理器
+（同一条消息既可能来自推送、也可能来自自己的乐观插入，两边都按 `id` 去重）。
+
+### 4. 打卡签退（小人生灭的数据源）
 
 | 方法 | 路径 | 说明 | 权限 |
 |---|---|---|---|
@@ -478,7 +514,7 @@ const CONFIG = {
 
 打卡记录 `checkins[]` 新增两个字段：`signoutAt`（未签退为 `null`）、`onDuty`（= `signoutAt === null`）。
 
-### 3.1 扫码签到（GPS 已降级为可选）
+### 4.1 扫码签到（GPS 已降级为可选）
 
 打卡不再要求浏览器定位 —— 成员大量使用微信 / QQ 内置浏览器，这些 WebView 不向普通网页开放 `navigator.geolocation`，且网页自身也无法调用摄像头（`getUserMedia` 同样要 JS-SDK），所以扫码动作交给外部扫码能力，平台只做三件事：
 
@@ -488,7 +524,7 @@ const CONFIG = {
 
 签到码规则：`HMAC-SHA256(SECRET_KEY, "checkin:<窗口号>")`，字符集 `23456789ABCDEFGHJKMNPQRSTUVWXYZ`（去掉易混的 0/O/1/I/L），窗口默认 90 秒（`LAB_CHECKIN_CODE_STEP`），可容忍前 2 个窗口（`LAB_CHECKIN_CODE_TOLERANCE`），即一个码实际有效约 1.5 ~ 4.5 分钟。不落库、不需要定时任务。
 
-### 4. 权限点（已并入 RBAC 矩阵「座位」分组）
+### 5. 权限点（已并入 RBAC 矩阵「座位」分组）
 
 | 权限点 | 说明 | 默认授予 |
 |---|---|---|

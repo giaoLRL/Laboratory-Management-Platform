@@ -27,7 +27,13 @@ class HomePageImage(models.Model):
     kind = models.CharField('媒体类型', max_length=16, choices=[('image', 'image'), ('video', 'video')], default='image')
     image = models.ImageField('上传图片', upload_to='homepage/%Y%m/', blank=True, null=True)
     video = models.FileField('上传视频', upload_to='homepage/%Y%m/', blank=True, null=True)
-    scale = models.PositiveSmallIntegerField('显示缩放', default=100)  # 80–150%
+    # 旧字段：原「显示缩放」= transform: scale，在 cover 下放大只会裁得更狠。
+    # 保留仅供旧接口 /homepage/scale 兼容，后台已改用 zoom，迁移时映射 zoom=max(100, scale)。
+    scale = models.PositiveSmallIntegerField('显示缩放', default=100)
+    fit = models.CharField('裁切方式', max_length=8, default='cover')  # cover 铺满 / contain 完整
+    focus_x = models.PositiveSmallIntegerField('焦点 X', default=50)   # 0–100，object-position
+    focus_y = models.PositiveSmallIntegerField('焦点 Y', default=50)
+    zoom = models.PositiveSmallIntegerField('构图缩放', default=100)   # 100–150%，仅微调
     updated = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
