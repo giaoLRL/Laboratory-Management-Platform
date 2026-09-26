@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.checkins import codes
 from apps.checkins.models import CheckInRecord
 from apps.common.rbac import require
+from apps.common.push import publish
 from apps.common.response import ok, fail
 
 
@@ -52,7 +53,9 @@ def checkins_code(request):
     if (err := require(request.user, 'action:checkin.qrcode', '没有展示签到二维码的权限')):
         return err
     info = codes.current()
-    url = request.build_absolute_uri('/') + f'?c={info["code"]}#checkins'
+    # 注意：站点根路径 `/` 由 nginx 交给营销官网，SPA 入口是 /index.html；
+    # 二维码必须编 SPA 入口，否则扫码会落到实验室官网首页（?c= 与 #checkins 全丢）。
+    url = request.build_absolute_uri('/index.html') + f'?c={info["code"]}#checkins'
     resp = ok({**info, 'url': url, 'qr': _qr_data_uri(url)})
     resp['Cache-Control'] = 'no-store'
     return resp
