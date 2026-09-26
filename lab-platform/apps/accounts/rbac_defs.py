@@ -152,7 +152,7 @@ PERMISSION_GROUPS = [
     ('请假', ['page:leaves', 'action:leave.create', 'action:leave.cancel', 'action:leave.review']),
     ('任务', ['page:tasks', 'action:task.create', 'action:task.update', 'action:task.delete',
               'action:task.attachment', 'action:task.review']),
-    ('打卡', ['page:checkins', 'action:checkin.create', 'action:checkin.refresh']),
+    ('打卡', ['page:checkins', 'action:checkin.create', 'action:checkin.qrcode', 'action:checkin.refresh']),
     ('比赛', ['page:competitions', 'action:competition.view', 'action:competition.create',
               'action:competition.update', 'action:competition.archive']),
     ('积分', ['page:leaderboard', 'action:task.score', 'action:points.rules', 'action:points.manual']),
